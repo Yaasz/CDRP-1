@@ -1,148 +1,219 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Share2, BookmarkPlus, Loader2, ServerCrash } from 'lucide-react';
-import axios from 'axios';
+import { Calendar, Clock, ChevronRight, Radio, User, Search, Filter, XCircle } from 'lucide-react';
+import api from '../utils/api';
+import { format, parseISO } from 'date-fns';
 
 // Placeholder image component (reusable)
 const ImagePlaceholder = ({ src, alt, className = "", ...props }) => (
   <div className={`w-full h-full bg-gray-300 flex items-center justify-center ${className}`} {...props}>
-    {/* Use img tag if src exists, otherwise show placeholder text */}
-    {src ? (
-        <img src={src} alt={alt} className="object-cover w-full h-full" loading="lazy"/>
-    ) : (
-        <span className="text-xs text-gray-500 text-center p-2">{alt} (No Image)</span>
-    )}
+    <img src={src} alt={alt} className="object-cover w-full h-full" />
   </div>
 );
 
 export default function NewsListPage() {
-  // Add state for data, loading, error
-  const [newsList, setNewsList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(false);
+  const [newsArticles, setNewsArticles] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
-  // Fetch data from backend
   useEffect(() => {
-    const fetchNews = async () => {
-      setLoading(true);
-      setError(null);
-      const backendUrl = import.meta.env.VITE_BACKEND_URL;
-      try {
-        console.log(`Fetching news from: ${backendUrl}/api/news`);
-        const response = await axios.get(`${backendUrl}/api/news`);
-        console.log("News response data:", response.data);
-        setNewsList(response.data.data || []); // Assuming data is in response.data.data
-      } catch (err) {
-        console.error("Error fetching news:", err);
-        const errorMsg = err.response?.data?.error || err.response?.data?.message || "Failed to load news.";
-        setError(errorMsg);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchNews();
-  }, []); // Fetch once on mount
+  }, []);
 
-  // Keep mock handlers for now, but update ID source
-  const handleBookmark = (e, newsId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    alert(`Bookmark clicked for news ID: ${newsId} (Mock)`);
+  const fetchNews = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      
+      const response = await api.get('/news');
+      console.log('News data fetched:', response.data);
+      
+      if (response.data && response.data.data) {
+        setNewsArticles(response.data.data);
+      } else {
+        setError(true);
+      }
+    } catch (err) {
+      console.error('Error fetching news:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleShare = (e, newsId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    alert(`Share clicked for news ID: ${newsId} (Mock)`);
+  // Format date from ISO string
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    try {
+      return format(parseISO(dateString), 'MMMM d, yyyy');
+    } catch (error) {
+      try {
+        return new Date(dateString).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      } catch (innerError) {
+        return 'Unknown date';
+      }
+    }
   };
 
-  // Add Loading state
+  // Filter news by search query and category
+  const filteredNews = newsArticles.filter(news => {
+    const matchesSearch = 
+      searchQuery === '' || 
+      news.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      news.content?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = 
+      selectedCategory === 'All' || 
+      news.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  // Unique categories from news data
+  const categories = ['All', ...new Set(newsArticles.map(news => news.category).filter(Boolean))];
+
+  // Calculate read time (approximately 200 words per minute)
+  const calculateReadTime = (content) => {
+    if (!content) return '1 min read';
+    const words = content.trim().split(/\s+/).length;
+    const minutes = Math.ceil(words / 200);
+    return `${minutes} min read`;
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <p className="ml-2 text-gray-600">Loading News...</p>
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-600 rounded-full border-t-transparent"></div>
       </div>
     );
   }
 
-  // Add Error state
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-        <ServerCrash className="h-12 w-12 text-red-500 mb-4" />
-        <h3 className="text-lg font-semibold text-red-700 mb-2">Loading Failed</h3>
-        <p className="text-red-600">{error}</p>
+      <div className="text-center py-12 max-w-lg mx-auto bg-white p-8 rounded-lg shadow border border-gray-200">
+        <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Unable to Load News</h1>
+        <p className="text-gray-600 mb-6">We're having trouble loading the news feed. Please try again later.</p>
+        <button
+          onClick={fetchNews}
+          className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">News & Updates</h1>
-        <p className="text-gray-600">Stay informed about disaster situations and community responses.</p>
+    <div className="container mx-auto p-4 max-w-6xl">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">News & Announcements</h1>
+        <p className="text-gray-600">Stay updated with the latest news related to disasters and response efforts</p>
       </div>
 
-      {/* News List - Iterate over newsList state */}
-      <div className="space-y-6">
-        {newsList.map(news => (
-          <div
-            key={news._id} // Use _id
-            className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
+      {/* Search & Filter Bar */}
+      <div className="bg-white p-4 mb-6 rounded-lg shadow border border-gray-200 flex flex-wrap gap-4">
+        {/* Search Input */}
+        <div className="relative flex-1 min-w-[250px]">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search news..."
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {/* Category Filter */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Filter className="h-5 w-5 text-gray-400" />
+          </div>
+          <select
+            className="block w-full pl-10 pr-8 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
           >
-            <Link to={`/dashboard/news/${news._id}`} className="block md:flex"> {/* Use _id in link */} 
-              <div className="md:w-1/3 h-48 md:h-auto relative flex-shrink-0">
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <ChevronRight className="h-5 w-5 text-gray-400 transform rotate-90" />
+          </div>
+        </div>
+      </div>
+
+      {/* News Grid */}
+      {filteredNews.length === 0 ? (
+        <div className="text-center py-12 bg-white p-6 rounded-lg shadow border border-gray-200">
+          <Radio className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">No News Found</h2>
+          <p className="text-gray-600">
+            {searchQuery || selectedCategory !== 'All' 
+              ? "No news articles match your search criteria. Try adjusting your filters." 
+              : "There are no news articles available at this time. Check back later for updates."}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredNews.map((news) => (
+            <Link 
+              key={news._id} 
+              to={`/dashboard/news/${news._id}`}
+              className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow flex flex-col h-full"
+            >
+              {/* News Item Image */}
+              <div className="relative h-48">
                 <ImagePlaceholder
-                  src={news.image || null} // Use image from backend or null
-                  alt={news.title || 'News item'}
-                  className="object-cover"
+                  src={news.image}
+                  alt={news.title}
                 />
+                <div className="absolute top-4 left-4">
+                  <span className="bg-blue-600 text-xs text-white font-semibold px-3 py-1 rounded-full shadow">
+                    {news.category || 'News'}
+                  </span>
+                </div>
               </div>
-              <div className="p-6 md:w-2/3 flex flex-col">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-1">{news.title || 'Untitled News'}</h2>
-                  </div>
-                  <div className="flex space-x-2 flex-shrink-0 ml-2">
-                    <button
-                      onClick={(e) => handleBookmark(e, news._id)}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors duration-150"
-                      aria-label="Bookmark"
-                    >
-                      <BookmarkPlus className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={(e) => handleShare(e, news._id)}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors duration-150"
-                      aria-label="Share"
-                    >
-                      <Share2 className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
 
-                <div className="mb-4 flex-grow">
-                  <p className="text-gray-600 text-sm line-clamp-3 md:line-clamp-2">
-                    {news.content || 'No content available.'}
-                  </p>
-                </div>
-
-                <div className="flex justify-between items-center text-xs text-gray-500 mt-auto">
-                  <div className="flex items-center">
-                    <Clock className="h-3.5 w-3.5 mr-1" />
-                    <span>{news.createdAt ? new Date(news.createdAt).toLocaleString() : 'Date unknown'}</span>
+              {/* News Item Content */}
+              <div className="p-5 flex-1 flex flex-col">
+                <h2 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">{news.title}</h2>
+                <p className="text-gray-600 mb-4 line-clamp-3">
+                  {news.content}
+                </p>
+                
+                {/* Meta Footer */}
+                <div className="mt-auto pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between text-sm text-gray-500">
+                  <div className="flex items-center mb-2 sm:mb-0">
+                    <User className="h-4 w-4 mr-1" />
+                    <span>{news.author || 'CDRP Team'}</span>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      <span>{formatDate(news.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-1" />
+                      <span>{calculateReadTime(news.content)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </Link>
-          </div>
-        ))}
-      </div>
-
-      {newsList.length === 0 && !loading && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center mt-6">
-          <p className="text-gray-600">No news articles found.</p>
+          ))}
         </div>
       )}
     </div>

@@ -1,8 +1,10 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Newspaper, UserRoundCog, LogOut, UsersRound, LifeBuoy } from 'lucide-react';
+import { LayoutDashboard, FileText, Newspaper, UserRoundCog, LogOut, UsersRound, LifeBuoy, Settings } from 'lucide-react';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const { user } = useAuth(); // Get user data including role
 
   // Mock logout function
   const handleLogout = () => {
@@ -51,6 +53,19 @@ export default function Sidebar() {
                <UsersRound className="mr-3 h-5 w-5" />
                Volunteer Hub
              </NavLink>
+             
+             {/* Admin Links - Only visible to administrators */}
+             {user && (user.role === 'admin' || user.accountType === 'admin') && (
+               <div className="pt-4 mt-4 border-t border-gray-200">
+                 <p className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                   Admin
+                 </p>
+                 <NavLink to="/dashboard/admin/news" className={getNavLinkClass}>
+                   <Settings className="mr-3 h-5 w-5" />
+                   Manage News
+                 </NavLink>
+               </div>
+             )}
           </div>
 
           {/* Bottom Section (Profile, Logout) */}

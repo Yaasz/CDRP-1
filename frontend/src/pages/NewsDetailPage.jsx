@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, User, Share2, ThumbsUp, MessageSquare, Bookmark, Clock } from 'lucide-react';
-
-// Mock data (Same as Next.js version, ensure 'id' matches)
-const mockNewsArticles = [
-  { id: 1, title: "Emergency Response Teams Deployed...", content: `<p>Local emergency response teams...</p><h3>How to Help</h3>...<ul><li>Water...</li></ul>`, author: "Ethiopian News Agency (ENA)", date: "July 15, 2024", readTime: "4 min read", category: "Updates", image: "https://images.unsplash.com/photo-1606989054596-ee351262a6be?...", likes: 152, comments: 18, relatedTags: ["Flooding", "Gambella", "Emergency Response", "NDRMC"] },
-  { id: 2, title: "Donation Center Opens in Addis...", content: `<p>A new donation collection center...</p><h3>Donation Center Information</h3>...`, author: "Addis Ababa City Administration", date: "July 14, 2024", readTime: "3 min read", category: "Community", image: "https://images.unsplash.com/photo-1606989054596-ee351262a6be?...", likes: 210, comments: 25, relatedTags: ["Drought", "Donations", "Addis Ababa", "NDRMC"] },
-  // Add other articles corresponding to IDs 3, 4, 5 from the list page if needed
-]; // Simplified content, use full HTML content from original mock data
+import { useParams, Link } from 'react-router-dom';
+import { 
+  ChevronLeft, 
+  Clock, 
+  Calendar,
+  Share2, 
+  MessageSquare, 
+  ThumbsUp, 
+  Bookmark,
+  User,
+  AlertTriangle,
+  Loader2
+} from 'lucide-react';
+import api from '../utils/api';
+import { format, parseISO } from 'date-fns';
 
 // Placeholder image component (reusable)
 const ImagePlaceholder = ({ src, alt, className = "", priority = false, ...props }) => ( // Added priority prop (ignored for now)
@@ -17,129 +23,177 @@ const ImagePlaceholder = ({ src, alt, className = "", priority = false, ...props
 );
 
 export default function NewsDetailPage() {
-  const { newsId } = useParams(); // Get ID from URL params
-  const navigate = useNavigate();
+  const { newsId } = useParams();
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false); // Basic error state
-  const [liked, setLiked] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
-
+  const [error, setError] = useState(false);
+  
   useEffect(() => {
-    setLoading(true);
-    setError(false);
-    // Simulate API fetch
-    const timer = setTimeout(() => {
-      const idToFind = parseInt(newsId); // Ensure ID is a number
-      const foundArticle = mockNewsArticles.find(a => a.id === idToFind);
-      if (foundArticle) {
-        setArticle(foundArticle);
+    fetchNewsArticle();
+  }, [newsId]);
+  
+  const fetchNewsArticle = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      
+      const response = await api.get(`/news/${newsId}`);
+      console.log('News article fetched:', response.data);
+      
+      if (response.data && response.data.data) {
+        setArticle(response.data.data);
       } else {
-        setError(true); // Set error if article not found
+        setError(true);
       }
+    } catch (err) {
+      console.error('Error fetching news article:', err);
+      setError(true);
+    } finally {
       setLoading(false);
-    }, 300); // Simulate network delay
-
-    return () => clearTimeout(timer); // Cleanup timer on unmount
-
-  }, [newsId]); // Re-run effect if newsId changes
-
-   // Basic loading state - could be replaced with a dedicated component
+    }
+  };
+  
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    try {
+      return format(parseISO(dateString), 'MMMM d, yyyy');
+    } catch (error) {
+      try {
+        return new Date(dateString).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      } catch (innerError) {
+        return 'Unknown date';
+      }
+    }
+  };
+  
+  // Calculate read time (approximately 200 words per minute)
+  const calculateReadTime = (content) => {
+    if (!content) return '1 min read';
+    const words = content.trim().split(/\s+/).length;
+    const minutes = Math.ceil(words / 200);
+    return `${minutes} min read`;
+  };
+  
+  // Action handlers
+  const handleLike = () => {
+    console.log('Like article:', newsId);
+    // Implement like functionality
+  };
+  
+  const handleComment = () => {
+    console.log('Comment on article:', newsId);
+    // Implement comment functionality
+  };
+  
+  const handleBookmark = () => {
+    console.log('Bookmark article:', newsId);
+    // Implement bookmark functionality
+  };
+  
+  const handleShare = () => {
+    console.log('Share article:', newsId);
+    // Implement share functionality - could use navigator.share() API
+  };
+  
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        {/* Simple spinner - matches the loading.js style somewhat */}
-        <div className="animate-spin h-8 w-8 border-4 border-blue-600 rounded-full border-t-transparent"></div>
+        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
       </div>
     );
   }
-
-  // Basic error state - could be replaced with a dedicated component
+  
   if (error || !article) {
     return (
-      <div className="text-center py-12 max-w-lg mx-auto bg-white p-8 rounded-lg shadow border border-gray-200">
+      <div className="max-w-3xl mx-auto p-4 text-center py-12 bg-white rounded-lg shadow border border-gray-200">
+        <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Article Not Found</h1>
-        <p className="text-gray-600 mb-6">The news article you're looking for doesn't exist or has been removed.</p>
+        <p className="text-gray-600 mb-6">We couldn't find the article you're looking for. It may have been removed or you might have followed a broken link.</p>
         <Link
           to="/dashboard/news"
           className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ChevronLeft className="h-4 w-4 mr-2" />
           Back to News
         </Link>
       </div>
     );
   }
 
-  // Mock action handlers
-  const handleLike = () => setLiked(!liked);
-  const handleBookmark = () => setBookmarked(!bookmarked);
-  const handleShare = () => alert(`Share clicked for article ID: ${article.id} (Mock)`);
-  const handleCommentClick = () => alert(`Comment button clicked for article ID: ${article.id} (Mock - implement comment section)`);
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Back Link */}
-      <button onClick={() => navigate(-1)} className="inline-flex items-center text-blue-600 mb-6 hover:underline focus:outline-none">
-        <ArrowLeft className="h-4 w-4 mr-1" />
-        Back
-      </button>
-
-      <article className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
-        {/* Article Header Image */}
-        <div className="relative">
-           {/* Optional overlay */}
-           {/* <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/50 to-transparent z-10"></div> */}
-           <div className="h-56 md:h-72 w-full relative overflow-hidden">
-            <ImagePlaceholder
-              src={article.image}
-              alt={article.title}
-              className="object-cover"
-              priority={true} // Hint for eager loading
-            />
-          </div>
-          <div className="absolute top-4 left-4 z-20">
-            <span className="bg-blue-600 text-xs text-white font-semibold px-3 py-1 rounded-full shadow">
-              {article.category}
+    <div className="max-w-4xl mx-auto p-4">
+      {/* Back button */}
+      <Link
+        to="/dashboard/news"
+        className="inline-flex items-center mb-6 text-blue-600 hover:text-blue-800 transition-colors"
+      >
+        <ChevronLeft className="h-4 w-4 mr-1" />
+        Back to News
+      </Link>
+      
+      <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        {/* Article header */}
+        <div className="p-6 border-b border-gray-100">
+          <div className="mb-4">
+            <span className="inline-block px-3 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full shadow-sm">
+              {article.category || 'News'}
             </span>
           </div>
-        </div>
-
-        {/* Article Content Container */}
-        <div className="px-6 py-6 md:px-10 md:py-8">
-          {/* Title */}
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 leading-tight">{article.title}</h1>
-
-          {/* Meta information */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6 text-sm text-gray-600">
+          
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+            {article.title}
+          </h1>
+          
+          <div className="flex flex-wrap items-center text-sm text-gray-500 gap-4">
             <div className="flex items-center">
-              <User className="h-4 w-4 mr-1.5 text-gray-500" />
-              {article.author}
+              <User className="h-4 w-4 mr-1" />
+              <span>{article.author || 'CDRP Team'}</span>
             </div>
+            
             <div className="flex items-center">
-              <Calendar className="h-4 w-4 mr-1.5 text-gray-500" />
-              {article.date}
+              <Calendar className="h-4 w-4 mr-1" />
+              <span>{formatDate(article.createdAt)}</span>
             </div>
+            
             <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-1.5 text-gray-500" />
-              {article.readTime}
+              <Clock className="h-4 w-4 mr-1" />
+              <span>{calculateReadTime(article.content)}</span>
             </div>
           </div>
-
-          {/* Article Content (Using dangerouslySetInnerHTML for mock HTML) */}
-          {/* Add specific Tailwind typography plugin if needed for better styling of raw HTML */}
-          <div
-            className="prose prose-blue max-w-none text-gray-700 leading-relaxed" // Using Tailwind prose for basic HTML styling
-            dangerouslySetInnerHTML={{ __html: article.content }} // WARNING: Only use with trusted HTML sources
-          />
-
+        </div>
+        
+        {/* Article image */}
+        {article.image && (
+          <div className="w-full h-80 md:h-96 bg-gray-100 border-b border-gray-100">
+            <img
+              src={article.image}
+              alt={article.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+        
+        {/* Article content */}
+        <div className="p-6 md:p-8 prose max-w-none prose-blue prose-img:rounded-md prose-headings:text-gray-900">
+          <div className="whitespace-pre-line text-gray-700">
+            {article.content}
+          </div>
+          
           {/* Tags */}
-          {article.relatedTags && article.relatedTags.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-800 mb-3">Related Tags</h3>
+          {article.tags && article.tags.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Related Topics</h3>
               <div className="flex flex-wrap gap-2">
-                {article.relatedTags.map((tag, index) => (
-                  <span key={index} className="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full hover:bg-gray-200 cursor-pointer transition-colors">
+                {article.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="inline-block px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+                  >
                     {tag}
                   </span>
                 ))}
@@ -147,54 +201,46 @@ export default function NewsDetailPage() {
             </div>
           )}
         </div>
-
-        {/* Actions Footer */}
-        <div className="px-6 py-4 md:px-10 bg-gray-50 border-t border-gray-200 flex flex-wrap justify-between items-center gap-4">
-          <div className="flex items-center space-x-3">
+        
+        {/* Action buttons */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
+          <div className="flex space-x-2">
             <button
               onClick={handleLike}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-colors duration-150 ${
-                liked
-                  ? 'text-blue-600 border-blue-200 bg-blue-50 font-medium'
-                  : 'text-gray-600 border-gray-300 hover:bg-gray-100'
-              }`}
-              aria-pressed={liked}
+              className="inline-flex items-center px-3 py-1.5 text-sm rounded-md bg-white shadow-sm border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-600 transition-colors"
             >
-              <ThumbsUp className={`h-4 w-4 transition-colors duration-150 ${liked ? 'fill-current' : ''}`} />
-              <span>{article.likes + (liked ? 1 : 0)}</span>
+              <ThumbsUp className="h-4 w-4 mr-1" />
+              <span>Like</span>
             </button>
-
+            
             <button
-              onClick={handleCommentClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm text-gray-600 border-gray-300 hover:bg-gray-100 transition-colors duration-150"
+              onClick={handleComment}
+              className="inline-flex items-center px-3 py-1.5 text-sm rounded-md bg-white shadow-sm border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-600 transition-colors"
             >
-              <MessageSquare className="h-4 w-4" />
-              <span>{article.comments}</span>
-            </button>
-
-            <button
-              onClick={handleBookmark}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-colors duration-150 ${
-                bookmarked
-                  ? 'text-blue-600 border-blue-200 bg-blue-50 font-medium'
-                  : 'text-gray-600 border-gray-300 hover:bg-gray-100'
-              }`}
-               aria-pressed={bookmarked}
-            >
-              <Bookmark className={`h-4 w-4 transition-colors duration-150 ${bookmarked ? 'fill-current' : ''}`} />
-              <span>{bookmarked ? 'Saved' : 'Save'}</span>
+              <MessageSquare className="h-4 w-4 mr-1" />
+              <span>Comment</span>
             </button>
           </div>
-
-          <button
-             onClick={handleShare}
-             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm text-gray-600 border-gray-300 hover:bg-gray-100 transition-colors duration-150"
-          >
-            <Share2 className="h-4 w-4" />
-            <span>Share</span>
-          </button>
+          
+          <div className="flex space-x-2">
+            <button
+              onClick={handleBookmark}
+              className="inline-flex items-center px-3 py-1.5 text-sm rounded-md bg-white shadow-sm border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-600 transition-colors"
+            >
+              <Bookmark className="h-4 w-4 mr-1" />
+              <span>Save</span>
+            </button>
+            
+            <button
+              onClick={handleShare}
+              className="inline-flex items-center px-3 py-1.5 text-sm rounded-md bg-white shadow-sm border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-600 transition-colors"
+            >
+              <Share2 className="h-4 w-4 mr-1" />
+              <span>Share</span>
+            </button>
+          </div>
         </div>
-      </article>
+      </div>
     </div>
   );
 }

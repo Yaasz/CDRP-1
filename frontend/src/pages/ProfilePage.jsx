@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Bell, User, Upload, Camera, Mail, Phone } from 'lucide-react';
+import { Bell, User, Upload, Camera, Mail, Phone, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 
 // Reusable Image Placeholder for Avatar
 const AvatarPlaceholder = ({ src, alt, size = 28, ...props }) => (
@@ -14,13 +16,13 @@ const AvatarPlaceholder = ({ src, alt, size = 28, ...props }) => (
 );
 
 export default function ProfilePage() {
-  // Mock user data - replace with actual data fetching later
+  const { user, login } = useAuth();
   const [userData, setUserData] = useState({
-    fullName: 'Abebe Kebede',
-    email: 'abebe.kebede@example.com',
-    phone: '+251 911 123456',
-    profileImage: '/placeholder-avatar.jpg', // Use a placeholder path initially
-    volunteerStatus: 'Community Volunteer',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    image: '',
     notifications: {
       email: true,
       sms: true,
@@ -30,15 +32,56 @@ export default function ProfilePage() {
 
   // State for form data during editing
   const [formData, setFormData] = useState(userData);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Add submitting state
-  const [profileImageFile, setProfileImageFile] = useState(null); // State for new image file
-  const [imagePreviewUrl, setImagePreviewUrl] = useState(userData.profileImage); // State for preview
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
-  // Keep form data in sync with user data unless actively editing something else
+  // Fetch user data from backend
   useEffect(() => {
-    setFormData(userData);
-    setImagePreviewUrl(userData.profileImage);
-  }, [userData]);
+    const fetchUserData = async () => {
+      if (!user || !user.id) return;
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await api.get(`/user/${user.id}`);
+        
+        if (response.data && response.data.data) {
+          const fetchedUser = response.data.data;
+          
+          // Transform backend data to match our form structure
+          const transformedData = {
+            firstName: fetchedUser.firstName || '',
+            lastName: fetchedUser.lastName || '',
+            email: fetchedUser.email || '',
+            phone: fetchedUser.phone || '',
+            image: fetchedUser.image || '',
+            // If notifications are not in the backend yet, use default values
+            notifications: fetchedUser.notifications || {
+              email: true,
+              sms: true,
+              newsletter: false
+            }
+          };
+          
+          setUserData(transformedData);
+          setFormData(transformedData);
+          setImagePreviewUrl(fetchedUser.image || '');
+        }
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        setError('Failed to load your profile information. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUserData();
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -74,42 +117,146 @@ export default function ProfilePage() {
       }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    console.log('Saving user data:', formData);
-    console.log('New profile image file:', profileImageFile);
-
-    // Simulate API call
-    setTimeout(() => {
-      // In a real app:
-      // 1. Upload profileImageFile if it exists. Get the new URL.
-      // 2. Update formData with the new image URL if successful.
-      // 3. Send formData to the API to save user details.
-      // 4. On success, update the main userData state.
-
-      // Mock success: Update userData with formData
-      // If there was a new image, update the image path in the final data
-      const finalData = { ...formData };
+    setError(null);
+    setSuccessMessage('');
+    
+    try {
+      // Create a FormData object to handle file upload
+      const profileFormData = new FormData();
+      
+      // Append user data
+      profileFormData.append('firstName', formData.firstName);
+      profileFormData.append('lastName', formData.lastName);
+      profileFormData.append('email', formData.email);
+      profileFormData.append('phone', formData.phone);
+      
+      // Add the profile image if selected
       if (profileImageFile) {
-          // In this mock, we just keep the preview URL, but ideally,
-          // it would be the URL returned from the upload service.
-          finalData.profileImage = imagePreviewUrl;
-          // Normally revoke object URL after upload: URL.revokeObjectURL(imagePreviewUrl)
+        profileFormData.append('image', profileImageFile);
+        console.log('Adding image file:', profileImageFile.name, profileImageFile.type, profileImageFile.size);
       }
-      setUserData(finalData);
-      setProfileImageFile(null); // Clear the file state
+      
+      // Log form data contents for debugging
+      console.log('Submitting profile update for user ID:', user.id);
+      console.log('Form data fields:');
+      for (const pair of profileFormData.entries()) {
+        // Don't log the actual file blob, just the name
+        if (pair[0] === 'image') {
+          console.log(pair[0], pair[1].name);
+        } else {
+          console.log(pair[0], pair[1]);
+        }
+      }
+      
+      // Send update request to the API
+      const response = await api.put(`/user/${user.id}`, profileFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('Profile update response:', response.data);
+      
+      if (response.data && response.data.data) {
+        const updatedUser = response.data.data;
+        
+        // Update local state with the response
+        setUserData({
+          firstName: updatedUser.firstName || '',
+          lastName: updatedUser.lastName || '',
+          email: updatedUser.email || '',
+          phone: updatedUser.phone || '',
+          image: updatedUser.image || '',
+          notifications: updatedUser.notifications || formData.notifications
+        });
+        
+        // If we have a new image URL from the response, update it
+        if (updatedUser.image) {
+          setImagePreviewUrl(updatedUser.image);
+        }
+        
+        // If there was a blob URL for preview, revoke it
+        if (profileImageFile) {
+          URL.revokeObjectURL(imagePreviewUrl);
+          setProfileImageFile(null);
+        }
+        
+        // Update auth context with the new user info if needed
+        if (login) {
+          const updatedAuthUser = {
+            token: localStorage.getItem('authToken'),
+            accountType: localStorage.getItem('accountType'),
+            user: {
+              id: user.id,
+              role: user.role,
+              firstName: updatedUser.firstName,
+              lastName: updatedUser.lastName,
+              email: updatedUser.email,
+              image: updatedUser.image
+            }
+          };
+          console.log('Updating auth context with:', updatedAuthUser);
+          login(updatedAuthUser);
+        }
+        
+        setSuccessMessage('Profile updated successfully!');
+      } else {
+        // Handle case where response doesn't have expected data structure
+        console.error('Invalid response format:', response);
+        setError('Received an invalid response from the server');
+      }
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      console.error('Error response:', err.response);
+      
+      let errorMessage = 'Failed to update your profile. Please try again later.';
+      
+      // Check for specific error responses
+      if (err.response) {
+        if (err.response.status === 404) {
+          errorMessage = 'User not found. Please log out and log in again.';
+        } else if (err.response.data && err.response.data.message) {
+          errorMessage = err.response.data.message;
+        }
+      }
+      
+      setError(errorMessage);
+    } finally {
       setIsSubmitting(false);
-      alert("Profile updated successfully!");
-    }, 1500);
+    }
   };
 
   // Reset form data to original userData
   const handleCancel = () => {
     setFormData(userData);
-    setImagePreviewUrl(userData.profileImage);
+    setImagePreviewUrl(userData.image);
     setProfileImageFile(null); // Clear any staged file
+    setError(null);
+    setSuccessMessage('');
   };
+
+  // Get user's full name
+  const getFullName = () => {
+    if (formData.firstName && formData.lastName) {
+      return `${formData.firstName} ${formData.lastName}`;
+    } else if (formData.firstName) {
+      return formData.firstName;
+    } else if (formData.lastName) {
+      return formData.lastName;
+    }
+    return 'User';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-6 px-4">
@@ -125,7 +272,7 @@ export default function ProfilePage() {
             {/* Avatar Section */}
             <div className="flex-shrink-0 mx-auto sm:mx-0">
               <div className="relative">
-                 <AvatarPlaceholder src={imagePreviewUrl} alt={formData.fullName} size={28} />
+                 <AvatarPlaceholder src={imagePreviewUrl} alt={getFullName()} size={28} />
                  <label htmlFor="profile-image-upload" className="absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-2 cursor-pointer shadow-md border-2 border-white hover:bg-blue-700 transition-colors">
                    <Camera size={16} className="text-white" />
                    <input id="profile-image-upload" name="profileImage" type="file" className="sr-only" accept="image/*" onChange={handleImageChange} />
@@ -135,19 +282,14 @@ export default function ProfilePage() {
 
             {/* Info Section */}
             <div className="flex-1 text-center sm:text-left">
-              <h2 className="text-xl font-semibold text-gray-800">{formData.fullName}</h2>
+              <h2 className="text-xl font-semibold text-gray-800">{getFullName()}</h2>
               <p className="text-sm text-gray-600 mb-2">{formData.email}</p>
-              {formData.volunteerStatus && (
-                <div className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full border border-yellow-200">
-                  {formData.volunteerStatus}
+              {user && user.role && (
+                <div className="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full border border-blue-200">
+                  {user.role === 'admin' ? 'Administrator' : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                 </div>
               )}
             </div>
-
-             {/* Actions (Simplified - integrated into form save/cancel) */}
-             {/* <div className="mt-4 sm:mt-0 flex gap-2 justify-center sm:justify-end flex-shrink-0">
-                Button actions are handled by the form below now
-             </div> */}
           </div>
         </div>
       </div>
@@ -159,12 +301,23 @@ export default function ProfilePage() {
           <span className="border-b-2 border-blue-600 py-3 px-1 text-sm font-semibold text-blue-600 whitespace-nowrap">
             Profile Settings
           </span>
-           {/* Inactive Tab Example */}
-           {/* <a href="#" className="border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-3 px-4 text-sm font-medium whitespace-nowrap">
-             Password
-           </a> */}
         </nav>
       </div>
+
+      {/* Error and Success Messages */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-md flex items-start border border-red-200">
+          <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+          <p>{error}</p>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-md flex items-start border border-green-200">
+          <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+          <p>{successMessage}</p>
+        </div>
+      )}
 
       {/* Settings Form */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
@@ -174,24 +327,56 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                      <div>
-                        <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                        <input type="text" id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                        <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <input 
+                          type="text" 
+                          id="firstName" 
+                          name="firstName" 
+                          value={formData.firstName} 
+                          onChange={handleChange} 
+                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <input 
+                          type="text" 
+                          id="lastName" 
+                          name="lastName" 
+                          value={formData.lastName} 
+                          onChange={handleChange} 
+                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                        />
                     </div>
                      <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Mail className="h-4 w-4 text-gray-400"/></div>
-                            <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                            <input 
+                              type="email" 
+                              id="email" 
+                              name="email" 
+                              value={formData.email} 
+                              onChange={handleChange} 
+                              className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                            />
                         </div>
                     </div>
                      <div>
                         <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                          <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Phone className="h-4 w-4 text-gray-400"/></div>
-                            <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+251 ..." className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+                            <input 
+                              type="tel" 
+                              id="phone" 
+                              name="phone" 
+                              value={formData.phone} 
+                              onChange={handleChange} 
+                              placeholder="+251 ..." 
+                              className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                            />
                         </div>
                     </div>
-                    {/* Add other fields like address etc. if needed */}
                 </div>
            </div>
 
