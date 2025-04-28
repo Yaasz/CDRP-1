@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Announcement = require("../models/announcementModel");
 const createAnnouncement = async (req, res) => {
   try {
     const { title, description, charities } = req.body;
@@ -33,11 +34,19 @@ const createAnnouncement = async (req, res) => {
 const getAllAnnouncements = async (req, res) => {
   try {
     const announcements = await Announcement.find();
-    res.status(200).json(announcements);
+    res.status(200).json({
+      count: announcements.length,
+      success: true,
+      data: announcements,
+    });
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Error fetching announcements", error: error.message });
+      .json({
+        success: false,
+        message: "Error fetching announcements",
+        error: error.message,
+      });
   }
 };
 

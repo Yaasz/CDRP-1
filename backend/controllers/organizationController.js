@@ -36,9 +36,9 @@ exports.createOrganization = async (req, res) => {
       email: data.email,
       phone: data.phone,
       password: data.password,
-      image: data.image || "default-logo.png", // Default if not provided
+      image: data.image || "",
       mission: data.mission,
-      type: data.type,
+      role: data.role,
       cloudinaryId: data.cloudinaryId || "",
     });
 
@@ -169,18 +169,18 @@ exports.deleteOrganization = async (req, res) => {
 };
 
 // Get organizations by type (charity or government)
-exports.getOrganizationsByType = async (req, res) => {
+exports.getOrganizationsByRole = async (req, res) => {
   try {
-    const { type } = req.params;
+    const { role } = req.params;
 
-    if (!["charity", "government"].includes(type)) {
+    if (!["charity", "government"].includes(role)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid organization type. Must be "charity" or "government"',
       });
     }
 
-    const organizations = await Organization.find({ organizationType: type });
+    const organizations = await Organization.find({ role: role });
 
     res.status(200).json({
       success: true,
@@ -212,7 +212,6 @@ exports.deleteAll = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
-    console.log(req.body);
     if (!identifier || !password) {
       return res.status(400).json({ message: "the fields are required" });
     }
@@ -231,7 +230,7 @@ exports.login = async (req, res) => {
     }
 
     const token = await jwt.sign(
-      { id: org._id, role: org.type },
+      { id: org._id, role: org.role },
       process.env.JWT_SECRET,
       {
         expiresIn: "1h",

@@ -1,6 +1,8 @@
 const express = require("express");
 const upload = require("../config/multer");
 const router = express.Router();
+const authToken = require("../middleware/auth");
+const authRoles = require("../middleware/authorize");
 const {
   getAllUsers,
   createUser,
@@ -13,17 +15,17 @@ const {
 
 router
   .route("/")
-  .get(getAllUsers)
+  .get(authToken, authRoles("admin"), getAllUsers)
   .post(upload.single("image"), createUser)
-  .delete(deleteAll);
+  .delete(authToken, authRoles("admin"), deleteAll);
 
 // Explicitly handle form data and JSON for login
 router.post("/login", login);
 
 router
   .route("/:id")
-  .get(getUser)
-  .put(upload.single("image"), updateUser)
-  .delete(deleteUser);
+  .get(authToken, getUser)
+  .put(authToken, authRoles("user"), upload.single("image"), updateUser)
+  .delete(authToken, authRoles("user", "admin"), deleteUser);
 
 module.exports = router;

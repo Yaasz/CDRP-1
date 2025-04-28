@@ -220,7 +220,6 @@ exports.deleteAll = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
-    console.log(req.body);
 
     if (!identifier || !password) {
       return res
@@ -236,7 +235,7 @@ exports.login = async (req, res) => {
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "incorrect password" });
     }
 
     const token = await jwt.sign(
@@ -254,7 +253,6 @@ exports.login = async (req, res) => {
         id: user._id,
         email: user.email,
         phone: user.phone,
-        role: user.role,
       },
     });
   } catch (error) {

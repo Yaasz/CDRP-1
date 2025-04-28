@@ -1,31 +1,40 @@
 const express = require("express");
 const upload = require("../config/multer");
 const router = express.Router();
+const authToken = require("../middleware/auth");
+const authRoles = require("../middleware/authorize");
 const {
   createOrganization,
   getAllOrganizations,
   getOrganization,
   updateOrganization,
   deleteOrganization,
-  getOrganizationsByType,
+  getOrganizationsByRole,
   deleteAll,
   login,
 } = require("../controllers/organizationController");
 
 router
   .route("/")
-  .get(getAllOrganizations)
+  .get(authToken, authRoles("admin"), getAllOrganizations)
   .post(upload.single("image"), createOrganization)
-  .delete(deleteAll);
+  .delete(authToken, authRoles("government", "admin"), deleteAll);
 
 router.post("/login", upload.none(), login);
 
 router
   .route("/:id")
-  .get(getOrganization)
-  .put(upload.single("image"), updateOrganization)
-  .delete(deleteOrganization);
+  .get(authToken, getOrganization)
+  .put(
+    authToken,
+    authRoles("charity", "government"),
+    upload.single("image"),
+    updateOrganization
+  )
+  .delete(authToken, authRoles("charity", "government"), deleteOrganization);
 
-router.route("/type/:type").get(getOrganizationsByType);
+router
+  .route("/:type")
+  .get(authToken, authRoles("admin"), getOrganizationsByRole);
 
 module.exports = router;

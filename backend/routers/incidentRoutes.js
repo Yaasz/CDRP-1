@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const authToken = require("../middleware/auth");
+const authRoles = require("../middleware/authorize");
 const {
   getAllIncidents,
   getIncidentById,
@@ -7,11 +9,14 @@ const {
   deleteAllIncidents,
 } = require("../controllers/incidentController");
 
-router.route("/").get(getAllIncidents).delete(deleteAllIncidents);
+router
+  .route("/")
+  .get(authToken, authRoles("admin", "goverment"), getAllIncidents)
+  .delete(authToken, authRoles("admin", "goverment"), deleteAllIncidents);
 
 router
   .route("/:id")
-  .get(getIncidentById) // Assumed method
-  .delete(deleteIncident); // Assumed method
+  .get(authToken, getIncidentById) // Assumed method
+  .delete(authToken, authRoles("admin", "goverment"), deleteIncident); // Assumed method
 
 module.exports = router;

@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const upload = require("../config/multer");
+const authToken = require("../middleware/auth");
+const authRoles = require("../middleware/authorize");
 const {
   getAllNews,
   createNews,
@@ -13,15 +15,20 @@ const {
 
 router
   .route("/")
-  .get(getAllNews)
-  .post(upload.single("image"), createNews)
-  .delete(deleteAll);
+  .get(authToken, getAllNews)
+  .post(authToken, authRoles("government"), upload.single("image"), createNews)
+  .delete(authToken, authRoles("admin", "government"), deleteAll);
 
 router
   .route("/:id")
-  .get(getNews)
-  .delete(deleteNews)
-  .put(upload.single("image"), updateNews)
-  .patch(upload.single("image"), updateNews);
+  .get(authToken, getNews)
+  .delete(authToken, authRoles("government", "admin"), deleteNews)
+  .put(authToken, authRoles("government"), upload.single("image"), updateNews)
+  .patch(
+    authToken,
+    authRoles("government"),
+    upload.single("image"),
+    updateNews
+  );
 
 module.exports = router;

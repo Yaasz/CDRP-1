@@ -31,7 +31,7 @@ const organizationSchema = new mongoose.Schema(
       default: "",
     },
     // Differentiating between two types of organizations
-    type: {
+    role: {
       type: String,
       enum: ["charity", "government"], // Define the types of organizations
       default: "charity",

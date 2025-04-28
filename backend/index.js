@@ -35,7 +35,7 @@ app.use("/api/volunteer", volunteerRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/incidents", incidentRoutes);
 app.use("/api/charityad", charityAdRoutes);
-app.use("/api/annoucement", announcementRoutes);
+app.use("/api/announcement", announcementRoutes);
 
 app.get("/", (req, res) => {
   res.status(200).json("server run successfully");

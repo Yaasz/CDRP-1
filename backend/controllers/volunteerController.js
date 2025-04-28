@@ -3,20 +3,38 @@ const CharityAd = require("../models/charityadModel"); // Adjust path to your Ch
 
 //create a volunteer
 const registerVolunteer = async (req, res) => {
-  const { user, name, phone, expertise, contribution, charityAdId } = req.body;
+  const {
+    userId,
+    fullName,
+    sex,
+    email,
+    phone,
+    expertise,
+    contribution,
+    charityAdId,
+  } = req.body;
 
   try {
     /*change this to check if the same volunteer exits twice with in the volunteers list of the same charity ad*/
-    const existingVolunteer = await Volunteer.findOne({ phone });
+    const charityAd = await CharityAd.findById(charityAdId);
+    if (!charityAd) {
+      // If CharityAd not found, delete the volunteer and return error
+      return res.status(404).json({
+        message: "CharityAd not found, volunteer registration cancelled",
+      });
+    }
+    const existingVolunteer = await charityAd.volunteers.some((volunteerId) =>
+      volunteerId.equals(userId)
+    );
     if (existingVolunteer) {
-      return res
-        .status(400)
-        .json({ message: "Phone number already registered" });
+      return res.status(400).json({ message: "You have already registered" });
     }
     // Create new volunteer
     const volunteer = new Volunteer({
-      user,
-      name,
+      userId,
+      fullName,
+      sex,
+      email,
       phone,
       expertise,
       contribution,
@@ -24,14 +42,7 @@ const registerVolunteer = async (req, res) => {
     await volunteer.save();
 
     // Link volunteer to CharityAd
-    const charityAd = await CharityAd.findById(charityAdId);
-    if (!charityAd) {
-      // If CharityAd not found, delete the volunteer and return error
-      await Volunteer.findByIdAndDelete(volunteer._id);
-      return res.status(404).json({
-        message: "CharityAd not found, volunteer registration cancelled",
-      });
-    }
+
     charityAd.volunteers.push(volunteer._id);
     await charityAd.save();
 
@@ -63,7 +74,7 @@ const getVolunteer = async (req, res) => {
 //update
 const updateVolunteer = async (req, res) => {
   const { id } = req.params;
-  const { name, phone, expertise, contributionType } = req.body;
+  const { fullName, sex, email, phone, expertise, contribution } = req.body;
 
   try {
     const volunteer = await Volunteer.findById(id);
@@ -79,10 +90,12 @@ const updateVolunteer = async (req, res) => {
       }
     }
 
-    volunteer.name = name || volunteer.name;
+    volunteer.fullName = fullName || volunteer.fullName;
+    volunteer.sex = sex || volunteer.sex;
+    volunteer.email = email || volunteer.email;
     volunteer.phone = phone || volunteer.phone;
     volunteer.expertise = expertise || volunteer.expertise;
-    volunteer.contributionType = contributionType || volunteer.contributionType;
+    volunteer.contribution = contribution || volunteer.contribution;
     await volunteer.save();
 
     res

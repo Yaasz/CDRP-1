@@ -6,10 +6,24 @@ const VolunteerSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  name: {
+  fullName: {
     type: String,
     required: true,
     trim: true,
+  },
+  sex: {
+    type: String,
+    enum: ["male", "female"],
+  },
+  email: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function (value) {
+        return validator.isEmail(value);
+      },
+      message: "Please provide a valid email address",
+    },
   },
   phone: {
     type: String,
