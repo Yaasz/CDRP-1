@@ -33,20 +33,25 @@ const createAnnouncement = async (req, res) => {
 
 const getAllAnnouncements = async (req, res) => {
   try {
-    const announcements = await Announcement.find();
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const searchFilter = search
+      ? { $or: [{ title: { $regex: search, $options: i } }] }
+      : {};
+    const announcements = await Announcement.find(searchFilter)
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
     res.status(200).json({
       count: announcements.length,
+      page: parseInt(page),
       success: true,
       data: announcements,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error fetching announcements",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching announcements",
+      error: error.message,
+    });
   }
 };
 

@@ -39,8 +39,16 @@ exports.createNews = async (req, res) => {
 // Get all news announcements
 exports.getAllNews = async (req, res) => {
   try {
-    const newsAnnouncements = await News.find();
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const searchFilter = search
+      ? {
+          $or: [{ title: { $regex: search, $options: i } }],
+        }
+      : {};
 
+    const newsAnnouncements = await News.find()
+      .skip((page - 1) * limit)
+      .limit(parseint(limit));
     res.status(200).json({
       success: true,
       count: newsAnnouncements.length,

@@ -10,6 +10,7 @@ const fs = require("fs").promises;
 exports.createUser = async (req, res) => {
   try {
     const data = { ...req.body };
+    console.log(data);
     const existingUser = await User.findOne({ email: data.email });
     if (existingUser) {
       return res.status(400).json({
@@ -33,15 +34,8 @@ exports.createUser = async (req, res) => {
         });
       }
     }
-    const user = new User({
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phone: data.phone,
-      password: data.password,
-      image: data.image || "default-profile.png",
-      cloudinaryId: data.cloudinaryId,
-    });
+    console.log(data);
+    const user = new User(data);
 
     const savedUser = await user.save();
     //cleanup local temp file
@@ -61,10 +55,26 @@ exports.createUser = async (req, res) => {
 // Get all public users
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find();
-
+    const { page = 1, limit = 5, search = "" } = req.query;
+    console.log(search);
+    const searchFilter = search
+      ? {
+          $or: [
+            { firstName: { $regex: search, $options: "i" } },
+            { lastName: { $regex: search, $options: "i" } },
+            { role: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+    console.log("search filter", JSON.stringify(searchFilter, null, 2));
+    const users = await User.find(searchFilter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+    console.log("page", page, "limit", limit);
     res.status(200).json({
       success: true,
+      page: parseInt(page),
       count: users.length,
       data: users,
     });

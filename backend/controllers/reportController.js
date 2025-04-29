@@ -11,12 +11,11 @@ exports.createReport = async (req, res) => {
     if (!data.title) empty.push("title");
     if (!data.description) empty.push("description");
     if (!data.reportedBy) empty.push("reportedBy");
-    if (!data.latitude) empty.push("latitude");
-    if (!data.longitude) empty.push("longitude");
+    if (!data.latitude || !data.longitude) empty.push("location");
 
     const user = await User.findById(data.reportedBy);
     if (!user) {
-      return res.status(404).json({ message: "user doesn't exist" });
+      return res.status(404).json({ message: "user id must be given" });
     }
     if (empty.length > 0) {
       return res
@@ -26,6 +25,10 @@ exports.createReport = async (req, res) => {
 
     const lat = parseFloat(data.latitude);
     const lon = parseFloat(data.longitude);
+    data.location = {
+      type: "Point",
+      coordinates: [lon, lat],
+    };
     if (isNaN(lat) || lat < -90 || lat > 90) {
       return res.status(400).json({ error: "Invalid latitude value" });
     }
@@ -74,18 +77,8 @@ exports.createReport = async (req, res) => {
         },
       });
     }
-
-    const newReport = new Report({
-      title: data.title,
-      description: data.description,
-      image: data.image,
-      cloudinaryId: data.cloudinaryId,
-      location: {
-        type: "Point",
-        coordinates: [lon, lat],
-      },
-      reportedBy: data.reportedBy,
-    });
+    console.log("report data", data);
+    const newReport = new Report(data);
 
     const disasterTypes = ["earthquake", "flood", "fire", "storm", "other"];
     const reportTitleLower = data.title.toLowerCase();
@@ -298,10 +291,33 @@ exports.updateReport = async (req, res) => {
 // Other functions remain unchanged
 exports.getAllReports = async (req, res) => {
   try {
-    const reports = await Report.find(); //.populate("reportedBy", "name email");
-    res.status(200).json({ count: reports.length, reports });
+    const { page = 1, limit = 5, search = "" } = req.query;
+    const searchFilter = search
+      ? {
+          $or: [
+            { title: { $regex: search, $options: i } },
+            { status: { $regex: search, $options: i } },
+            { type: { $regex: search, $options: i } },
+            { date: { $regex: search, $options: i } },
+          ],
+        }
+      : {};
+    const reports = await Report.find(searchFilter)
+      .sort({ createdAt: -1 })
+      //.populate("reportedBy", "name email")
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+    console.log("limit", limit);
+    res.status(200).json({
+      success: true,
+      page: parseInt(page),
+      count: reports.length,
+      reports,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res
+      .status(500)
+      .json({ message: "internal server error", error: error.message });
   }
 };
 

@@ -4,7 +4,7 @@ const CharityAd = require("../models/charityadModel"); // Adjust path to your Ch
 //create a volunteer
 const registerVolunteer = async (req, res) => {
   const {
-    userId,
+    user,
     fullName,
     sex,
     email,
@@ -31,7 +31,7 @@ const registerVolunteer = async (req, res) => {
     }
     // Create new volunteer
     const volunteer = new Volunteer({
-      userId,
+      user,
       fullName,
       sex,
       email,
@@ -136,8 +136,25 @@ const deleteVolunteer = async (req, res) => {
 //fetch all
 const getAllVolunteers = async (req, res) => {
   try {
-    const volunteers = await Volunteer.find().populate("userId", "email");
-    res.status(200).json(volunteers);
+    const { page = 1, limit = 5, search = "" } = req.query;
+    console.log(search);
+    const searchFilter = search
+      ? {
+          $or: [
+            { fullName: { $regex: search, $options: "i" } },
+            { sex: { $regex: search, $options: "i" } },
+            { expertise: { $regex: search, $options: "i" } },
+            { contribution: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const volunteers = await Volunteer.find()
+      .populate("userId", "email")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+    res.status(200).json({ success: true, volunteers });
   } catch (error) {
     res
       .status(500)

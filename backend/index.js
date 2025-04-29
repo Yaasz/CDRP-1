@@ -2,6 +2,10 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const { swaggerUi } = require("./swagger"); // Import Swagger UI configuration
+const YAML = require("yamljs");
+const path = require("path");
+
 const announcementRoutes = require("./routers/announcementRoutes");
 const charityAdRoutes = require("./routers/charityAdRoutes");
 const incidentRoutes = require("./routers/incidentRoutes");
@@ -27,6 +31,11 @@ mongoose
   .catch((err) => {
     console.error("Database connection error:", err);
   });
+
+const swaggerDocument = YAML.load(path.join(__dirname, "swaggerDoc.yaml"));
+
+// Serve Swagger UI at /api-docs
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use("/api/user", userRoutes);
 app.use("/api/org", organizationRoutes);

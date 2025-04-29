@@ -36,6 +36,10 @@ const UserSchema = new mongoose.Schema(
       type: String, // URL of the profile image (optional)
       default: "default-profile.png",
     },
+    cloudinaryId: {
+      type: String,
+      required: false,
+    },
   },
   { timestamps: true }
 );

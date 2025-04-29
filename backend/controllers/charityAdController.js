@@ -42,19 +42,33 @@ exports.createCharityAd = async (req, res) => {
 // Get all charity ads
 exports.getAllCharityAds = async (req, res) => {
   try {
-    const charityAds = await CharityAd.find()
-      .populate("charity", "name description")
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const searchFilter = search
+      ? {
+          $or: [
+            { title: { $regex: search, $options: i } },
+            { status: { $regex: search, $options: i } },
+            { charity: { $regex: search, $options: i } },
+          ],
+        }
+      : {};
+
+    const charityAds = await CharityAd.find(searchFilter)
+      .populate("charity", "name")
       .populate({
         path: "volunteers",
         populate: {
           path: "user",
           select: "name email",
         },
-      });
+      })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
 
     res.status(200).json({
       success: true,
       count: charityAds.length,
+      page: parseInt(page),
       data: charityAds,
     });
   } catch (error) {

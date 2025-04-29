@@ -4,7 +4,20 @@ const Incident = require("../models/incidentModel");
 // Get all incidents
 exports.getAllIncidents = async (req, res) => {
   try {
-    const incidents = await Incident.find();
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const searchFilter = search
+      ? {
+          $or: [
+            { title: { $regex: search, $options: i } },
+            { status: { $regex: search, $options: i } },
+            { type: { $regex: search, $options: i } },
+            { date: { $regex: search, $options: i } },
+          ],
+        }
+      : {};
+    const incidents = await Incident.find(searchFilter)
+      .skip((page - 1) * limit)
+      .limit(parseint(limit));
     /*.populate(
       "reports",
       "title description status"

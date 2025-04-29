@@ -15,7 +15,7 @@ const {
 
 router
   .route("/")
-  .get(authToken, authRoles("admin"), getAllUsers)
+  .get(authToken, getAllUsers)
   .post(upload.single("image"), createUser)
   .delete(authToken, authRoles("admin"), deleteAll);
 

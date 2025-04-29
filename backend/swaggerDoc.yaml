@@ -1,0 +1,1330 @@
+openapi: 3.0.3
+info:
+  title: Disaster Management API
+  description: API for managing disaster-related announcements, incidents, news, users, reports, volunteers, organizations, and charity ads.
+  version: 1.0.0
+servers:
+  - url: /api
+    description: Main API server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Announcement:
+      type: object
+      required:
+        - title
+        - description
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        charities:
+          type: array
+          items:
+            type: object
+            properties:
+              charityId:
+                type: string
+              status:
+                type: string
+                enum: [Pending, Approved, Rejected]
+              responseMessage:
+                type: string
+              respondedAt:
+                type: string
+                format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CharityAd:
+      type: object
+      required:
+        - charity
+        - incident
+        - title
+        - description
+      properties:
+        _id:
+          type: string
+        charity:
+          type: string
+        incident:
+          type: string
+        title:
+          type: string
+        image:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, completed]
+        volunteers:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Incident:
+      type: object
+      required:
+        - type
+        - title
+        - description
+        - dateOccurred
+        - location
+      properties:
+        _id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        dateOccurred:
+          type: string
+          format: date-time
+        location:
+          type: object
+          required:
+            - type
+            - coordinates
+          properties:
+            type:
+              type: string
+              enum: [Point]
+            coordinates:
+              type: array
+              items:
+                type: number
+        status:
+          type: string
+          enum: [pending, validated]
+        reports:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    News:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        image:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Organization:
+      type: object
+      required:
+        - name
+        - email
+        - phone
+        - password
+        - role
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        password:
+          type: string
+        image:
+          type: string
+        mission:
+          type: string
+        role:
+          type: string
+          enum: [charity, government]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Report:
+      type: object
+      required:
+        - title
+        - description
+        - location
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+        location:
+          type: object
+          required:
+            - type
+            - coordinates
+          properties:
+            type:
+              type: string
+              enum: [Point]
+            coordinates:
+              type: array
+              items:
+                type: number
+        reportedBy:
+          type: string
+        incident:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    User:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - phone
+        - password
+        - role
+      properties:
+        _id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        image:
+          type: string
+        cloudinaryId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Volunteer:
+      type: object
+      required:
+        - user
+        - fullName
+        - phone
+        - expertise
+        - contribution
+      properties:
+        _id:
+          type: string
+        user:
+          type: string
+        fullName:
+          type: string
+        sex:
+          type: string
+          enum: [male, female]
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        expertise:
+          type: string
+        contribution:
+          type: string
+          enum: [skill, material donation, financial aid]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+paths:
+  /announcement:
+    get:
+      summary: Get all announcements
+      tags:
+        - Announcements
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+    post:
+      summary: Create a new announcement
+      tags:
+        - Announcements
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Announcement"
+      responses:
+        "201":
+          description: Announcement created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+  /announcement/{id}:
+    get:
+      summary: Get an announcement by ID
+      tags:
+        - Announcements
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Announcement details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+    put:
+      summary: Update an announcement
+      tags:
+        - Announcements
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Announcement"
+      responses:
+        "200":
+          description: Announcement updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+    delete:
+      summary: Delete an announcement
+      tags:
+        - Announcements
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Announcement deleted
+  /incident:
+    get:
+      summary: Get all incidents
+      tags:
+        - Incidents
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of incidents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Incident"
+    delete:
+      summary: Delete all incidents
+      tags:
+        - Incidents
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: All incidents deleted
+  /incident/{id}:
+    get:
+      summary: Get an incident by ID
+      tags:
+        - Incidents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Incident details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+    delete:
+      summary: Delete an incident
+      tags:
+        - Incidents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Incident deleted
+  /news:
+    get:
+      summary: Get all news
+      tags:
+        - News
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of news
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/News"
+    post:
+      summary: Create a new news item
+      tags:
+        - News
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: News created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/News"
+    delete:
+      summary: Delete all news
+      tags:
+        - News
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: All news deleted
+  /news/{id}:
+    get:
+      summary: Get a news item by ID
+      tags:
+        - News
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: News details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/News"
+    put:
+      summary: Update a news item
+      tags:
+        - News
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: News updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/News"
+    patch:
+      summary: Partially update a news item
+      tags:
+        - News
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: News updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/News"
+    delete:
+      summary: Delete a news item
+      tags:
+        - News
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: News deleted
+  /user:
+    get:
+      summary: Get all users
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      summary: Create a new user
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [user, admin]
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      summary: Delete all users
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: All users deleted
+  /user/login:
+    post:
+      summary: User login
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+  /user/{id}:
+    get:
+      summary: Get a user by ID
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    put:
+      summary: Update a user
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [user, admin]
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      summary: Delete a user
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: User deleted
+  /report:
+    get:
+      summary: Get all reports
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+    post:
+      summary: Create a new report
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+                longitude:
+                  type: string
+                latitude:
+                  type: string
+                reportedBy:
+                  type: string
+      responses:
+        "201":
+          description: Report created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    delete:
+      summary: Delete all reports
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: All reports deleted
+  /report/{id}:
+    get:
+      summary: Get a report by ID
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    put:
+      summary: Update a report
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+                location:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [Point]
+                    coordinates:
+                      type: array
+                      items:
+                        type: number
+      responses:
+        "200":
+          description: Report updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    delete:
+      summary: Delete a report
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Report deleted
+  /volunteer:
+    get:
+      summary: Get all volunteers
+      tags:
+        - Volunteers
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of volunteers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Volunteer"
+    post:
+      summary: Register a new volunteer
+      tags:
+        - Volunteers
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Volunteer"
+      responses:
+        "201":
+          description: Volunteer registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Volunteer"
+    delete:
+      summary: Delete all volunteers
+      tags:
+        - Volunteers
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: All volunteers deleted
+  /volunteer/{id}:
+    get:
+      summary: Get a volunteer by ID
+      tags:
+        - Volunteers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Volunteer details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Volunteer"
+    post:
+      summary: Update a volunteer
+      tags:
+        - Volunteers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Volunteer"
+      responses:
+        "200":
+          description: Volunteer updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Volunteer"
+    delete:
+      summary: Delete a volunteer
+      tags:
+        - Volunteers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Volunteer deleted
+  /org:
+    get:
+      summary: Get all organizations
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Organization"
+    post:
+      summary: Create a new organization
+      tags:
+        - Organizations
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                password:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+                mission:
+                  type: string
+                role:
+                  type: string
+                  enum: [charity, government]
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+    delete:
+      summary: Delete all organizations
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: All organizations deleted
+  /org/login:
+    post:
+      summary: Organization login
+      tags:
+        - Organizations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+  /org/{id}:
+    get:
+      summary: Get an organization by ID
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+    put:
+      summary: Update an organization
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                password:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+                mission:
+                  type: string
+                role:
+                  type: string
+                  enum: [charity, government]
+      responses:
+        "200":
+          description: Organization updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+    delete:
+      summary: Delete an organization
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Organization deleted
+  /org/{type}:
+    get:
+      summary: Get organizations by role
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [charity, government]
+      responses:
+        "200":
+          description: List of organizations by role
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Organization"
+  /charityAd:
+    get:
+      summary: Get all charity ads
+      tags:
+        - Charity Ads
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of charity ads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CharityAd"
+    post:
+      summary: Create a new charity ad
+      tags:
+        - Charity Ads
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                charity:
+                  type: string
+                incident:
+                  type: string
+                title:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [open, completed]
+      responses:
+        "201":
+          description: Charity ad created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharityAd"
+    delete:
+      summary: Delete all charity ads
+      tags:
+        - Charity Ads
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: All charity ads deleted
+  /charityAd/{id}:
+    get:
+      summary: Get a charity ad by ID
+      tags:
+        - Charity Ads
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Charity ad details
+          content:
+            application/json:
+              BR schema:
+                $ref: "#/components/schemas/CharityAd"
+    put:
+      summary: Update a charity ad
+      tags:
+        - Charity Ads
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                charity:
+                  type: string
+                incident:
+                  type: string
+                title:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [open, completed]
+      responses:
+        "200":
+          description: Charity ad updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharityAd"
+    delete:
+      summary: Delete a charity ad
+      tags:
+        - Charity Ads
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Charity ad deleted

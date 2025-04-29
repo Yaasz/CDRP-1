@@ -58,8 +58,18 @@ exports.createOrganization = async (req, res) => {
 // Get all organizations
 exports.getAllOrganizations = async (req, res) => {
   try {
-    const organizations = await Organization.find();
-
+    const { page = 1, limit = 10, search = "" } = req.query;
+    const searchFilter = search
+      ? {
+          $or: [
+            { name: { $regex: search, $options: i } },
+            { role: { $regex: search, $options: i } },
+          ],
+        }
+      : {};
+    const organizations = await Organization.find()
+      .skip((page - 1) * limit)
+      .limit(parseint(limit));
     res.status(200).json({
       success: true,
       count: organizations.length,

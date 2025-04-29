@@ -18,6 +18,7 @@ const incidentSchema = new mongoose.Schema(
     },
     dateOccurred: {
       type: Date,
+      default: Date.now,
       required: true,
     },
     location: {
