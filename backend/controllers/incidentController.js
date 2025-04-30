@@ -4,7 +4,7 @@ const Incident = require("../models/incidentModel");
 // Get all incidents
 exports.getAllIncidents = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "" } = req.query;
+    const { page = 1, limit = 5, search = "" } = req.query;
     const searchFilter = search
       ? {
           $or: [
@@ -17,7 +17,7 @@ exports.getAllIncidents = async (req, res) => {
       : {};
     const incidents = await Incident.find(searchFilter)
       .skip((page - 1) * limit)
-      .limit(parseint(limit));
+      .limit(parseInt(limit));
     /*.populate(
       "reports",
       "title description status"
@@ -27,6 +27,7 @@ exports.getAllIncidents = async (req, res) => {
       success: true,
       count: incidents.length,
       data: incidents,
+      page: parseInt(page),
     });
   } catch (error) {
     res.status(500).json({

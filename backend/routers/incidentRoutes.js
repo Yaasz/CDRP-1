@@ -16,7 +16,7 @@ router
 
 router
   .route("/:id")
-  .get(authToken, getIncidentById) // Assumed method
-  .delete(authToken, authRoles("admin", "goverment"), deleteIncident); // Assumed method
+  .get(authToken, getIncidentById)
+  .delete(authToken, authRoles("admin", "goverment"), deleteIncident);
 
 module.exports = router;

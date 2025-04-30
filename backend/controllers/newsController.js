@@ -48,11 +48,12 @@ exports.getAllNews = async (req, res) => {
 
     const newsAnnouncements = await News.find()
       .skip((page - 1) * limit)
-      .limit(parseint(limit));
+      .limit(parseInt(limit));
     res.status(200).json({
       success: true,
       count: newsAnnouncements.length,
       data: newsAnnouncements,
+      page: parseInt(page),
     });
   } catch (error) {
     res.status(500).json({

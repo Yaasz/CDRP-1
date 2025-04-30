@@ -69,11 +69,12 @@ exports.getAllOrganizations = async (req, res) => {
       : {};
     const organizations = await Organization.find()
       .skip((page - 1) * limit)
-      .limit(parseint(limit));
+      .limit(parseInt(limit));
     res.status(200).json({
       success: true,
       count: organizations.length,
       data: organizations,
+      page: parseInt(page),
     });
   } catch (error) {
     res.status(500).json({

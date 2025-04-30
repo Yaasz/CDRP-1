@@ -382,7 +382,7 @@ paths:
       responses:
         "204":
           description: Announcement deleted
-  /incident:
+  /incidents:
     get:
       summary: Get all incidents
       tags:
@@ -407,7 +407,7 @@ paths:
       responses:
         "204":
           description: All incidents deleted
-  /incident/{id}:
+  /incidents/{id}:
     get:
       summary: Get an incident by ID
       tags:

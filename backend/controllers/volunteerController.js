@@ -154,7 +154,7 @@ const getAllVolunteers = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
-    res.status(200).json({ success: true, volunteers });
+    res.status(200).json({ success: true, page: parseInt(page), volunteers });
   } catch (error) {
     res
       .status(500)
