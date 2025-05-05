@@ -6,6 +6,24 @@ const fs = require("fs").promises;
 exports.createCharityAd = async (req, res) => {
   try {
     const data = { ...req.body };
+    if (!data.charity) {
+      return res.status(400).json({
+        success: false,
+        message: "charity is required",
+      });
+    }
+    if (!data.title) {
+      return res.status(400).json({
+        success: false,
+        message: "title is required",
+      });
+    }
+    if (!data.description) {
+      return res.status(400).json({
+        success: false,
+        message: "description is required",
+      });
+    }
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "charityAd",
@@ -14,27 +32,23 @@ exports.createCharityAd = async (req, res) => {
       data.cloudinaryId = result.public_id;
       await fs.unlink(req.file.path);
     }
+    console.log("data", data);
 
     const charityAd = new CharityAd({
-      charity: data.charity,
-      incident: data.incident,
-      title: data.title,
-      description: data.description,
-      image: data.image,
-      cloudinaryId: data.cloudinaryId,
-
-      // volunteers field will be empty by default
+      data,
     });
 
     const savedAd = await charityAd.save();
     res.status(201).json({
       success: true,
-      data: savedAd,
+      message: "advertisement created",
+      response: savedAd,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message,
+      message: "internal server",
+      error: error.message,
     });
   }
 };
@@ -74,7 +88,8 @@ exports.getAllCharityAds = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -96,6 +111,7 @@ exports.getCharityAd = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Charity ad not found",
+        error: "document not found",
       });
     }
 
@@ -106,7 +122,8 @@ exports.getCharityAd = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -145,12 +162,14 @@ exports.updateCharityAd = async (req, res) => {
     });
     res.status(200).json({
       success: true,
+      message: "ad updated successfully",
       data: charityAd,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -163,6 +182,7 @@ exports.deleteCharityAd = async (req, res) => {
     if (!charityAd) {
       return res.status(404).json({
         success: false,
+        error: "document not found",
         message: "Charity ad not found",
       });
     }
@@ -170,11 +190,13 @@ exports.deleteCharityAd = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Charity ad deleted successfully",
+      data: charityAd,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -182,10 +204,16 @@ exports.deleteCharityAd = async (req, res) => {
 exports.deleteAll = async (req, res) => {
   try {
     const delete_all = await CharityAd.deleteMany({});
-    res
-      .status(200)
-      .json({ success: true, message: "all charity ads are deleted" });
+    res.status(200).json({
+      success: true,
+      message: "all charity ads are deleted",
+      count: delete_all.deletedCount, //todo:check the format and change to count if complex
+    });
   } catch (error) {
-    res.status(500).json({ message: "internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };

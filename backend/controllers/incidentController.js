@@ -17,11 +17,8 @@ exports.getAllIncidents = async (req, res) => {
       : {};
     const incidents = await Incident.find(searchFilter)
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
-    /*.populate(
-      "reports",
-      "title description status"
-    );*/
+      .limit(parseInt(limit))
+      .populate("reports", "title description image date");
 
     res.status(200).json({
       success: true,
@@ -32,7 +29,8 @@ exports.getAllIncidents = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -51,13 +49,14 @@ exports.getIncidentById = async (req, res) => {
 
     const incident = await Incident.findById(id).populate(
       "reports",
-      "title description status"
+      "title description image"
     );
 
     if (!incident) {
       return res.status(404).json({
         success: false,
         message: "Incident not found",
+        error: "doc not found",
       });
     }
 
@@ -68,7 +67,8 @@ exports.getIncidentById = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -90,6 +90,7 @@ exports.deleteIncident = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Incident not found",
+        error: "doc not found",
       });
     }
 
@@ -100,7 +101,8 @@ exports.deleteIncident = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -110,10 +112,15 @@ exports.deleteAllIncidents = async (req, res) => {
   try {
     const result = await Incident.deleteMany({});
     res.status(200).json({
+      success: true,
       message: "All incidents deleted successfully",
-      deletedCount: result.deletedCount,
+      countCount: result.deletedCount,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };

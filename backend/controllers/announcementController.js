@@ -12,9 +12,11 @@ const createAnnouncement = async (req, res) => {
     }
 
     if (empty.length > 0) {
-      return res
-        .status(400)
-        .json({ error: `${empty.join(", ")} fields are required` });
+      return res.status(400).json({
+        success: false,
+        message: "missing fields",
+        error: `${empty.join(", ")} fields are required`,
+      });
     }
 
     const response = await Announcement.create({
@@ -22,15 +24,20 @@ const createAnnouncement = async (req, res) => {
       description,
       charities: charities || [],
     });
-    res
-      .status(201)
-      .json({ message: "Announcement created successfully", response });
+    res.status(201).json({
+      success: true,
+      message: "Announcement created successfully",
+      data: response,
+    });
   } catch (error) {
-    res.status(500).json({ message: "error creating announcement" });
-    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "error creating announcement",
+      error: error.message,
+    });
+    console.error(error.message);
   }
 };
-
 const getAllAnnouncements = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "" } = req.query;
@@ -63,12 +70,19 @@ const getAnnouncementById = async (req, res) => {
     }
     const announcement = await Announcement.findById(id);
     if (!announcement) {
-      return res.status(404).json({ message: "Announcement not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Announcement not found",
+        error: "document not found",
+      });
     }
-    res.status(200).json(announcement);
+    res
+      .status(200)
+      .json({ success: true, message: "user fetched", data: announcement });
   } catch (error) {
     res.status(500).json({
-      message: "Error fetching announcement with given id",
+      message: "internal server error",
+      success: false,
       error: error.message,
     });
   }
@@ -89,11 +103,17 @@ const updateAnnouncement = async (req, res) => {
     announcement.description = description || announcement.description;
     if (charities) announcement.charities = charities;
     const updatedAnnouncement = await announcement.save();
-    res.status(200).json(updatedAnnouncement);
+    res.status(200).json({
+      success: true,
+      message: "update successfully",
+      data: updatedAnnouncement,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating announcement", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };
 
@@ -101,17 +121,31 @@ const deleteAnnouncement = async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid announcement ID" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid announcement ID",
+        error: "invalid param",
+      });
     }
     const announcement = await Announcement.findByIdAndDelete(id);
     if (!announcement) {
-      return res.status(404).json({ message: "Announcement not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Announcement not found",
+        error: "document not found",
+      });
     }
-    res.status(200).json({ message: "Announcement deleted successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Announcement deleted successfully",
+      data: announcement,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error deleting announcement", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };
 

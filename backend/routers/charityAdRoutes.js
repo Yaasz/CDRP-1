@@ -19,7 +19,7 @@ router
   .get(authToken, getAllCharityAds)
   .post(
     authToken,
-    authRoles("admin", "charity"),
+    authRoles("charity"),
     upload.single("image"),
     createCharityAd
   )

@@ -7,12 +7,26 @@ const fs = require("fs").promises;
 exports.createOrganization = async (req, res) => {
   try {
     const data = { ...req.body };
-    const exists = await Organization.findOne({ email: data.email });
-
+    if (!data.name || !data.email || !data.phone || !data.password) {
+      return res.status(400).json({
+        success: false,
+        message: "name, email, phone and password are required",
+      });
+    }
+    const nameExists = await Organization.findOne({ name: data.name });
+    if (nameExists) {
+      return res.status(400).json({
+        success: false,
+        message: "organization name taken",
+      });
+    }
+    const exists = await Organization.findOne({
+      $or: [{ email: data.email }, { phone: data.phone }],
+    });
     if (exists) {
       return res.status(400).json({
         success: false,
-        message: "Organization with the same email exists",
+        message: "Organization with the same email/phone already exists",
       });
     }
     if (req.file) {
@@ -24,33 +38,27 @@ exports.createOrganization = async (req, res) => {
         data.cloudinaryId = result.public_id;
         await fs.unlink(req.file.path);
       } catch (error) {
-        return res
-          .status(400)
-          .json({ success: false, message: "image upload failed" });
+        return res.status(400).json({
+          success: false,
+          message: "image upload failed",
+          error: error.message,
+        });
       }
-    } else {
-      data.image = "default org profile";
     }
-    const organization = new Organization({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      password: data.password,
-      image: data.image || "",
-      mission: data.mission,
-      role: data.role,
-      cloudinaryId: data.cloudinaryId || "",
-    });
+    console.log("data", data);
+    const organization = new Organization(data);
 
     const savedOrganization = await organization.save();
     res.status(201).json({
       success: true,
+      message: "Organization created successfully",
       data: savedOrganization,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(500).json({
       success: false,
-      message: error.message, // Will catch unique constraint errors for name/email
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -67,19 +75,20 @@ exports.getAllOrganizations = async (req, res) => {
           ],
         }
       : {};
-    const organizations = await Organization.find()
+    const organizations = await Organization.find(searchFilter)
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
     res.status(200).json({
       success: true,
-      count: organizations.length,
+      count: organizations.length, //todo:check if there is a way to access the tot count in db
       data: organizations,
       page: parseInt(page),
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -93,6 +102,7 @@ exports.getOrganization = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Organization not found",
+        error: "document not found",
       });
     }
 
@@ -103,7 +113,8 @@ exports.getOrganization = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -120,6 +131,29 @@ exports.updateOrganization = async (req, res) => {
         success: false,
         message: "Organization not found",
       });
+    }
+
+    if (
+      data.name !== exists.name ||
+      data.email !== exists.email ||
+      data.phone !== exists.phone
+    ) {
+      const nameExists = await Organization.findOne({ name: data.name });
+      if (nameExists) {
+        return res.status(400).json({
+          success: false,
+          message: "organization name taken",
+        });
+      }
+      const exists = await Organization.findOne({
+        $or: [{ email: data.email }, { phone: data.phone }],
+      });
+      if (exists) {
+        return res.status(400).json({
+          success: false,
+          message: "Organization with the same email/phone already exists",
+        });
+      }
     }
 
     if (req.file) {
@@ -144,13 +178,14 @@ exports.updateOrganization = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Organization updated successfully",
       data: organization,
     });
   } catch (error) {
-    console.error(error.message);
     res.status(500).json({
       success: false,
-      message: "internal server error", // Will catch unique constraint or validation errors
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -164,6 +199,7 @@ exports.deleteOrganization = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Organization not found",
+        error: "document not found",
       });
     }
 
@@ -174,34 +210,8 @@ exports.deleteOrganization = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
-    });
-  }
-};
-
-// Get organizations by type (charity or government)
-exports.getOrganizationsByRole = async (req, res) => {
-  try {
-    const { role } = req.params;
-
-    if (!["charity", "government"].includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid organization type. Must be "charity" or "government"',
-      });
-    }
-
-    const organizations = await Organization.find({ role: role });
-
-    res.status(200).json({
-      success: true,
-      count: organizations.length,
-      data: organizations,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -215,8 +225,11 @@ exports.deleteAll = async (req, res) => {
       count: delAll.deletedCount,
     });
   } catch (error) {
-    console.error("delete all orgs", error.message);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
 
@@ -232,7 +245,11 @@ exports.login = async (req, res) => {
     });
 
     if (!org) {
-      return res.status(401).json({ message: "user doesn't exist" });
+      return res.status(401).json({
+        success: false,
+        message: "user not found",
+        error: "document not found",
+      });
     }
 
     const match = await bcrypt.compare(password, org.password);
@@ -251,14 +268,19 @@ exports.login = async (req, res) => {
       success: true,
       token,
       data: {
-        id: org._id,
         email: org.email,
-        type: org.type,
+        role: org.role,
         phone: org.phone,
       },
     });
   } catch (error) {
     console.error(error.message);
-    res.status(500).json({ success: false, message: "internal server error" });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "internal server error",
+        error: error.message,
+      });
   }
 };

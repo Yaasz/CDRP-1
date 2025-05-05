@@ -13,7 +13,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png/;
+    const filetypes = /jpeg|jpg|png|mp4|mov|avi/;
     const extname = filetypes.test(
       path.extname(file.originalname).toLowerCase()
     );
@@ -21,7 +21,11 @@ const upload = multer({
     if (extname && mimetype) {
       return cb(null, true);
     } else {
-      cb(new Error("Only images (jpeg, jpg, png) are allowed!"));
+      cb(
+        new Error(
+          "Only images and videos (jpeg, jpg, png, mp4, mov, avi) are allowed!"
+        )
+      );
     }
   },
 });

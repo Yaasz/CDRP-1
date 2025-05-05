@@ -11,16 +11,17 @@ const {
   deleteAllVolunteers,
 } = require("../controllers/volunteerController");
 
-// Routes tied to a specific CharityAd
 router
   .route("/")
   .get(authToken, authRoles("admin", "charity"), getAllVolunteers)
   .delete(authToken, authRoles("admin"), deleteAllVolunteers)
   .post(authToken, authRoles("user"), registerVolunteer);
+
+// routers tied to a charityad
 router
   .route("/:id")
-  .get(authToken, getVolunteer)
+  .get(authToken, authRoles("user", "charity"), getVolunteer)
   .post(authToken, authRoles("user"), updateVolunteer)
-  .delete(authToken, deleteVolunteer);
+  .delete(authToken, authRoles("user"), deleteVolunteer);
 
 module.exports = router;

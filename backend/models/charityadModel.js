@@ -1,6 +1,6 @@
 // CharityAd model
 const mongoose = require("mongoose");
-
+const validator = require("validator");
 const CharityAdSchema = new mongoose.Schema(
   {
     charity: {
@@ -11,7 +11,7 @@ const CharityAdSchema = new mongoose.Schema(
         validator: async function (value) {
           const Organization = mongoose.model("Organization");
           const org = await Organization.findById(value);
-          return org && org.organizationType === "charity";
+          return org && org.role === "charity";
         },
         message:
           "The referenced organization must have organizationType 'charity'.",
@@ -20,13 +20,22 @@ const CharityAdSchema = new mongoose.Schema(
     incident: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "incident",
-      required: true,
-    },
+      required: false,
+    }, //todo remove this to enable ads unrelated to incidents
     title: {
       type: String,
       required: true,
       trim: true,
+      validate: {
+        validator: function (value) {
+          return validator.matches(value.trim(), /^[A-Za-z0-9\s.,!?'"&()-]+$/);
+        },
+        message: "title must be text",
+      },
+      minlength: [4, "title must be at least 4 characters "],
+      maxlength: [50, "title too long"],
     },
+
     image: {
       type: String,
       default: "",
@@ -34,6 +43,14 @@ const CharityAdSchema = new mongoose.Schema(
     description: {
       type: String,
       required: true,
+      validate: {
+        validator: function (value) {
+          return validator.matches(value.trim(), /^[A-Za-z0-9\s.,!?'"&()-]+$/);
+        },
+        message: "description must be text",
+      },
+      minlength: [4, "description must be at least 4 characters "],
+      maxlength: [300, "description too long"],
     },
     status: {
       type: String,
@@ -51,5 +68,4 @@ const CharityAdSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports =
-  mongoose.models.CharityAd || mongoose.model("CharityAd", CharityAdSchema);
+module.exports = mongoose.model("CharityAd", CharityAdSchema);

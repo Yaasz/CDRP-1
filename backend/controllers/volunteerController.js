@@ -1,21 +1,11 @@
-const Volunteer = require("../models/volunteerModel"); // Adjust path to your model
-const CharityAd = require("../models/charityadModel"); // Adjust path to your CharityAd model
-
+const Volunteer = require("../models/volunteerModel");
+const CharityAd = require("../models/charityadModel");
+const User = require("../models/userModel");
 //create a volunteer
 const registerVolunteer = async (req, res) => {
-  const {
-    user,
-    fullName,
-    sex,
-    email,
-    phone,
-    expertise,
-    contribution,
-    charityAdId,
-  } = req.body;
+  const data = { ...req.body };
 
   try {
-    /*change this to check if the same volunteer exits twice with in the volunteers list of the same charity ad*/
     const charityAd = await CharityAd.findById(charityAdId);
     if (!charityAd) {
       // If CharityAd not found, delete the volunteer and return error
@@ -24,21 +14,13 @@ const registerVolunteer = async (req, res) => {
       });
     }
     const existingVolunteer = await charityAd.volunteers.some((volunteerId) =>
-      volunteerId.equals(userId)
+      volunteerId.equals(data.user)
     );
     if (existingVolunteer) {
       return res.status(400).json({ message: "You have already registered" });
     }
     // Create new volunteer
-    const volunteer = new Volunteer({
-      user,
-      fullName,
-      sex,
-      email,
-      phone,
-      expertise,
-      contribution,
-    });
+    const volunteer = new Volunteer(data);
     await volunteer.save();
 
     // Link volunteer to CharityAd
@@ -46,13 +28,17 @@ const registerVolunteer = async (req, res) => {
     charityAd.volunteers.push(volunteer._id);
     await charityAd.save();
 
-    res
-      .status(201)
-      .json({ message: "Volunteer registered successfully", volunteer });
+    res.status(201).json({
+      success: true,
+      message: "Volunteer registered successfully",
+      data: volunteer,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error registering volunteer", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };
 //fetch one
@@ -60,51 +46,78 @@ const getVolunteer = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const volunteer = await Volunteer.findById(id); //.populate("user", "email");
+    const volunteer = await Volunteer.findById(id);
     if (!volunteer) {
-      return res.status(404).json({ message: "Volunteer not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Volunteer not found",
+        error: "document not found",
+      });
     }
-    res.status(200).json(volunteer);
+    res.status(200).json({
+      success: true,
+      message: "user fetched successfully",
+      data: volunteer,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching volunteer", error: error.message });
+    res.status(500).json({
+      success: true,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };
 //update
 const updateVolunteer = async (req, res) => {
   const { id } = req.params;
-  const { fullName, sex, email, phone, expertise, contribution } = req.body;
+  const data = { ...req.body };
 
   try {
     const volunteer = await Volunteer.findById(id);
     if (!volunteer) {
-      return res.status(404).json({ message: "Volunteer not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Volunteer not found",
+        error: "document not found",
+      });
     }
 
-    // Check if new phone number is unique (if provided and different)
-    if (phone && phone !== volunteer.phone) {
-      const existingVolunteer = await Volunteer.findOne({ phone });
+    if (
+      (data.phone && data.phone !== volunteer.phone) ||
+      (data.email && data.email !== volunteer.email)
+    ) {
+      const existingVolunteer = await Volunteer.findOne({
+        $or: [{ phone: data.phone }, { email: data.email }],
+      });
       if (existingVolunteer) {
-        return res.status(400).json({ message: "Phone number already in use" });
+        return res.status(400).json({
+          success: false,
+          message: "Phone number/ email already registered",
+          error: "duplicate entry",
+        });
       }
     }
 
-    volunteer.fullName = fullName || volunteer.fullName;
-    volunteer.sex = sex || volunteer.sex;
+    volunteer.fullName = data.fullName || volunteer.fullName;
+    volunteer.sex = data.sex || volunteer.sex;
+    volunteer.age = data.age || volunteer.age;
     volunteer.email = email || volunteer.email;
     volunteer.phone = phone || volunteer.phone;
     volunteer.expertise = expertise || volunteer.expertise;
     volunteer.contribution = contribution || volunteer.contribution;
     await volunteer.save();
 
-    res
-      .status(200)
-      .json({ message: "Volunteer updated successfully", volunteer });
+    res.status(200).json({
+      success: true,
+      message: "Volunteer updated successfully",
+      data: volunteer,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating volunteer", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };
 
@@ -124,12 +137,16 @@ const deleteVolunteer = async (req, res) => {
       { $pull: { volunteers: id } }
     );
 
-    await volunteer.deleteOne();
-    res.status(200).json({ message: "Volunteer deleted successfully" });
-  } catch (error) {
+    await volunteer.deleteOne({ _id: id });
     res
-      .status(500)
-      .json({ message: "Error deleting volunteer", error: error.message });
+      .status(200)
+      .json({ success: true, message: "Volunteer deleted successfully" });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };
 
@@ -149,16 +166,23 @@ const getAllVolunteers = async (req, res) => {
         }
       : {};
 
-    const volunteers = await Volunteer.find()
-      .populate("userId", "email")
+    const volunteers = await Volunteer.find(serachFilter)
+      .populate("user", "fullName email")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
-    res.status(200).json({ success: true, page: parseInt(page), volunteers });
+    res.status(200).json({
+      success: true,
+      page: parseInt(page),
+      data: volunteers,
+      count: await Volunteer.countDocuments(),
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching volunteers", error: error.message });
+    res.status(500).json({
+      success: true,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };
 
@@ -167,11 +191,18 @@ const deleteAllVolunteers = async (req, res) => {
   try {
     const result = await Volunteer.deleteMany({});
     res.status(200).json({
+      success: true,
       message: "All reports deleted successfully",
-      deletedCount: result.deletedCount,
+      count: result.deletedCount,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "internal server error",
+        error: error.message,
+      });
   }
 };
 module.exports = {

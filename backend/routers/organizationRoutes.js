@@ -16,9 +16,9 @@ const {
 
 router
   .route("/")
-  .get(authToken, authRoles("admin"), getAllOrganizations)
+  .get(authToken, authRoles("admin", "government"), getAllOrganizations)
   .post(upload.single("image"), createOrganization)
-  .delete(authToken, authRoles("government", "admin"), deleteAll);
+  .delete(authToken, authRoles("admin"), deleteAll);
 
 router.post("/login", upload.none(), login);
 
@@ -31,10 +31,11 @@ router
     upload.single("image"),
     updateOrganization
   )
-  .delete(authToken, authRoles("charity", "government"), deleteOrganization);
-
-router
-  .route("/:type")
-  .get(authToken, authRoles("admin"), getOrganizationsByRole);
+  .delete(
+    authToken,
+    authRoles("charity", "government", "admin"),
+    deleteOrganization
+  );
 
 module.exports = router;
+//delete the fetch org by role make the functionality by search query

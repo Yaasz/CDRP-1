@@ -1,15 +1,30 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const validator = require("validator");
 // Define the Public User schema
 const UserSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
       required: true,
+      validate: {
+        validator: function (value) {
+          return validator.matches(value.trim(), /^[A-Za-z0-9\s.,!?'"&()-]+$/);
+        },
+        message: "name must be text",
+      },
+      minlength: [4, "name must be at least 5 characters "],
     },
     lastName: {
       type: String,
       required: true,
+      validate: {
+        validator: function (value) {
+          return validator.matches(value.trim(), /^[A-Za-z0-9\s.,!?'"&()-]+$/);
+        },
+        message: "name must be text",
+      },
+      minlength: [4, "name must be at least 5 characters "],
     },
     email: {
       type: String,
@@ -35,10 +50,6 @@ const UserSchema = new mongoose.Schema(
     image: {
       type: String, // URL of the profile image (optional)
       default: "default-profile.png",
-    },
-    cloudinaryId: {
-      type: String,
-      required: false,
     },
   },
   { timestamps: true }

@@ -11,12 +11,12 @@ const {
 
 router
   .route("/")
-  .get(authToken, authRoles("admin", "goverment"), getAllIncidents)
-  .delete(authToken, authRoles("admin", "goverment"), deleteAllIncidents);
+  .get(authToken, authRoles("admin", "government"), getAllIncidents)
+  .delete(authToken, authRoles("admin", "government"), deleteAllIncidents);
 
 router
   .route("/:id")
-  .get(authToken, getIncidentById)
-  .delete(authToken, authRoles("admin", "goverment"), deleteIncident);
+  .get(authToken, authRoles("admin", "government"), getIncidentById)
+  .delete(authToken, authRoles("admin", "government"), deleteIncident);
 
 module.exports = router;

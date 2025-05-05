@@ -1,52 +1,52 @@
 const News = require("../models/newsModel");
 const cloudinary = require("../config/cloudinary");
+const { count } = require("console");
 
 const fs = require("fs").promises;
 
-// Create a new news announcement
+// Create a new news
 exports.createNews = async (req, res) => {
   //upload.single("image") // removed and put in the router
   try {
-    const { title, content } = req.body;
-    if (!req.file) {
-      res.status(400).json({ error: "image is required" });
+    const data = { ...req.body };
+    if (req.file) {
+      //upload
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "news",
+      });
+      data.image = result.secure_url;
+      data.cloudinaryId = result.public_id;
+      await fs.unlink(req.file.path);
     }
-    //upload
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "news",
-    });
-    await fs.unlink(req.file.path);
-    const newsAnnouncement = new News({
-      title,
-      content,
-      image: result.secure_url || "", // Default to empty string if not provided
-      cloudinaryId: result.public_id,
-    });
+    console.log("data", data);
+    const newsAnnouncement = new News(data);
 
     const savedAnnouncement = await newsAnnouncement.save();
     res.status(201).json({
       success: true,
+      message: "News created successfully",
       data: savedAnnouncement,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
 
-// Get all news announcements
+// Get all news
 exports.getAllNews = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "" } = req.query;
+    const { page = 1, limit = 10, search = "" } = req.query; //todo:add filter to search by date and type
     const searchFilter = search
       ? {
           $or: [{ title: { $regex: search, $options: i } }],
         }
       : {};
 
-    const newsAnnouncements = await News.find()
+    const newsAnnouncements = await News.find(searchFilter)
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
     res.status(200).json({
@@ -58,12 +58,13 @@ exports.getAllNews = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
 
-// Get single news announcement by ID
+// Get single news  by ID
 exports.getNews = async (req, res) => {
   try {
     const newsAnnouncement = await News.findById(req.params.id);
@@ -72,22 +73,25 @@ exports.getNews = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "News announcement not found",
+        error: "document not found",
       });
     }
 
     res.status(200).json({
       success: true,
+      message: "news fetched",
       data: newsAnnouncement,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
 
-// Update news announcement
+// Update news
 exports.updateNews = async (req, res) => {
   const updates = { ...req.body };
   const { id } = req.params;
@@ -96,7 +100,8 @@ exports.updateNews = async (req, res) => {
     if (!newsAnnouncement) {
       return res.status(404).json({
         success: false,
-        message: "News announcement not found",
+        message: "News not found",
+        error: "document not found",
       });
     }
 
@@ -120,17 +125,19 @@ exports.updateNews = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "News updated successfully",
       data: news,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
 
-// Delete news announcement
+// Delete news by ID
 exports.deleteNews = async (req, res) => {
   try {
     const newsAnnouncement = await News.findByIdAndDelete(req.params.id);
@@ -138,40 +145,20 @@ exports.deleteNews = async (req, res) => {
     if (!newsAnnouncement) {
       return res.status(404).json({
         success: false,
-        message: "News announcement not found",
+        message: "News not found",
+        error: "document not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: "News announcement deleted successfully",
+      message: "News  deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
-    });
-  }
-};
-
-// Get news announcements by related incident
-exports.getNewsByIncident = async (req, res) => {
-  try {
-    const { incidentId } = req.params;
-
-    const newsAnnouncements = await News.find({
-      relatedIncident: incidentId,
-    });
-
-    res.status(200).json({
-      success: true,
-      count: newsAnnouncements.length,
-      data: newsAnnouncements,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -180,8 +167,16 @@ exports.getNewsByIncident = async (req, res) => {
 exports.deleteAll = async (req, res) => {
   try {
     const deleteAll = await News.deleteMany({});
-    res.status(200).json({ messages: "all news have been deleted", deleteAll });
+    res.status(200).json({
+      success: true,
+      messages: "all news have been deleted",
+      count: deleteAll.deletedCount,
+    });
   } catch (error) {
-    res.status(500).json({ message: "internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };

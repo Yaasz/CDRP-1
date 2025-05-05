@@ -11,11 +11,19 @@ exports.createUser = async (req, res) => {
   try {
     const data = { ...req.body };
     console.log(data);
-    const existingUser = await User.findOne({ email: data.email });
-    if (existingUser) {
+    //todo:check for existing phone number
+    const existingEmail = await User.findOne({ email: data.email });
+    if (existingEmail) {
       return res.status(400).json({
         success: false,
         message: "Email already in use",
+      });
+    }
+    const existingPhone = await User.find({ phone: data.phone });
+    if (existingPhone.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number already in use",
       });
     }
     if (req.file) {
@@ -27,10 +35,14 @@ exports.createUser = async (req, res) => {
         data.cloudinaryId = result.public_id;
         await fs.unlink(req.file.path);
       } catch (error) {
-        console.error("failed to upload image to cloudinary", error.message);
+        console.error(
+          "failed to upload user image to cloudinary",
+          error.message
+        );
         return res.status(400).json({
           success: false,
-          message: "image upload failed try again later",
+          message: "failed to upload image. try again later",
+          error: error.message,
         });
       }
     }
@@ -42,12 +54,14 @@ exports.createUser = async (req, res) => {
 
     res.status(201).json({
       success: true,
+      message: "registered successfully",
       data: savedUser,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -71,17 +85,19 @@ exports.getAllUsers = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
-    console.log("page", page, "limit", limit);
+
     res.status(200).json({
       success: true,
+      message: "all users",
       page: parseInt(page),
-      count: users.length,
+      count: await User.countDocuments(), //todo:use model.countDocuments() for every controller
       data: users,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -95,17 +111,20 @@ exports.getUser = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "User not found",
+        error: "document not found",
       });
     }
 
     res.status(200).json({
+      message: "user fetched by id",
       success: true,
       data: user,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -120,6 +139,7 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "User not found",
+        error: "document not found",
       });
     }
 
@@ -146,9 +166,31 @@ exports.updateUser = async (req, res) => {
       data.image = user.image;
       data.cloudinaryId = user.cloudinaryId;
     }
-    //cleanup local temp file
-    await fs.unlink(req.file.path);
 
+    if (data.email) {
+      const existingUser = await User.findOne({ email: data.email });
+      if (existingUser && existingUser._id.toString() !== id) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already in use",
+        });
+      }
+    }
+    if (data.phone) {
+      const existingUser = await User.findOne({ phone: data.phone });
+      if (existingUser && existingUser._id.toString() !== id) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number already in use",
+        });
+      }
+    }
+    if (data.role) {
+      return res.status(400).json({
+        success: false,
+        message: "role change is not allowed",
+      });
+    }
     const updatedUser = await User.findByIdAndUpdate(id, data, {
       new: true,
       runValidators: true,
@@ -156,12 +198,14 @@ exports.updateUser = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "user updated successfully",
       data: updatedUser,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -177,6 +221,7 @@ exports.deleteUser = async (req, res) => {
         message: "User not found",
       });
     }
+    //todo:decide to delete or not
     {
       /*
     // Remove user from Reports (set reportedBy to null)
@@ -198,16 +243,30 @@ exports.deleteUser = async (req, res) => {
     }
 */
     }
-    await user.deleteOne();
+    //todo:check what happens to the image in cloudinary use in all
+    if (user.cloudinaryId) {
+      try {
+        await cloudinary.uploader.destroy(user.cloudinaryId);
+      } catch (error) {
+        console.log(
+          "Old image not removed if Cloudinary ID is invalid ",
+          error.message
+        );
+      }
+    }
+
+    const deletedUser = await user.deleteOne();
 
     res.status(200).json({
       success: true,
       message: "User deleted successfully.",
+      data: deletedUser,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "internal server error",
+      error: error.message,
     });
   }
 };
@@ -222,8 +281,11 @@ exports.deleteAll = async (req, res) => {
       count: delAll.deletedCount,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "internal server error" });
-    console.log(error.message);
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };
 
@@ -232,16 +294,20 @@ exports.login = async (req, res) => {
     const { identifier, password } = req.body;
 
     if (!identifier || !password) {
-      return res
-        .status(400)
-        .json({ error: "Identifier and password required" });
+      return res.status(400).json({
+        success: false,
+        message: "Identifier and password required",
+        error: "missing fields",
+      });
     }
 
     const user = await User.findOne({
       $or: [{ email: identifier }, { phone: identifier }],
     });
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res
+        .status(401)
+        .json({ error: "user with email/password not found  " });
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -260,13 +326,17 @@ exports.login = async (req, res) => {
       message: "Login successful",
       token,
       user: {
-        id: user._id,
+        full_name: user.firstName + " " + user.lastName,
         email: user.email,
         phone: user.phone,
       },
     });
   } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({
+      success: false,
+      message: "Internal Server error",
+      error: error.message,
+    });
   }
 };
+//todo:add email and phone number verification firebase and nodemailer

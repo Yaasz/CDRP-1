@@ -15,13 +15,13 @@ const {
 // Define routes
 router
   .route("/")
-  .get(authToken, authRoles("government", "admin"), getAllAnnouncements)
+  .get(authToken, authRoles("admin", "charity"), getAllAnnouncements)
   .post(authToken, authRoles("government"), createAnnouncement);
 
 router
   .route("/:id")
   .get(authToken, getAnnouncementById)
   .put(authToken, authRoles("government"), updateAnnouncement)
-  .delete(authToken, authRoles("government"), deleteAnnouncement);
+  .delete(authToken, authRoles("government", "admin"), deleteAnnouncement);
 
 module.exports = router;

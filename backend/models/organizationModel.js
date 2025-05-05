@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const validator = require("validator");
 // Define the Organization schema
 const organizationSchema = new mongoose.Schema(
   {
@@ -7,6 +8,13 @@ const organizationSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      validate: {
+        validator: function (value) {
+          return validator.matches(value.trim(), /^[A-Za-z0-9\s.,!?'"&()-]+$/);
+        },
+        message: "name must be text",
+      },
+      minlength: [5, "name must be at least 5 characters "],
     },
     email: {
       type: String,
@@ -23,12 +31,20 @@ const organizationSchema = new mongoose.Schema(
       required: true,
     },
     image: {
-      type: String, // URL of the organization's logo or profile image (optional)
-      default: "default-logo.png",
+      type: String,
+      required: false,
     },
     mission: {
       type: String, // A brief description of the organization's mission
       default: "",
+      validate: {
+        validator: function (value) {
+          return validator.matches(value.trim(), /^[A-Za-z0-9\s.,!?'"&()-]+$/);
+        },
+        message: "mission must be text",
+      },
+      minlength: [5, "mission must be at least 5 characters "],
+      maxlength: [100, "mission too long"],
     },
     // Differentiating between two types of organizations
     role: {

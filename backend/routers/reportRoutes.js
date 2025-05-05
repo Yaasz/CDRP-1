@@ -15,7 +15,8 @@ const {
 router
   .route("/")
   .get(authToken, authRoles("admin", "government"), getAllReports)
-  .post(authToken, authRoles("user"), upload.single("image"), createReport)
+  //allow multiple uploads image and video
+  .post(authToken, authRoles("user"), upload.array("media", 10), createReport)
   .delete(
     authToken,
     authRoles("admin"),
@@ -28,9 +29,5 @@ router
   .get(authToken, getReportById)
   .put(authToken, authRoles("user"), upload.single("image"), updateReport)
   .delete(authToken, authRoles("user", "admin"), deleteReport);
-
-/*router
-  .route("/:id/assign-incident")
-  .put(reportController.assignReportToIncident);*/
 
 module.exports = router;
