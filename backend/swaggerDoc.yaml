@@ -4,7 +4,7 @@ info:
   description: API for managing charity ads, announcements, incidents, news, volunteers, organizations, reports, and users.
   version: 1.0.0
 servers:
-  - url: http://localhost:3000/api
+  - url: /api
     description: Local development server
 components:
   securitySchemes:
