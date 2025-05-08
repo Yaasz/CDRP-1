@@ -156,6 +156,8 @@ components:
           type: string
           format: objectId
           nullable: true
+        duration:
+          type: Integer
         title:
           type: string
           minLength: 4
@@ -167,7 +169,7 @@ components:
         description:
           type: string
           minLength: 4
-          maxLength: 300
+          maxLength: 1000
           pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
         status:
           type: string
@@ -216,6 +218,7 @@ components:
         - phone
         - password
         - role
+        - taxId
       properties:
         name:
           type: string
@@ -227,6 +230,8 @@ components:
         phone:
           type: string
         password:
+          type: string
+        taxId:
           type: string
         image:
           type: string
@@ -561,6 +566,8 @@ paths:
                   minLength: 4
                   maxLength: 50
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                duration:
+                  type: integer
                 description:
                   type: string
                   minLength: 4
@@ -1407,6 +1414,8 @@ paths:
                   type: string
                 password:
                   type: string
+                taxId:
+                  type: string
                 image:
                   type: string
                   format: binary
@@ -1425,6 +1434,7 @@ paths:
                 - phone
                 - password
                 - role
+                - taxId
       responses:
         "201":
           description: Organization created
@@ -1473,8 +1483,7 @@ paths:
               type: object
               properties:
                 email:
-                  type: string
-                  format: email
+                  identifier: string
                 password:
                   type: string
               required:

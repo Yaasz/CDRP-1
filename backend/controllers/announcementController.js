@@ -48,7 +48,7 @@ const getAllAnnouncements = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
     res.status(200).json({
-      count: announcements.length,
+      count: await Announcement.countDocuments(),
       page: parseInt(page),
       success: true,
       data: announcements,

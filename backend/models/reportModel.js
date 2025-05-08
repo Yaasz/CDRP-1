@@ -34,7 +34,7 @@ const reportSchema = new mongoose.Schema(
         },
         message: "description must be text",
       },
-      minlength: [4, "description must be atleast 4 characters "],
+      minlength: [4, "description must be at least 4 characters "],
       maxlength: [300, "description too long"],
     },
     image: {

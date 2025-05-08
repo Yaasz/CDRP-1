@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const upload = require("../config/multer");
 const authToken = require("../middleware/auth");
+const requireVerification = require("../middleware/requireVerification");
 const authRoles = require("../middleware/authorize");
 // Import controller functions
 const {
@@ -20,6 +21,7 @@ router
   .post(
     authToken,
     authRoles("charity"),
+    requireVerification,
     upload.single("image"),
     createCharityAd
   )
@@ -27,7 +29,18 @@ router
 router
   .route("/:id")
   .get(authToken, getCharityAd)
-  .put(authToken, authRoles("charity"), upload.single("image"), updateCharityAd)
-  .delete(authToken, authRoles("charity"), deleteCharityAd);
+  .put(
+    authToken,
+    authRoles("charity"),
+    requireVerification,
+    upload.single("image"),
+    updateCharityAd
+  )
+  .delete(
+    authToken,
+    authRoles("charity"),
+    requireVerification,
+    deleteCharityAd
+  );
 
 module.exports = router;

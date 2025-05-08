@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authToken = require("../middleware/auth");
 const authRoles = require("../middleware/authorize");
-
+const requireVerification = require("../middleware/requireVerification");
 // Import controller functions
 const {
   createAnnouncement,
@@ -15,7 +15,12 @@ const {
 // Define routes
 router
   .route("/")
-  .get(authToken, authRoles("admin", "charity"), getAllAnnouncements)
+  .get(
+    authToken,
+    authRoles("admin", "charity"),
+    requireVerification,
+    getAllAnnouncements
+  )
   .post(authToken, authRoles("government"), createAnnouncement);
 
 router

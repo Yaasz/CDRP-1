@@ -24,6 +24,16 @@ exports.createCharityAd = async (req, res) => {
         message: "description is required",
       });
     }
+    if (data.duration) {
+      const duration = parseInt(data.duration);
+      if (isNaN(duration) || duration <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "duration must be a positive number",
+        });
+      }
+      data.duration = duration * 24 * 60 * 60 * 1000; // Convert to milliseconds
+    }
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "charityAd",
@@ -81,7 +91,7 @@ exports.getAllCharityAds = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      count: charityAds.length,
+      count: await CharityAd.countDocuments(),
       page: parseInt(page),
       data: charityAds,
     });
@@ -142,7 +152,16 @@ exports.updateCharityAd = async (req, res) => {
         message: "Charity ad not found",
       });
     }
-
+    if (updates.duration) {
+      const duration = parseInt(updates.duration);
+      if (isNaN(duration) || duration <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "duration must be a positive number",
+        });
+      }
+      updates.duration = duration * 24 * 60 * 60 * 1000; // Convert to milliseconds
+    }
     if (req.file) {
       if (charAd.cloudinaryId) {
         await cloudinary.uploader.destroy(charAd.cloudinaryId);
@@ -207,7 +226,7 @@ exports.deleteAll = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "all charity ads are deleted",
-      count: delete_all.deletedCount, //todo:check the format and change to count if complex
+      count: delete_all.deletedCount,
     });
   } catch (error) {
     res.status(500).json({

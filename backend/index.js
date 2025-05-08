@@ -19,6 +19,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+require("./cron/expireCharityAds");
 
 mongoose
   .connect(process.env.DB)

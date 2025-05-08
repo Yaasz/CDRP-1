@@ -51,7 +51,7 @@ const VolunteerSchema = new mongoose.Schema({
     required: true,
     unique: true,
     match: [/^\+?[1-9]\d{1,14}$/, "Invalid phone number"], // E.164 format validation
-  }, //add email field
+  },
   expertise: {
     type: String,
     required: true,

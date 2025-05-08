@@ -14,7 +14,7 @@ const newsSchema = new mongoose.Schema(
       },
       minlength: [4, "title must be at least 4 characters "],
     },
-    content: {
+    description: {
       type: String,
       required: true,
       validate: {
@@ -23,12 +23,22 @@ const newsSchema = new mongoose.Schema(
         },
         message: "description must be text",
       },
-      minlength: [4, "description must be atleast 4 characters "],
-      maxlength: [300, "description too long"],
+      minlength: [4, "description must be at least 4 characters "],
+      maxlength: [1000, "description too long"],
     },
     image: {
       type: String, // URL of the image for the news announcement
-      default: "",
+      required: false,
+      validate: {
+        validator: function (value) {
+          return validator.isURL(value);
+        },
+        message: "image must be a valid URL",
+      },
+    },
+    cloudinaryId: {
+      type: String,
+      required: false,
     },
   },
   { timestamps: true }

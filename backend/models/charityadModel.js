@@ -38,7 +38,17 @@ const CharityAdSchema = new mongoose.Schema(
 
     image: {
       type: String,
-      default: "",
+      required: false,
+      validate: {
+        validator: function (value) {
+          return validator.isURL(value);
+        },
+        message: "image must be a valid URL",
+      },
+    },
+    cloudinaryId: {
+      type: String,
+      required: false,
     },
     description: {
       type: String,
@@ -50,11 +60,11 @@ const CharityAdSchema = new mongoose.Schema(
         message: "description must be text",
       },
       minlength: [4, "description must be at least 4 characters "],
-      maxlength: [300, "description too long"],
+      maxlength: [1000, "description too long"],
     },
     status: {
       type: String,
-      enum: ["open", "completed"],
+      enum: ["open", "closed"],
       default: "open",
     },
     volunteers: [
@@ -64,6 +74,15 @@ const CharityAdSchema = new mongoose.Schema(
         default: [],
       },
     ],
+    duration: {
+      type: Number,
+      required: true,
+      default: 7 * 24 * 60 * 60 * 1000, // 7 days
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+    },
   },
   { timestamps: true }
 );

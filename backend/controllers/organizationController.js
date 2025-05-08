@@ -80,7 +80,7 @@ exports.getAllOrganizations = async (req, res) => {
       .limit(parseInt(limit));
     res.status(200).json({
       success: true,
-      count: organizations.length, //todo:check if there is a way to access the tot count in db
+      count: await Organization.countDocuments(), //todo:check if there is a way to access the tot count in db
       data: organizations,
       page: parseInt(page),
     });
@@ -275,12 +275,43 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     console.error(error.message);
-    res
-      .status(500)
-      .json({
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
+  }
+};
+
+exports.verify = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const org = await Organization.findById(id);
+    if (!org) {
+      return res.status(404).json({
         success: false,
-        message: "internal server error",
-        error: error.message,
+        message: "Organization not found",
+        error: "document not found",
       });
+    }
+    if (org.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Organization already verified",
+      });
+    }
+    org.isVerified = true;
+    org.status = "active";
+    await org.save();
+    res.status(200).json({
+      success: true,
+      message: "Organization verified successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };

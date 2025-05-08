@@ -49,7 +49,17 @@ const UserSchema = new mongoose.Schema(
     },
     image: {
       type: String, // URL of the profile image (optional)
-      default: "default-profile.png",
+      required: false,
+      validate: {
+        validator: function (value) {
+          return validator.isURL(value);
+        },
+        message: "image must be a valid URL",
+      },
+    },
+    cloudinaryId: {
+      type: String,
+      required: false,
     },
   },
   { timestamps: true }

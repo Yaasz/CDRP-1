@@ -22,7 +22,7 @@ exports.getAllIncidents = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      count: incidents.length,
+      count: await Incident.countDocuments(),
       data: incidents,
       page: parseInt(page),
     });

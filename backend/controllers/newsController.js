@@ -51,7 +51,7 @@ exports.getAllNews = async (req, res) => {
       .limit(parseInt(limit));
     res.status(200).json({
       success: true,
-      count: newsAnnouncements.length,
+      count: await News.countDocuments(),
       data: newsAnnouncements,
       page: parseInt(page),
     });

@@ -166,7 +166,7 @@ const getAllVolunteers = async (req, res) => {
         }
       : {};
 
-    const volunteers = await Volunteer.find(serachFilter)
+    const volunteers = await Volunteer.find(searchFilter)
       .populate("user", "fullName email")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -196,13 +196,11 @@ const deleteAllVolunteers = async (req, res) => {
       count: result.deletedCount,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "internal server error",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };
 module.exports = {

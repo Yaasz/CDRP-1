@@ -323,12 +323,11 @@ exports.getAllReports = async (req, res) => {
       .populate("reportedBy", "name email")
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
-    //todo:test the pagination
     console.log("limit", limit);
     res.status(200).json({
       success: true,
       page: parseInt(page),
-      count: reports.length,
+      count: await Report.countDocuments(),
       data: reports,
     });
   } catch (error) {
@@ -380,7 +379,7 @@ exports.deleteReport = async (req, res) => {
 
     // Remove report ID from the associated Incident's reports array
     await Incident.findByIdAndUpdate(
-      { _id: report.incident },
+      { _id: report.incident, status: "pending" },
       { $pull: { reports: report._id } }
     );
 
@@ -400,18 +399,17 @@ exports.deleteReport = async (req, res) => {
 exports.deleteAllReports = async (req, res) => {
   try {
     const result = await Report.deleteMany({});
+    await Incident.deleteMany({});
     res.status(200).json({
       success: true,
       message: "All reports deleted successfully",
       deletedCount: result.deletedCount,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "internal server error",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
   }
 };

@@ -30,7 +30,28 @@ const organizationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    taxId: {
+      type: String,
+      required: true,
+      unique: true,
+      validate: {
+        validator: function (value) {
+          return validator.isAlphanumeric(value);
+        },
+        message: "taxId must be alphanumeric",
+      },
+    },
     image: {
+      type: String,
+      required: false,
+      validate: {
+        validator: function (value) {
+          return validator.isURL(value);
+        },
+        message: "image must be a valid URL",
+      },
+    },
+    cloudinaryId: {
       type: String,
       required: false,
     },
@@ -51,6 +72,16 @@ const organizationSchema = new mongoose.Schema(
       type: String,
       enum: ["charity", "government"], // Define the types of organizations
       default: "charity",
+      required: true,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive"], // Define the types of organizations
+      default: "active",
       required: true,
     },
   },
