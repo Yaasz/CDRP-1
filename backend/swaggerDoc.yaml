@@ -1403,7 +1403,7 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                organizationName:
                   type: string
                   minLength: 5
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$

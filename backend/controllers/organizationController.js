@@ -13,6 +13,14 @@ exports.createOrganization = async (req, res) => {
         message: "name, email, phone and password are required",
       });
     }
+    if (data.role && data.role == "government") {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(400).json({
+          success: false,
+          message: "government organization can only be created by admin",
+        });
+      }
+    }
     const nameExists = await Organization.findOne({ name: data.name });
     if (nameExists) {
       return res.status(400).json({
@@ -130,6 +138,12 @@ exports.updateOrganization = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Organization not found",
+      });
+    }
+    if (data.role && data.role == "government") {
+      return res.status(400).json({
+        success: false,
+        message: "government organization can only be created by admin",
       });
     }
 

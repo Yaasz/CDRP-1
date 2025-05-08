@@ -90,7 +90,7 @@ exports.getAllUsers = async (req, res) => {
       success: true,
       message: "all users",
       page: parseInt(page),
-      count: await User.countDocuments(), //todo:use model.countDocuments() for every controller
+      count: await User.countDocuments(),
       data: users,
     });
   } catch (error) {
@@ -221,29 +221,7 @@ exports.deleteUser = async (req, res) => {
         message: "User not found",
       });
     }
-    //todo:decide to delete or not
-    {
-      /*
-    // Remove user from Reports (set reportedBy to null)
-    await Report.updateMany(
-      { reportedBy: user._id },
-      { $set: { reportedBy: null } }
-    );
 
-    // Remove user from Volunteers (delete volunteer records referencing this user)
-    const volunteers = await Volunteer.find({ userId: user._id });
-    for (const volunteer of volunteers) {
-      // Remove volunteer from CharityAd
-      await CharityAd.updateMany(
-        { volunteers: volunteer._id },
-        { $pull: { volunteers: volunteer._id } }
-      );
-      // Delete the volunteer record
-      await Volunteer.findByIdAndDelete(volunteer._id);
-    }
-*/
-    }
-    //todo:check what happens to the image in cloudinary use in all
     if (user.cloudinaryId) {
       try {
         await cloudinary.uploader.destroy(user.cloudinaryId);

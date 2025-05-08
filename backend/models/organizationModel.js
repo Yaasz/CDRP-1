@@ -4,7 +4,7 @@ const validator = require("validator");
 // Define the Organization schema
 const organizationSchema = new mongoose.Schema(
   {
-    name: {
+    organizationName: {
       type: String,
       required: true,
       unique: true,
