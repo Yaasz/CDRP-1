@@ -70,9 +70,9 @@ exports.getAllCharityAds = async (req, res) => {
     const searchFilter = search
       ? {
           $or: [
-            { title: { $regex: search, $options: i } },
-            { status: { $regex: search, $options: i } },
-            { charity: { $regex: search, $options: i } },
+            { title: { $regex: search, $options: "i" } },
+            { status: { $regex: search, $options: "i" } },
+            { charity: { $regex: search, $options: "i" } },
           ],
         }
       : {};
@@ -91,7 +91,8 @@ exports.getAllCharityAds = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      count: await CharityAd.countDocuments(),
+      totalCount: await CharityAd.countDocuments(),
+      searchCount: await CharityAd.countDocuments(searchFilter),
       page: parseInt(page),
       data: charityAds,
     });
@@ -205,7 +206,13 @@ exports.deleteCharityAd = async (req, res) => {
         message: "Charity ad not found",
       });
     }
-
+    if (charityAd.cloudinaryId) {
+      try {
+        await cloudinary.uploader.destroy(charityAd.cloudinaryId);
+      } catch (error) {
+        console.error("Error deleting image from Cloudinary:", error);
+      }
+    }
     res.status(200).json({
       success: true,
       message: "Charity ad deleted successfully",

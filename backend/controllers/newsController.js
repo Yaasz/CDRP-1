@@ -39,19 +39,21 @@ exports.createNews = async (req, res) => {
 // Get all news
 exports.getAllNews = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "" } = req.query; //todo:add filter to search by date and type
+    const { page = 1, limit = 10, search = "" } = req.query;
     const searchFilter = search
       ? {
-          $or: [{ title: { $regex: search, $options: i } }],
+          $or: [{ title: { $regex: search, $options: "i" } }],
         }
       : {};
 
     const newsAnnouncements = await News.find(searchFilter)
+      .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
     res.status(200).json({
       success: true,
-      count: await News.countDocuments(),
+      totalCount: await News.countDocuments(),
+      searchCount: await News.countDocuments(searchFilter),
       data: newsAnnouncements,
       page: parseInt(page),
     });
@@ -148,6 +150,13 @@ exports.deleteNews = async (req, res) => {
         message: "News not found",
         error: "document not found",
       });
+    }
+    if (newsAnnouncement.cloudinaryId) {
+      try {
+        await cloudinary.uploader.destroy(newsAnnouncement.cloudinaryId);
+      } catch (error) {
+        console.log("error deleting image from cloudinary", error);
+      }
     }
 
     res.status(200).json({

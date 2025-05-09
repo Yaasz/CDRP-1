@@ -13,6 +13,12 @@ const registerVolunteer = async (req, res) => {
         message: "CharityAd not found, volunteer registration cancelled",
       });
     }
+    if (charityAd.status && charityAd.status === "closed") {
+      return res.status(400).json({
+        success: false,
+        message: "The Ad is closed, volunteer registration cancelled",
+      });
+    }
     const existingVolunteer = await charityAd.volunteers.some((volunteerId) =>
       volunteerId.equals(data.user)
     );
@@ -175,7 +181,8 @@ const getAllVolunteers = async (req, res) => {
       success: true,
       page: parseInt(page),
       data: volunteers,
-      count: await Volunteer.countDocuments(),
+      totalCount: await Volunteer.countDocuments(),
+      searchCount: await Volunteer.countDocuments(searchFilter),
     });
   } catch (error) {
     res.status(500).json({

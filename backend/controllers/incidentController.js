@@ -8,10 +8,10 @@ exports.getAllIncidents = async (req, res) => {
     const searchFilter = search
       ? {
           $or: [
-            { title: { $regex: search, $options: i } },
-            { status: { $regex: search, $options: i } },
-            { type: { $regex: search, $options: i } },
-            { date: { $regex: search, $options: i } },
+            { title: { $regex: search, $options: "i" } },
+            { status: { $regex: search, $options: "i" } },
+            { type: { $regex: search, $options: "i" } },
+            { date: { $regex: search, $options: "i" } },
           ],
         }
       : {};
@@ -22,7 +22,8 @@ exports.getAllIncidents = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      count: await Incident.countDocuments(),
+      totalCount: await Incident.countDocuments(),
+      searchCount: await Incident.countDocuments(searchFilter),
       data: incidents,
       page: parseInt(page),
     });

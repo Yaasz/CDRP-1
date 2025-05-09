@@ -16,13 +16,8 @@ router
   .route("/")
   .get(authToken, authRoles("admin", "government"), getAllReports)
   //allow multiple uploads image and video
-  .post(authToken, authRoles("user"), upload.array("media", 10), createReport)
-  .delete(
-    authToken,
-    authRoles("admin"),
-    upload.single("image"),
-    deleteAllReports
-  );
+  .post(authToken, authRoles("user"), upload.array("image", 10), createReport)
+  .delete(authToken, authRoles("admin"), deleteAllReports);
 
 router
   .route("/:id")

@@ -42,13 +42,14 @@ const getAllAnnouncements = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "" } = req.query;
     const searchFilter = search
-      ? { $or: [{ title: { $regex: search, $options: i } }] }
+      ? { $or: [{ title: { $regex: search, $options: "i" } }] }
       : {};
     const announcements = await Announcement.find(searchFilter)
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
     res.status(200).json({
-      count: await Announcement.countDocuments(),
+      totalCount: await Announcement.countDocuments(),
+      searchCount: await Announcement.countDocuments(searchFilter),
       page: parseInt(page),
       success: true,
       data: announcements,

@@ -2,16 +2,49 @@ const Report = require("../models/reportModel");
 const Incident = require("../models/incidentModel"); // Add this import
 const User = require("../models/userModel");
 const cloudinary = require("../config/cloudinary");
+const mongoose = require("mongoose");
 const fs = require("fs").promises;
+const distanceMap = {
+  "wild fire": 5000,
+  "earth quake": 50000,
+  drought: 100000,
+  "land slide": 2000,
+  flood: 5000,
+  "locust swarm": 20000,
+  sinkhole: 500,
+  volcano: 50000,
+  "hail storm": 10000,
+};
+//note:allowed types of disasters
+const allowedTypes = [
+  "wild fire",
+  "earth quake",
+  "drought",
+  "land slide",
+  "flood",
+  "locust swarm",
+  "sinkhole",
+  "volcano",
+  "hail storm",
+];
 // Create a new report
 exports.createReport = async (req, res) => {
   try {
     const data = { ...req.body };
+    //console.log("report data", data.reportedBy);
     const empty = [];
+    //check if the required fields are provided
     if (!data.type) empty.push("type");
     if (!data.description) empty.push("description");
     if (!data.reportedBy) empty.push("reportedBy");
     if (!data.latitude || !data.longitude) empty.push("location");
+    const isValidId = await mongoose.Types.ObjectId.isValid(data.reportedBy);
+    if (!isValidId) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid user id",
+      });
+    }
 
     const user = await User.findById(data.reportedBy);
     if (!user) {
@@ -39,16 +72,48 @@ exports.createReport = async (req, res) => {
     if (isNaN(lon) || lon < -180 || lon > 180) {
       return res.status(400).json({ error: "Invalid longitude value" });
     }
+    if (data.type) {
+      const disasterType = data.type;
 
-    // Handle image upload
-    if (req.file) {
-      try {
-        const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: "report",
+      const match = allowedTypes.some(
+        (type) =>
+          type.trim().replace(/\s+/g, " ").toLowerCase() ===
+          disasterType.trim().replace(/\s+/g, " ").toLowerCase()
+      );
+      if (!match) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid disaster type",
+          error: `disaster type must be one of the following: ${allowedTypes.join(
+            ", "
+          )}`,
         });
-        data.image = result.secure_url;
-        data.cloudinaryId = result.public_id;
-        await fs.unlink(req.file.path);
+      }
+    }
+    // Handle image upload
+    if (req.files && req.files.length > 0) {
+      const files = req.files;
+      data.image = [];
+      console.log("files", files);
+      try {
+        for (const file of files) {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: "report",
+          });
+          console.log("data", data);
+
+          data.image.push({
+            url: result.secure_url,
+            cloudinaryId: result.public_id,
+          });
+          try {
+            //note:delete temp file
+            await fs.unlink(file.path);
+            console.log("temp File deleted successfully");
+          } catch (error) {
+            console.error("Error deleting temp file:", error);
+          }
+        }
       } catch (error) {
         return res.status(400).json({
           success: false,
@@ -59,6 +124,9 @@ exports.createReport = async (req, res) => {
     }
 
     // Check for existing report
+    const normalizedType = data.type.trim().replace(/\s+/g, " ").toLowerCase();
+    const max_distance = distanceMap[normalizedType] || 1000; // Default to 1000 if type not found
+    //console.log("max_distance", max_distance);
     const existingReport = await Report.findOne({
       reportedBy: data.reportedBy,
       type: data.type,
@@ -68,7 +136,7 @@ exports.createReport = async (req, res) => {
             type: "Point",
             coordinates: [lon, lat],
           },
-          $maxDistance: 1000,
+          $maxDistance: max_distance,
         },
       },
     });
@@ -88,7 +156,7 @@ exports.createReport = async (req, res) => {
 
     // Look for matching incidents with pending status
     const matchingIncidents = await Incident.find({
-      type: data.type, //todo:check this works
+      type: data.type,
       status: "pending", // Only match pending incidents
       location: {
         $near: {
@@ -96,7 +164,7 @@ exports.createReport = async (req, res) => {
             type: "Point",
             coordinates: [lon, lat],
           },
-          $maxDistance: 1000,
+          $maxDistance: max_distance,
         },
       },
     }).limit(1);
@@ -121,6 +189,7 @@ exports.createReport = async (req, res) => {
     } else {
       const newIncident = new Incident({
         type: data.type,
+        title: data.title,
         description: data.description,
         dateOccurred: new Date(),
         location: {
@@ -151,12 +220,7 @@ exports.createReport = async (req, res) => {
     });
   }
 };
-
 // Update a report
-
-const MAX_DISTANCE = 1000;
-const CLOUDINARY_FOLDER = "report";
-
 exports.updateReport = async (req, res) => {
   try {
     const { id } = req.params;
@@ -174,18 +238,41 @@ exports.updateReport = async (req, res) => {
         message: "only the owner can update a report",
       });
     }
+    if (data.type) {
+      const disasterType = data.type;
 
+      const match = allowedTypes.some(
+        (type) =>
+          type.toLowerCase().trim().replace(/\s+/g, " ") ===
+          disasterType.toLowerCase().trim().replace(/\s+/g, " ")
+      );
+      if (!match) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid disaster type",
+          error: `disaster type must be one of the following:${allowedTypes.join(
+            ", "
+          )}`,
+        });
+      }
+    }
     if (req.file) {
       try {
         if (existingReport.cloudinaryId) {
           await cloudinary.uploader.destroy(existingReport.cloudinaryId);
         }
         const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: CLOUDINARY_FOLDER,
+          folder: "report",
         });
         data.image = result.secure_url;
         data.cloudinaryId = result.public_id;
-        await fs.unlink(req.file.path);
+        try {
+          //note:delete temp file
+          await fs.unlink(req.file.path);
+          console.log("temp File deleted successfully");
+        } catch (err) {
+          console.error("Error deleting temp file:", err);
+        }
       } catch (error) {
         return res.status(400).json({
           success: false,
@@ -207,87 +294,90 @@ exports.updateReport = async (req, res) => {
       { $set: updates },
       { new: true, runValidators: true }
     );
-    //todo:test create two incidents of the same type and location and then change the type of one of them
-    if (data.type) {
-      const disasterType = data.type; // TODO: Validate disasterType
 
-      if (updatedReport.incident) {
-        const incident = await Incident.findById(updatedReport.incident);
-        if (incident && incident.type !== disasterType) {
-          // Type mismatch: Unlink from current incident
-          incident.reports = incident.reports.filter(
-            (reportId) => String(reportId) !== String(updatedReport._id)
-          );
-          await incident.save();
-          updatedReport.incident = null;
-          await updatedReport.save();
+    if (updatedReport.incident) {
+      const incident = await Incident.findById(updatedReport.incident);
+      if (incident && incident.type !== data.type) {
+        // Type mismatch: Unlink from current incident
+        incident.reports = incident.reports.filter(
+          (reportId) => String(reportId) !== String(updatedReport._id)
+        );
+        await incident.save();
+        updatedReport.incident = null;
+        await updatedReport.save();
 
-          // Find matching incident
-          const matchingIncidents = await Incident.find({
-            type: disasterType,
-            status: "pending",
-            location: {
-              $near: {
-                $geometry: existingReport.location,
-                $maxDistance: MAX_DISTANCE,
-              },
-            },
-          }).limit(1);
-
-          if (matchingIncidents.length > 0) {
-            const newIncident = matchingIncidents[0];
-            newIncident.reports.push(updatedReport._id);
-            await newIncident.save();
-            updatedReport.incident = newIncident._id;
-            await updatedReport.save();
-          } else {
-            const newIncident = new Incident({
-              type: disasterType,
-              title: data.title || updatedReport.title,
-              description: `Auto-generated from report: ${
-                data.description || updatedReport.description
-              }`,
-              location: existingReport.location,
-              status: "active",
-              reports: [updatedReport._id],
-            });
-            await newIncident.save();
-            updatedReport.incident = newIncident._id;
-            await updatedReport.save();
-          }
-        }
-      } else {
-        // No incident: Find or create one
+        // Find matching incident
+        const normalizedType = data.type
+          .trim()
+          .replace(/\s+/g, " ")
+          .toLowerCase();
+        const max_distance = distanceMap[normalizedType] || 1000;
         const matchingIncidents = await Incident.find({
           type: disasterType,
-          status: "active",
+          status: "pending",
           location: {
             $near: {
               $geometry: existingReport.location,
-              $maxDistance: MAX_DISTANCE,
+              $maxDistance: max_distance,
             },
           },
         }).limit(1);
 
         if (matchingIncidents.length > 0) {
-          const incident = matchingIncidents[0];
-          incident.reports.push(updatedReport._id);
-          await incident.save();
-          updatedReport.incident = incident._id;
+          const newIncident = matchingIncidents[0];
+          newIncident.reports.push(updatedReport._id);
+          await newIncident.save();
+          updatedReport.incident = newIncident._id;
           await updatedReport.save();
         } else {
           const newIncident = new Incident({
-            type: disasterType,
+            type: data.type || updatedReport.type,
             title: data.title || updatedReport.title,
-            description: data.description || updatedReport.description,
+            description: `Auto-generated from report: ${
+              data.description || updatedReport.description
+            }`,
             location: existingReport.location,
-            status: "active",
             reports: [updatedReport._id],
           });
           await newIncident.save();
           updatedReport.incident = newIncident._id;
           await updatedReport.save();
         }
+      }
+    } else {
+      // No incident: Find or create one
+      const normalizedType = data.type
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLowerCase();
+      const max_distance = distanceMap[normalizedType] || 1000;
+      const matchingIncidents = await Incident.find({
+        type: data.type,
+        location: {
+          $near: {
+            $geometry: existingReport.location,
+            $maxDistance: max_distance,
+          },
+        },
+      }).limit(1);
+
+      if (matchingIncidents.length > 0) {
+        const incident = matchingIncidents[0];
+        incident.reports.push(updatedReport._id);
+        await incident.save();
+        updatedReport.incident = incident._id;
+        await updatedReport.save();
+      } else {
+        const newIncident = new Incident({
+          type: data.type || updatedReport.type,
+          title: data.title || updatedReport.title,
+          description: data.description || updatedReport.description,
+          location: existingReport.location,
+          reports: [updatedReport._id],
+        });
+        await newIncident.save();
+        updatedReport.incident = newIncident._id;
+        await updatedReport.save();
       }
     }
 
@@ -311,10 +401,10 @@ exports.getAllReports = async (req, res) => {
     const searchFilter = search
       ? {
           $or: [
-            { title: { $regex: search, $options: i } },
-            { status: { $regex: search, $options: i } },
-            { type: { $regex: search, $options: i } },
-            { date: { $regex: search, $options: i } },
+            { title: { $regex: search, $options: "i" } },
+            { status: { $regex: search, $options: "i" } },
+            { type: { $regex: search, $options: "i" } },
+            { date: { $regex: search, $options: "i" } },
           ],
         }
       : {};
@@ -327,7 +417,7 @@ exports.getAllReports = async (req, res) => {
     res.status(200).json({
       success: true,
       page: parseInt(page),
-      count: await Report.countDocuments(),
+      totalCount: await Report.countDocuments(),
       data: reports,
     });
   } catch (error) {
@@ -376,6 +466,13 @@ exports.deleteReport = async (req, res) => {
         error: "document not found",
       });
     }
+    if (report.cloudinaryId) {
+      try {
+        await cloudinary.uploader.destroy(report.cloudinaryId);
+      } catch (error) {
+        console.error("Cloudinary deletion error:", error);
+      }
+    }
 
     // Remove report ID from the associated Incident's reports array
     await Incident.findByIdAndUpdate(
@@ -400,6 +497,7 @@ exports.deleteAllReports = async (req, res) => {
   try {
     const result = await Report.deleteMany({});
     await Incident.deleteMany({});
+    await cloudinary.api.delete_resources_by_prefix("report"); //todo use this in every delete-all
     res.status(200).json({
       success: true,
       message: "All reports deleted successfully",

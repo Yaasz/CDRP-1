@@ -9,7 +9,7 @@ const {
   getOrganization,
   updateOrganization,
   deleteOrganization,
-  getOrganizationsByRole,
+  verify,
   deleteAll,
   login,
 } = require("../controllers/organizationController");
@@ -31,6 +31,7 @@ router
     upload.single("image"),
     updateOrganization
   )
+  .patch(authToken, authRoles("admin"), verify)
   .delete(
     authToken,
     authRoles("charity", "government", "admin"),

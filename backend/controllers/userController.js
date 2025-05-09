@@ -10,8 +10,7 @@ const fs = require("fs").promises;
 exports.createUser = async (req, res) => {
   try {
     const data = { ...req.body };
-    console.log(data);
-    //todo:check for existing phone number
+    //console.log(data);
     const existingEmail = await User.findOne({ email: data.email });
     if (existingEmail) {
       return res.status(400).json({
@@ -90,7 +89,8 @@ exports.getAllUsers = async (req, res) => {
       success: true,
       message: "all users",
       page: parseInt(page),
-      count: await User.countDocuments(),
+      totalCount: await User.countDocuments(),
+      searchCount: await User.countDocuments(searchFilter),
       data: users,
     });
   } catch (error) {
@@ -304,6 +304,7 @@ exports.login = async (req, res) => {
       message: "Login successful",
       token,
       user: {
+        id: user._id,
         full_name: user.firstName + " " + user.lastName,
         email: user.email,
         phone: user.phone,

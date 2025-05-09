@@ -37,10 +37,22 @@ const reportSchema = new mongoose.Schema(
       minlength: [4, "description must be at least 4 characters "],
       maxlength: [300, "description too long"],
     },
-    image: {
-      type: String, // URL of the image uploaded with the report
-      default: "",
-    },
+    image: [
+      {
+        url: {
+          type: String, // URL of the image uploaded with the report
+          required: false,
+          validate: {
+            validator: validator.isURL,
+            message: "image must be a valid URL",
+          },
+        },
+        cloudinaryId: {
+          type: String, // Public ID of the image in the cloud storage
+          required: false,
+        },
+      },
+    ],
     location: {
       type: {
         type: String,

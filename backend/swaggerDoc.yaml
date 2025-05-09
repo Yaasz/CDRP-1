@@ -18,7 +18,6 @@ components:
       required:
         - title
         - description
-        - charities
       properties:
         title:
           type: string
@@ -32,17 +31,8 @@ components:
         charities:
           type: array
           items:
-            type: object
-            required:
-              - charity
-            properties:
-              charity:
-                type: string
-                format: objectId
-              response:
-                type: string
-                enum: [Pending, Accepted, Rejected]
-                default: Pending
+            type: string
+            format: objectId
         createdAt:
           type: string
           format: date-time
@@ -157,7 +147,7 @@ components:
           format: objectId
           nullable: true
         duration:
-          type: Integer
+          type: integer
         title:
           type: string
           minLength: 4
@@ -190,13 +180,13 @@ components:
       type: object
       required:
         - title
-        - content
+        - description
       properties:
         title:
           type: string
           minLength: 4
           pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
-        content:
+        description:
           type: string
           minLength: 4
           maxLength: 300
@@ -218,7 +208,6 @@ components:
         - phone
         - password
         - role
-        - taxId
       properties:
         name:
           type: string
@@ -244,6 +233,13 @@ components:
           type: string
           enum: [charity, government]
           default: charity
+        isVerified:
+          type: boolean
+          default: false
+        status:
+          type: string
+          enum: [pending, active]
+          default: pending
         createdAt:
           type: string
           format: date-time
@@ -296,7 +292,6 @@ components:
       required:
         - type
         - description
-        - location
       properties:
         type:
           type: string
@@ -312,8 +307,15 @@ components:
           maxLength: 300
           pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
         image:
-          type: string
-          default: ""
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: uri
+              cloudinaryId:
+                type: string
         location:
           type: object
           required:
@@ -332,7 +334,6 @@ components:
         reportedBy:
           type: string
           format: objectId
-          nullable: true
         incident:
           type: string
           format: objectId
@@ -346,10 +347,97 @@ components:
     Error:
       type: object
       properties:
+        success:
+          type: boolean
         message:
           type: string
-        status:
+        error:
+          type: string
+    PaginatedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        count:
           type: integer
+        page:
+          type: integer
+        data:
+          type: array
+          items:
+            type: object
+    PaginatedAnnouncementResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Announcement"
+    PaginatedIncidentResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Incident"
+    PaginatedUserResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/User"
+    PaginatedCharityAdResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/CharityAd"
+    PaginatedNewsResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/News"
+    PaginatedOrganizationResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Organization"
+    PaginatedVolunteerResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Volunteer"
+    PaginatedReportResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Report"
 paths:
   /announcement:
     get:
@@ -358,22 +446,49 @@ paths:
         - Announcements
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches title)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
       responses:
         "200":
           description: List of announcements
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Announcement"
+                $ref: "#/components/schemas/PaginatedAnnouncementResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin or charity role
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin or charity role with verification
     post:
       summary: Create a new announcement
       tags:
@@ -385,14 +500,45 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Announcement"
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 300
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                charities:
+                  type: array
+                  items:
+                    type: string
+                    format: objectId
+              required:
+                - title
+                - description
       responses:
         "201":
           description: Announcement created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Announcement"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Announcement"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -426,7 +572,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Announcement"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Announcement"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -457,14 +616,42 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Announcement"
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 300
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                charities:
+                  type: array
+                  items:
+                    type: string
+                    format: objectId
       responses:
         "200":
           description: Announcement updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Announcement"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Announcement"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -498,8 +685,23 @@ paths:
             type: string
             format: objectId
       responses:
-        "204":
+        "200":
           description: Announcement deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -526,15 +728,36 @@ paths:
         - CharityAds
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches title, status, or charity)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
       responses:
         "200":
           description: List of charity ads
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CharityAd"
+                $ref: "#/components/schemas/PaginatedCharityAdResponse"
         "401":
           description: Unauthorized
           content:
@@ -571,7 +794,7 @@ paths:
                 description:
                   type: string
                   minLength: 4
-                  maxLength: 300
+                  maxLength: 1000
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
                 image:
                   type: string
@@ -590,7 +813,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharityAd"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  response:
+                    $ref: "#/components/schemas/CharityAd"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -603,7 +839,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires charity role
+      description: Requires charity role with verification
     delete:
       summary: Delete all charity ads
       tags:
@@ -611,8 +847,19 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "204":
+        "200":
           description: All charity ads deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -646,7 +893,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharityAd"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/CharityAd"
         "401":
           description: Unauthorized
           content:
@@ -691,10 +943,12 @@ paths:
                   minLength: 4
                   maxLength: 50
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                duration:
+                  type: integer
                 description:
                   type: string
                   minLength: 4
-                  maxLength: 300
+                  maxLength: 1000
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
                 image:
                   type: string
@@ -712,7 +966,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharityAd"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/CharityAd"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -731,7 +998,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires charity role
+      description: Requires charity role with verification
     delete:
       summary: Delete a charity ad
       tags:
@@ -746,8 +1013,17 @@ paths:
             type: string
             format: objectId
       responses:
-        "204":
+        "200":
           description: Charity ad deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
         "401":
           description: Unauthorized
           content:
@@ -766,7 +1042,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires charity role
+      description: Requires charity role with verification
   /incidents:
     get:
       summary: Get all incidents
@@ -774,15 +1050,36 @@ paths:
         - Incidents
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches title, status, type, or date)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
       responses:
         "200":
           description: List of incidents
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Incident"
+                $ref: "#/components/schemas/PaginatedIncidentResponse"
         "401":
           description: Unauthorized
           content:
@@ -803,8 +1100,19 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "204":
+        "200":
           description: All incidents deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -838,7 +1146,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Incident"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/Incident"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -866,8 +1185,23 @@ paths:
             type: string
             format: objectId
       responses:
-        "204":
+        "200":
           description: Incident deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -894,15 +1228,36 @@ paths:
         - News
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches title)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
       responses:
         "200":
           description: List of news
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/News"
+                $ref: "#/components/schemas/PaginatedNewsResponse"
         "401":
           description: Unauthorized
           content:
@@ -926,7 +1281,7 @@ paths:
                   type: string
                   minLength: 4
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
-                content:
+                description:
                   type: string
                   minLength: 4
                   maxLength: 300
@@ -936,14 +1291,27 @@ paths:
                   format: binary
               required:
                 - title
-                - content
+                - description
       responses:
         "201":
           description: News item created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/News"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/News"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -964,8 +1332,19 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "204":
+        "200":
           description: All news deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -999,7 +1378,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/News"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/News"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1036,7 +1428,7 @@ paths:
                   type: string
                   minLength: 4
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
-                content:
+                description:
                   type: string
                   minLength: 4
                   maxLength: 300
@@ -1044,16 +1436,26 @@ paths:
                 image:
                   type: string
                   format: binary
-              required:
-                - title
-                - content
       responses:
         "200":
           description: News item updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/News"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/News"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1097,7 +1499,7 @@ paths:
                   type: string
                   minLength: 4
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
-                content:
+                description:
                   type: string
                   minLength: 4
                   maxLength: 300
@@ -1111,7 +1513,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/News"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/News"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1145,8 +1560,23 @@ paths:
             type: string
             format: objectId
       responses:
-        "204":
+        "200":
           description: News item deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1173,15 +1603,36 @@ paths:
         - Volunteers
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches fullName, sex, expertise, or contribution)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
       responses:
         "200":
           description: List of volunteers
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Volunteer"
+                $ref: "#/components/schemas/PaginatedVolunteerResponse"
         "401":
           description: Unauthorized
           content:
@@ -1206,14 +1657,60 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Volunteer"
+              type: object
+              properties:
+                user:
+                  type: string
+                  format: objectId
+                fullName:
+                  type: string
+                  minLength: 5
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                sex:
+                  type: string
+                  enum: [male, female]
+                age:
+                  type: integer
+                  minimum: 1
+                  maximum: 120
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                  pattern: ^\+?[1-9]\d{1,14}$
+                expertise:
+                  type: string
+                contribution:
+                  type: string
+              required:
+                - user
+                - fullName
+                - age
+                - email
+                - phone
+                - expertise
+                - contribution
       responses:
         "201":
           description: Volunteer registered
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Volunteer"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Volunteer"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1234,8 +1731,19 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "204":
+        "200":
           description: All volunteers deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -1269,7 +1777,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Volunteer"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Volunteer"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1283,7 +1804,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       description: Requires user or charity role
-    post:
+    put:
       summary: Update a volunteer
       tags:
         - Volunteers
@@ -1301,14 +1822,49 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Volunteer"
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  minLength: 5
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                sex:
+                  type: string
+                  enum: [male, female]
+                age:
+                  type: integer
+                  minimum: 1
+                  maximum: 120
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                  pattern: ^\+?[1-9]\d{1,14}$
+                expertise:
+                  type: string
+                contribution:
+                  type: string
       responses:
         "200":
           description: Volunteer updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Volunteer"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Volunteer"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1342,8 +1898,23 @@ paths:
             type: string
             format: objectId
       responses:
-        "204":
+        "200":
           description: Volunteer deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1370,15 +1941,36 @@ paths:
         - Organizations
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches name or role)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
       responses:
         "200":
           description: List of organizations
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Organization"
+                $ref: "#/components/schemas/PaginatedOrganizationResponse"
         "401":
           description: Unauthorized
           content:
@@ -1403,7 +1995,7 @@ paths:
             schema:
               type: object
               properties:
-                organizationName:
+                name:
                   type: string
                   minLength: 5
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
@@ -1434,14 +2026,20 @@ paths:
                 - phone
                 - password
                 - role
-                - taxId
       responses:
         "201":
           description: Organization created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Organization"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Organization"
         "400":
           description: Bad request
           content:
@@ -1455,8 +2053,19 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "204":
+        "200":
           description: All organizations deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -1482,12 +2091,12 @@ paths:
             schema:
               type: object
               properties:
-                email:
-                  identifier: string
+                identifier:
+                  type: string
                 password:
                   type: string
               required:
-                - email
+                - identifier
                 - password
       responses:
         "200":
@@ -1497,8 +2106,25 @@ paths:
               schema:
                 type: object
                 properties:
+                  success:
+                    type: boolean
                   token:
                     type: string
+                  data:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      phone:
+                        type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1525,7 +2151,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Organization"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/Organization"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1569,6 +2206,8 @@ paths:
                   type: string
                 password:
                   type: string
+                taxId:
+                  type: string
                 image:
                   type: string
                   format: binary
@@ -1580,19 +2219,26 @@ paths:
                 role:
                   type: string
                   enum: [charity, government]
-              required:
-                - name
-                - email
-                - phone
-                - password
-                - role
       responses:
         "200":
           description: Organization updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Organization"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Organization"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1612,6 +2258,56 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       description: Requires charity or government role
+    patch:
+      summary: Verify an organization
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: Organization verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin role
     delete:
       summary: Delete an organization
       tags:
@@ -1626,8 +2322,23 @@ paths:
             type: string
             format: objectId
       responses:
-        "204":
+        "200":
           description: Organization deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1654,15 +2365,36 @@ paths:
         - Reports
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches title, status, type, or date)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
       responses:
         "200":
           description: List of reports
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Report"
+                $ref: "#/components/schemas/PaginatedReportResponse"
         "401":
           description: Unauthorized
           content:
@@ -1693,52 +2425,84 @@ paths:
                   type: string
                   minLength: 4
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Type of disaster (e.g., wild fire, earth quake)
                 title:
                   type: string
                   minLength: 10
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Title of the report (optional)
                 description:
                   type: string
                   minLength: 4
                   maxLength: 300
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Description of the report
                 image:
-                  type: string
-                  format: binary
-                location:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                      enum: [Point]
-                    coordinates:
-                      type: array
-                      items:
-                        type: number
-                      minItems: 2
-                      maxItems: 2
-                  required:
-                    - type
-                    - coordinates
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Up to 10 image files for the report
+                longitude:
+                  type: number
+                  description: Longitude of the report location
+                latitude:
+                  type: number
+                  description: Latitude of the report location
                 reportedBy:
                   type: string
                   format: objectId
-                  nullable: true
+                  description: ID of the user reporting the incident
                 incident:
                   type: string
                   format: objectId
                   nullable: true
+                  description: Associated incident ID (optional)
               required:
                 - type
                 - description
-                - location
+                - longitude
+                - latitude
+                - reportedBy
       responses:
         "201":
           description: Report created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Report"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Report"
+                  incident:
+                    oneOf:
+                      - type: object
+                        properties:
+                          id:
+                            type: string
+                            format: objectId
+                          status:
+                            type: string
+                          reportCount:
+                            type: integer
+                        description: Existing incident
+                      - type: object
+                        properties:
+                          type:
+                            type: string
+                          status:
+                            type: string
+                        description: New incident
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1759,8 +2523,19 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "204":
+        "200":
           description: All reports deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  deletedCount:
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -1794,7 +2569,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Report"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Report"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1831,52 +2619,53 @@ paths:
                   type: string
                   minLength: 4
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Type of disaster (e.g., wild fire, earth quake)
                 title:
                   type: string
                   minLength: 10
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Title of the report (optional)
                 description:
                   type: string
                   minLength: 4
                   maxLength: 300
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Description of the report
                 image:
-                  type: string
-                  format: binary
-                location:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                      enum: [Point]
-                    coordinates:
-                      type: array
-                      items:
-                        type: number
-                      minItems: 2
-                      maxItems: 2
-                  required:
-                    - type
-                    - coordinates
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Up to 10 image files to replace or add to the report
                 reportedBy:
                   type: string
                   format: objectId
-                  nullable: true
+                  description: ID of the user updating the report
                 incident:
                   type: string
                   format: objectId
                   nullable: true
-              required:
-                - type
-                - description
-                - location
+                  description: Associated incident ID (optional)
       responses:
         "200":
           description: Report updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Report"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Report"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1910,8 +2699,23 @@ paths:
             type: string
             format: objectId
       responses:
-        "204":
+        "200":
           description: Report deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1938,21 +2742,49 @@ paths:
         - Users
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches firstName, lastName, or role)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
       responses:
         "200":
           description: List of users
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/PaginatedUserResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin role
     post:
       summary: Create a new user
       tags:
@@ -1999,7 +2831,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
         "400":
           description: Bad request
           content:
@@ -2013,8 +2852,19 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "204":
+        "200":
           description: All users deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -2045,7 +2895,7 @@ paths:
                 password:
                   type: string
               required:
-                - email
+                - identifier
                 - password
       responses:
         "200":
@@ -2055,8 +2905,30 @@ paths:
               schema:
                 type: object
                 properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
                   token:
                     type: string
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: objectId
+                      full_name:
+                        type: string
+                      email:
+                        type: string
+                      phone:
+                        type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -2083,7 +2955,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -2131,26 +3016,29 @@ paths:
                   type: string
                 password:
                   type: string
-                role:
-                  type: string
-                  enum: [user, admin]
                 image:
                   type: string
                   format: binary
-              required:
-                - firstName
-                - lastName
-                - email
-                - phone
-                - password
-                - role
       responses:
         "200":
           description: User updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -2184,8 +3072,23 @@ paths:
             type: string
             format: objectId
       responses:
-        "204":
+        "200":
           description: User deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:

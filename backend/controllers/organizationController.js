@@ -78,8 +78,8 @@ exports.getAllOrganizations = async (req, res) => {
     const searchFilter = search
       ? {
           $or: [
-            { name: { $regex: search, $options: i } },
-            { role: { $regex: search, $options: i } },
+            { name: { $regex: search, $options: "i" } },
+            { role: { $regex: search, $options: "i" } },
           ],
         }
       : {};
@@ -88,7 +88,8 @@ exports.getAllOrganizations = async (req, res) => {
       .limit(parseInt(limit));
     res.status(200).json({
       success: true,
-      count: await Organization.countDocuments(), //todo:check if there is a way to access the tot count in db
+      totalCount: await Organization.countDocuments(),
+      searchCount: await Organization.countDocuments(searchFilter),
       data: organizations,
       page: parseInt(page),
     });
@@ -183,7 +184,6 @@ exports.updateOrganization = async (req, res) => {
     } else {
       data.image = exists.image;
       data.cloudinaryId = exists.cloudinaryId;
-      await fs.unlink(req.file.path);
     }
     const organization = await Organization.findByIdAndUpdate(id, data, {
       new: true,
@@ -217,6 +217,13 @@ exports.deleteOrganization = async (req, res) => {
       });
     }
 
+    if (organization.cloudinaryId) {
+      try {
+        await cloudinary.uploader.destroy(organization.cloudinaryId);
+      } catch (error) {
+        console.error("Error deleting image from Cloudinary:", error);
+      }
+    }
     res.status(200).json({
       success: true,
       message: "Organization deleted successfully",
