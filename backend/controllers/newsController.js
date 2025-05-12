@@ -1,6 +1,5 @@
 const News = require("../models/newsModel");
 const cloudinary = require("../config/cloudinary");
-const { count } = require("console");
 
 const fs = require("fs").promises;
 
@@ -9,15 +8,37 @@ exports.createNews = async (req, res) => {
   //upload.single("image") // removed and put in the router
   try {
     const data = { ...req.body };
-    if (req.file) {
-      //upload
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "news",
+    if (!data.incident) {
+      return res.status(400).json({
+        success: false,
+        message: "news must be about incident",
+        error: "incident is required",
       });
-      data.image = result.secure_url;
-      data.cloudinaryId = result.public_id;
-      await fs.unlink(req.file.path);
     }
+    if (!data.title || data.description) {
+      return res.status(400).json({
+        success: false,
+        message: "title and description are required",
+        error: "missing fields",
+      });
+    }
+    if (!data.images.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "news must have at least one image",
+        error: "missing fields",
+      });
+    }
+    const images = data.images;
+    images.map((img) => {
+      if (!img.url || !img.cloudinaryId) {
+        return res.status(400).json({
+          success: false,
+          message: "image must be url and cloudinaryId ",
+          error: "missing fields",
+        });
+      }
+    });
     console.log("data", data);
     const newsAnnouncement = new News(data);
 

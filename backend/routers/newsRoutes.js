@@ -9,21 +9,20 @@ const {
   getNews,
   updateNews,
   deleteNews,
-  getNewsByIncident,
   deleteAll,
 } = require("../controllers/newsController");
 
 router
   .route("/")
   .get(authToken, getAllNews)
-  .post(authToken, authRoles("government"), upload.single("image"), createNews)
+  .post(authToken, authRoles("government"), createNews)
   .delete(authToken, authRoles("admin", "government"), deleteAll);
 
 router
   .route("/:id")
   .get(authToken, getNews)
   .delete(authToken, authRoles("government", "admin"), deleteNews)
-  .put(authToken, authRoles("government"), upload.single("image"), updateNews)
+  .put(authToken, authRoles("government"), updateNews)
   .patch(
     authToken,
     authRoles("government"),

@@ -22,7 +22,7 @@ router
 router
   .route("/:id")
   .get(authToken, getReportById)
-  .put(authToken, authRoles("user"), upload.single("image"), updateReport)
+  .put(authToken, authRoles("user"), upload.array("image", 10), updateReport)
   .delete(authToken, authRoles("user", "admin"), deleteReport);
 
 module.exports = router;

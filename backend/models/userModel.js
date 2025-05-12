@@ -40,6 +40,11 @@ const UserSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      //note: this is commented out to allow for easier testing of the password field
+      /*validate:{
+        validator:validator.isStrongPassword,
+        message: "password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one symbol",
+      }*/
     },
     role: {
       type: String,
@@ -52,7 +57,7 @@ const UserSchema = new mongoose.Schema(
       required: false,
       validate: {
         validator: function (value) {
-          return validator.isURL(value);
+          return !value || validator.isURL(value); //note:allows empty string for image or valid URL
         },
         message: "image must be a valid URL",
       },

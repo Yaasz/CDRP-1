@@ -46,7 +46,7 @@ const organizationSchema = new mongoose.Schema(
       required: false,
       validate: {
         validator: function (value) {
-          return validator.isURL(value);
+          return !value || validator.isURL(value);
         },
         message: "image must be a valid URL",
       },

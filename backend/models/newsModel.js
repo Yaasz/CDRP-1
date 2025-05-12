@@ -26,19 +26,28 @@ const newsSchema = new mongoose.Schema(
       minlength: [4, "description must be at least 4 characters "],
       maxlength: [1000, "description too long"],
     },
-    image: {
-      type: String, // URL of the image for the news announcement
-      required: false,
-      validate: {
-        validator: function (value) {
-          return validator.isURL(value);
+    images: [
+      {
+        url: {
+          type: String,
+          required: false,
+          validate: {
+            validator: function (value) {
+              return !value || validator.isURL(value);
+            },
+            message: "Image must be a valid URL",
+          },
         },
-        message: "image must be a valid URL",
+        cloudinaryId: {
+          type: String,
+          required: false,
+        },
       },
-    },
-    cloudinaryId: {
-      type: String,
-      required: false,
+    ],
+    incident: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Incident",
+      required: true,
     },
   },
   { timestamps: true }

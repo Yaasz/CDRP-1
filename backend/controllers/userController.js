@@ -45,16 +45,21 @@ exports.createUser = async (req, res) => {
         });
       }
     }
-    console.log(data);
     const user = new User(data);
-
     const savedUser = await user.save();
-    //cleanup local temp file
-
+    const token = await jwt.sign(
+      { id: savedUser._id, role: savedUser.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+    console.log("saved user", savedUser);
     res.status(201).json({
       success: true,
       message: "registered successfully",
       data: savedUser,
+      token: token,
     });
   } catch (error) {
     res.status(500).json({

@@ -57,10 +57,18 @@ exports.createOrganization = async (req, res) => {
     const organization = new Organization(data);
 
     const savedOrganization = await organization.save();
+    const token = await jwt.sign(
+      { id: savedOrganization._id, role: savedOrganization.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
     res.status(201).json({
       success: true,
       message: "Organization created successfully",
       data: savedOrganization,
+      token: token,
     });
   } catch (error) {
     res.status(500).json({

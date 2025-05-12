@@ -256,27 +256,38 @@ exports.updateReport = async (req, res) => {
         });
       }
     }
-    if (req.file) {
+    if (req.files && req.files.length > 0) {
+      const files = req.files;
+      data.image = [];
+      console.log("files", files);
       try {
-        if (existingReport.cloudinaryId) {
-          await cloudinary.uploader.destroy(existingReport.cloudinaryId);
+        if (existingReport.image.length > 0) {
+          for (const image of existingReport.image) {
+            await cloudinary.uploader.destroy(image.cloudinaryId);
+          }
         }
-        const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: "report",
-        });
-        data.image = result.secure_url;
-        data.cloudinaryId = result.public_id;
-        try {
-          //note:delete temp file
-          await fs.unlink(req.file.path);
-          console.log("temp File deleted successfully");
-        } catch (err) {
-          console.error("Error deleting temp file:", err);
+        for (const file of files) {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: "report",
+          });
+          console.log("data", data);
+
+          data.image.push({
+            url: result.secure_url,
+            cloudinaryId: result.public_id,
+          });
+          try {
+            //note:delete temp file
+            await fs.unlink(file.path);
+            console.log("temp File deleted successfully");
+          } catch (error) {
+            console.error("Error deleting temp file:", error);
+          }
         }
       } catch (error) {
         return res.status(400).json({
           success: false,
-          message: "Image upload failed",
+          message: "image upload failed",
           error: error.message,
         });
       }

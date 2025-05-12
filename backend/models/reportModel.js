@@ -43,7 +43,9 @@ const reportSchema = new mongoose.Schema(
           type: String, // URL of the image uploaded with the report
           required: false,
           validate: {
-            validator: validator.isURL,
+            validator: function (value) {
+              return !value || validator.isURL(value);
+            },
             message: "image must be a valid URL",
           },
         },
