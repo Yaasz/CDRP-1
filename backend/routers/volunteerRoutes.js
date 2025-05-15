@@ -21,7 +21,7 @@ router
 router
   .route("/:id")
   .get(authToken, authRoles("user", "charity"), getVolunteer)
-  .post(authToken, authRoles("user"), updateVolunteer)
+  .put(authToken, authRoles("user"), updateVolunteer)
   .delete(authToken, authRoles("user"), deleteVolunteer);
 
 module.exports = router;

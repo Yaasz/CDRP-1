@@ -1,4 +1,5 @@
 const Volunteer = require("../models/volunteerModel");
+const mongoose = require("mongoose");
 const CharityAd = require("../models/charityadModel");
 const User = require("../models/userModel");
 //create a volunteer
@@ -6,7 +7,14 @@ const registerVolunteer = async (req, res) => {
   const data = { ...req.body };
 
   try {
-    const charityAd = await CharityAd.findById(charityAdId);
+    if (!data.charityAdId) {
+      return res.status(400).json({
+        success: false,
+        message: "volunteer can only register to a charity ad",
+        error: "missing field",
+      });
+    }
+    const charityAd = await CharityAd.findById(data.charityAdId);
     if (!charityAd) {
       // If CharityAd not found, delete the volunteer and return error
       return res.status(404).json({
@@ -27,7 +35,7 @@ const registerVolunteer = async (req, res) => {
     }
     // Create new volunteer
     const volunteer = new Volunteer(data);
-    await volunteer.save();
+    const saved = await volunteer.save();
 
     // Link volunteer to CharityAd
 
@@ -37,7 +45,7 @@ const registerVolunteer = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Volunteer registered successfully",
-      data: volunteer,
+      data: saved,
     });
   } catch (error) {
     res.status(500).json({
@@ -52,6 +60,13 @@ const getVolunteer = async (req, res) => {
   const { id } = req.params;
 
   try {
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid volunteer id",
+        error: "invalid id",
+      });
+    }
     const volunteer = await Volunteer.findById(id);
     if (!volunteer) {
       return res.status(404).json({
@@ -79,6 +94,13 @@ const updateVolunteer = async (req, res) => {
   const data = { ...req.body };
 
   try {
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid volunteer id",
+        error: "invalid id",
+      });
+    }
     const volunteer = await Volunteer.findById(id);
     if (!volunteer) {
       return res.status(404).json({
@@ -87,14 +109,18 @@ const updateVolunteer = async (req, res) => {
         error: "document not found",
       });
     }
-
+    const charityAd = await CharityAd.find({ _id: charityAdId });
     if (
       (data.phone && data.phone !== volunteer.phone) ||
       (data.email && data.email !== volunteer.email)
     ) {
-      const existingVolunteer = await Volunteer.findOne({
+      const volunteer = await Volunteer.findOne({
         $or: [{ phone: data.phone }, { email: data.email }],
       });
+
+      const existingVolunteer = volunteer
+        ? charityAd.volunteers.some((id) => id.equals(volunteer._id))
+        : false;
       if (existingVolunteer) {
         return res.status(400).json({
           success: false,
@@ -104,19 +130,16 @@ const updateVolunteer = async (req, res) => {
       }
     }
 
-    volunteer.fullName = data.fullName || volunteer.fullName;
-    volunteer.sex = data.sex || volunteer.sex;
-    volunteer.age = data.age || volunteer.age;
-    volunteer.email = email || volunteer.email;
-    volunteer.phone = phone || volunteer.phone;
-    volunteer.expertise = expertise || volunteer.expertise;
-    volunteer.contribution = contribution || volunteer.contribution;
-    await volunteer.save();
+    const updatedVolunteer = await Volunteer.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { new: true, runValidators: true }
+    );
 
     res.status(200).json({
       success: true,
       message: "Volunteer updated successfully",
-      data: volunteer,
+      data: updatedVolunteer,
     });
   } catch (error) {
     res.status(500).json({
@@ -132,6 +155,13 @@ const deleteVolunteer = async (req, res) => {
   const { id } = req.params;
 
   try {
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid volunteer id",
+        error: "invalid id",
+      });
+    }
     const volunteer = await Volunteer.findById(id);
     if (!volunteer) {
       return res.status(404).json({ message: "Volunteer not found" });
@@ -197,6 +227,12 @@ const getAllVolunteers = async (req, res) => {
 const deleteAllVolunteers = async (req, res) => {
   try {
     const result = await Volunteer.deleteMany({});
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No volunteers found to delete",
+      });
+    }
     res.status(200).json({
       success: true,
       message: "All reports deleted successfully",

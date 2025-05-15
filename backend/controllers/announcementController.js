@@ -10,6 +10,13 @@ const createAnnouncement = async (req, res) => {
     if (!description) {
       empty.push("description");
     }
+    if (!charities && charities.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "announcement must be for charity",
+        error: "missing fields",
+      });
+    }
 
     if (empty.length > 0) {
       return res.status(400).json({
@@ -67,7 +74,13 @@ const getAnnouncementById = async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid announcement ID" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Invalid announcement ID",
+          error: "invalid param",
+        });
     }
     const announcement = await Announcement.findById(id);
     if (!announcement) {

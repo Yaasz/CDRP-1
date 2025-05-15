@@ -17,11 +17,11 @@ const CharityAdSchema = new mongoose.Schema(
           "The referenced organization must have organizationType 'charity'.",
       },
     },
-    incident: {
+    /*incident: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "incident",
       required: false,
-    }, //todo remove this to enable ads unrelated to incidents
+    }, */
     title: {
       type: String,
       required: true,
@@ -35,7 +35,6 @@ const CharityAdSchema = new mongoose.Schema(
       minlength: [4, "title must be at least 4 characters "],
       maxlength: [50, "title too long"],
     },
-
     image: {
       type: String,
       required: false,
@@ -82,7 +81,30 @@ const CharityAdSchema = new mongoose.Schema(
     expiresAt: {
       type: Date,
       required: true,
+      default: function () {
+        return new Date(Date.now() + this.duration);
+      },
     },
+    categories: [
+      {
+        type: String,
+        required: false,
+      },
+    ],
+    requirements: [
+      {
+        location: {
+          type: String,
+          required: false,
+        },
+        skills: [
+          {
+            type: String,
+            required: false,
+          },
+        ],
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -25,18 +25,17 @@ router.post("/login", upload.none(), login);
 router
   .route("/:id")
   .get(authToken, getOrganization)
-  .put(
+  .patch(
     authToken,
     authRoles("charity", "government"),
     upload.single("image"),
     updateOrganization
   )
-  .patch(authToken, authRoles("admin"), verify)
   .delete(
     authToken,
     authRoles("charity", "government", "admin"),
     deleteOrganization
   );
+router.route("/verify/:id").patch(authToken, authRoles("admin"), verify);
 
 module.exports = router;
-//delete the fetch org by role make the functionality by search query

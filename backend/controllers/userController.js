@@ -1,5 +1,5 @@
 const User = require("../models/userModel");
-const Report = require("../models/reportModel"); //usage commented out
+const mongoose = require("mongoose");
 const Volunteer = require("../models/volunteerModel");
 const cloudinary = require("../config/cloudinary");
 const bcrypt = require("bcrypt");
@@ -38,7 +38,7 @@ exports.createUser = async (req, res) => {
           "failed to upload user image to cloudinary",
           error.message
         );
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: "failed to upload image. try again later",
           error: error.message,
@@ -74,7 +74,6 @@ exports.createUser = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const { page = 1, limit = 5, search = "" } = req.query;
-    console.log(search);
     const searchFilter = search
       ? {
           $or: [
@@ -84,7 +83,6 @@ exports.getAllUsers = async (req, res) => {
           ],
         }
       : {};
-    console.log("search filter", JSON.stringify(searchFilter, null, 2));
     const users = await User.find(searchFilter)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -138,8 +136,22 @@ exports.getUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
+    if (mongoose.type.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+        error: "invalid param",
+      });
+    }
     const user = await User.findById(id);
     const data = { ...req.body };
+    if (req.user.id.toString() !== id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "you can only update your profile",
+        error: "unauthorized access",
+      });
+    }
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -167,11 +179,6 @@ exports.updateUser = async (req, res) => {
       data.cloudinaryId = result.public_id;
       await fs.unlink(req.file.path);
     }
-    if (!req.file) {
-      data.image = user.image;
-      data.cloudinaryId = user.cloudinaryId;
-    }
-
     if (data.email) {
       const existingUser = await User.findOne({ email: data.email });
       if (existingUser && existingUser._id.toString() !== id) {
@@ -191,14 +198,15 @@ exports.updateUser = async (req, res) => {
       }
     }
     if (data.role) {
-      return res.status(400).json({
-        success: false,
-        message: "role change is not allowed",
-      });
+      if (req.user.role !== "admin") {
+        return res.status(400).json({
+          success: false,
+          message: "only admin can update user role",
+        });
+      }
     }
     const updatedUser = await User.findByIdAndUpdate(id, data, {
       new: true,
-      runValidators: true,
     });
 
     res.status(200).json({
@@ -258,6 +266,11 @@ exports.deleteUser = async (req, res) => {
 exports.deleteAll = async (req, res) => {
   try {
     const delAll = await User.deleteMany({});
+    try {
+      await cloudinary.api.delete_resources_by_prefix("profile");
+    } catch (error) {
+      console.error("failed to delete all profile images", error);
+    }
     res.status(200).json({
       success: true,
       message: "all users deleted",
@@ -323,4 +336,47 @@ exports.login = async (req, res) => {
     });
   }
 };
-//todo:add email and phone number verification firebase and nodemailer
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Old password and new password required",
+        error: "missing fields",
+      });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+        error: "document not found",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "incorrect password" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal Server error",
+      error: error.message,
+    });
+  }
+};

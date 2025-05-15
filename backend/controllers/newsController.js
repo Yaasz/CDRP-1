@@ -1,6 +1,6 @@
 const News = require("../models/newsModel");
 const cloudinary = require("../config/cloudinary");
-
+const mongoose = require("mongoose");
 const fs = require("fs").promises;
 
 // Create a new news
@@ -8,6 +8,18 @@ exports.createNews = async (req, res) => {
   //upload.single("image") // removed and put in the router
   try {
     const data = { ...req.body };
+    console.log(data.images);
+    data.images = data.images
+      .replace(/\r\n/g, "") // Remove newlines
+      .replace(/\s+/g, " ") // Normalize whitespace
+      .replace(/,(\s*})/g, "$1") // Remove trailing commas before closing braces
+      .trim();
+    data.images = data.images.startsWith("[")
+      ? data.images
+      : `[${data.images}]`;
+    console.log("data images", data.images);
+    data.images = JSON.parse(data.images);
+
     if (!data.incident) {
       return res.status(400).json({
         success: false,
@@ -15,14 +27,14 @@ exports.createNews = async (req, res) => {
         error: "incident is required",
       });
     }
-    if (!data.title || data.description) {
+    if (!data.title || !data.description) {
       return res.status(400).json({
         success: false,
         message: "title and description are required",
         error: "missing fields",
       });
     }
-    if (!data.images.length > 0) {
+    if (!data.images.length === 0) {
       return res.status(400).json({
         success: false,
         message: "news must have at least one image",
@@ -30,6 +42,7 @@ exports.createNews = async (req, res) => {
       });
     }
     const images = data.images;
+    console.log("type", typeof images);
     images.map((img) => {
       if (!img.url || !img.cloudinaryId) {
         return res.status(400).json({
@@ -39,7 +52,7 @@ exports.createNews = async (req, res) => {
         });
       }
     });
-    console.log("data", data);
+    //console.log("data", data);
     const newsAnnouncement = new News(data);
 
     const savedAnnouncement = await newsAnnouncement.save();
@@ -90,7 +103,15 @@ exports.getAllNews = async (req, res) => {
 // Get single news  by ID
 exports.getNews = async (req, res) => {
   try {
-    const newsAnnouncement = await News.findById(req.params.id);
+    const { id } = req.params;
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid news id",
+        error: "invalid param",
+      });
+    }
+    const newsAnnouncement = await News.findById(id);
 
     if (!newsAnnouncement) {
       return res.status(404).json({
@@ -116,9 +137,31 @@ exports.getNews = async (req, res) => {
 
 // Update news
 exports.updateNews = async (req, res) => {
-  const updates = { ...req.body };
-  const { id } = req.params;
   try {
+    const data = { ...req.body };
+    const { id } = req.params;
+
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid news id",
+        error: "invalid id",
+      });
+    }
+    // Parse images string
+    if (data.images) {
+      data.images = data.images
+        .replace(/\r\n/g, "") // Remove newlines
+        .replace(/\s+/g, " ") // Normalize whitespace
+        .replace(/,(\s*})/g, "$1") // Remove trailing commas before closing braces
+        .trim();
+      data.images = data.images.startsWith("[")
+        ? data.images
+        : `[${data.images}]`;
+      data.images = JSON.parse(data.images);
+    }
+
+    // Check if news exists
     const newsAnnouncement = await News.findById(id);
     if (!newsAnnouncement) {
       return res.status(404).json({
@@ -128,20 +171,43 @@ exports.updateNews = async (req, res) => {
       });
     }
 
-    if (req.file) {
-      if (newsAnnouncement.cloudinaryId) {
-        await cloudinary.uploader.destroy(newsAnnouncement.cloudinaryId);
-      }
-
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "news",
+    // Validate required fields
+    if (!data.incident) {
+      return res.status(400).json({
+        success: false,
+        message: "news must be about incident",
+        error: "incident is required",
       });
-      updates.image = result.secure_url;
-      updates.cloudinaryId = result.public_id;
-
-      await fs.unlink(req.file.path);
     }
-    const news = await News.findByIdAndUpdate(id, updates, {
+    if (!data.title || !data.description) {
+      return res.status(400).json({
+        success: false,
+        message: "title and description are required",
+        error: "missing fields",
+      });
+    }
+    if (!data.images || data.images.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "news must have at least one image",
+        error: "missing fields",
+      });
+    }
+
+    // Validate images
+    const images = data.images;
+    images.forEach((img) => {
+      if (!img.url || !img.cloudinaryId) {
+        return res.status(400).json({
+          success: false,
+          message: "image must be url and cloudinaryId",
+          error: "missing fields",
+        });
+      }
+    });
+
+    // Update news
+    const news = await News.findByIdAndUpdate(id, data, {
       new: true,
       runValidators: true,
     });
@@ -152,7 +218,7 @@ exports.updateNews = async (req, res) => {
       data: news,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(500).json({
       success: false,
       message: "internal server error",
       error: error.message,
@@ -163,7 +229,15 @@ exports.updateNews = async (req, res) => {
 // Delete news by ID
 exports.deleteNews = async (req, res) => {
   try {
-    const newsAnnouncement = await News.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid news id",
+        error: "invalid param",
+      });
+    }
+    const newsAnnouncement = await News.findByIdAndDelete(id);
 
     if (!newsAnnouncement) {
       return res.status(404).json({

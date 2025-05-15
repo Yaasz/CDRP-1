@@ -15,19 +15,14 @@ const {
 router
   .route("/")
   .get(authToken, getAllNews)
-  .post(authToken, authRoles("government"), createNews)
+  .post(authToken, authRoles("government"), upload.none(), createNews)
   .delete(authToken, authRoles("admin", "government"), deleteAll);
 
 router
   .route("/:id")
   .get(authToken, getNews)
   .delete(authToken, authRoles("government", "admin"), deleteNews)
-  .put(authToken, authRoles("government"), updateNews)
-  .patch(
-    authToken,
-    authRoles("government"),
-    upload.single("image"),
-    updateNews
-  );
+  .put(authToken, authRoles("government"), upload.none(), updateNews)
+  .patch(authToken, upload.none(), authRoles("government"), updateNews);
 
 module.exports = router;

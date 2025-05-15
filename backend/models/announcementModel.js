@@ -52,12 +52,12 @@ const AnnouncementSchema = new mongoose.Schema(
     ],
     duration: {
       type: Number,
-      required: true,
+      required: false,
       default: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
     expiresAt: {
       type: Date,
-      required: true,
+      required: false,
       default: function () {
         return new Date(Date.now() + this.duration);
       },

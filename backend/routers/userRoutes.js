@@ -11,6 +11,7 @@ const {
   deleteUser,
   deleteAll,
   login,
+  changePassword,
 } = require("../controllers/userController");
 
 router
@@ -25,7 +26,15 @@ router.post("/login", login);
 router
   .route("/:id")
   .get(authToken, getUser)
-  .put(authToken, authRoles("user"), upload.single("image"), updateUser)
+  .patch(
+    authToken,
+    authRoles("user", "admin"),
+    upload.single("image"),
+    updateUser
+  )
   .delete(authToken, authRoles("user", "admin"), deleteUser);
+router
+  .route("/changePassword/:id")
+  .patch(authToken, authRoles("user", "admin"), changePassword);
 
 module.exports = router;

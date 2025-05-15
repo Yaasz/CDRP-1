@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 
 const VolunteerSchema = new mongoose.Schema({
+  charityAdId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "CharityAd",
+    required: true,
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

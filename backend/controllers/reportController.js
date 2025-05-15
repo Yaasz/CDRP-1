@@ -5,6 +5,7 @@ const cloudinary = require("../config/cloudinary");
 const mongoose = require("mongoose");
 const fs = require("fs").promises;
 const distanceMap = {
+  fire: 5000,
   "wild fire": 5000,
   "earth quake": 50000,
   drought: 100000,
@@ -17,6 +18,7 @@ const distanceMap = {
 };
 //note:allowed types of disasters
 const allowedTypes = [
+  "fire",
   "wild fire",
   "earth quake",
   "drought",
@@ -31,7 +33,6 @@ const allowedTypes = [
 exports.createReport = async (req, res) => {
   try {
     const data = { ...req.body };
-    //console.log("report data", data.reportedBy);
     const empty = [];
     //check if the required fields are provided
     if (!data.type) empty.push("type");
@@ -94,20 +95,18 @@ exports.createReport = async (req, res) => {
     if (req.files && req.files.length > 0) {
       const files = req.files;
       data.image = [];
-      console.log("files", files);
       try {
         for (const file of files) {
           const result = await cloudinary.uploader.upload(file.path, {
             folder: "report",
           });
-          console.log("data", data);
-
           data.image.push({
             url: result.secure_url,
             cloudinaryId: result.public_id,
           });
           try {
             //note:delete temp file
+            console.log("file path", file.path);
             await fs.unlink(file.path);
             console.log("temp File deleted successfully");
           } catch (error) {
@@ -115,6 +114,7 @@ exports.createReport = async (req, res) => {
           }
         }
       } catch (error) {
+        console.log(error);
         return res.status(400).json({
           success: false,
           message: "image upload failed",
@@ -213,6 +213,7 @@ exports.createReport = async (req, res) => {
       });
     }
   } catch (error) {
+    console.log("error", error);
     res.status(500).json({
       success: false,
       message: "internal server error",
@@ -225,14 +226,20 @@ exports.updateReport = async (req, res) => {
   try {
     const { id } = req.params;
     const data = { ...req.body };
-
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "the report id invalid ",
+        error: "invalid param",
+      });
+    }
     const existingReport = await Report.findById(id);
     if (!existingReport) {
       return res
         .status(404)
         .json({ success: false, message: "Report not found" });
     }
-    if (String(existingReport.reportedBy) !== data.reportedBy) {
+    if (existingReport.reportedBy.toString() !== req.user.id.toString()) {
       return res.status(403).json({
         success: false,
         message: "only the owner can update a report",
@@ -259,7 +266,6 @@ exports.updateReport = async (req, res) => {
     if (req.files && req.files.length > 0) {
       const files = req.files;
       data.image = [];
-      console.log("files", files);
       try {
         if (existingReport.image.length > 0) {
           for (const image of existingReport.image) {
@@ -277,7 +283,6 @@ exports.updateReport = async (req, res) => {
             cloudinaryId: result.public_id,
           });
           try {
-            //note:delete temp file
             await fs.unlink(file.path);
             console.log("temp File deleted successfully");
           } catch (error) {
@@ -292,17 +297,9 @@ exports.updateReport = async (req, res) => {
         });
       }
     }
-
-    const updates = {};
-    if (data.type) updates.type = data.type;
-    if (data.description) updates.description = data.description;
-    if (data.image !== undefined) updates.image = data.image;
-    if (data.cloudinaryId) updates.cloudinaryId = data.cloudinaryId;
-    updates.reportedBy = existingReport.reportedBy;
-
     const updatedReport = await Report.findByIdAndUpdate(
       id,
-      { $set: updates },
+      { $set: data },
       { new: true, runValidators: true }
     );
 
@@ -424,7 +421,6 @@ exports.getAllReports = async (req, res) => {
       .populate("reportedBy", "name email")
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
-    console.log("limit", limit);
     res.status(200).json({
       success: true,
       page: parseInt(page),
@@ -442,7 +438,15 @@ exports.getAllReports = async (req, res) => {
 
 exports.getReportById = async (req, res) => {
   try {
-    const report = await Report.findById(req.params.id).populate(
+    const { id } = req.params;
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "the report id invalid ",
+        error: "invalid param",
+      });
+    }
+    const report = await Report.findById(id).populate(
       "reportedBy",
       "name email"
     );
@@ -508,7 +512,11 @@ exports.deleteAllReports = async (req, res) => {
   try {
     const result = await Report.deleteMany({});
     await Incident.deleteMany({});
-    await cloudinary.api.delete_resources_by_prefix("report"); //todo use this in every delete-all
+    try {
+      await cloudinary.api.delete_resources_by_prefix("report");
+    } catch (error) {
+      console.error("failed to delete all report images", error);
+    }
     res.status(200).json({
       success: true,
       message: "All reports deleted successfully",

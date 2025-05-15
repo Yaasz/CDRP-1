@@ -3,6 +3,7 @@ const cloudinary = require("../config/cloudinary");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const fs = require("fs").promises;
+const mongoose = require("mongoose");
 // Create a new organization
 exports.createOrganization = async (req, res) => {
   try {
@@ -53,7 +54,6 @@ exports.createOrganization = async (req, res) => {
         });
       }
     }
-    console.log("data", data);
     const organization = new Organization(data);
 
     const savedOrganization = await organization.save();
@@ -141,7 +141,13 @@ exports.updateOrganization = async (req, res) => {
   try {
     const { id } = req.params;
     const data = { ...req.body };
-
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid organization id",
+        error: "invalid param",
+      });
+    }
     const exists = await Organization.findById(id);
     if (!exists) {
       return res.status(404).json({
@@ -215,7 +221,15 @@ exports.updateOrganization = async (req, res) => {
 // Delete organization
 exports.deleteOrganization = async (req, res) => {
   try {
-    const organization = await Organization.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid organization id",
+        error: "invalid param",
+      });
+    }
+    const organization = await Organization.findByIdAndDelete(id);
 
     if (!organization) {
       return res.status(404).json({
@@ -248,6 +262,11 @@ exports.deleteOrganization = async (req, res) => {
 exports.deleteAll = async (req, res) => {
   try {
     const delAll = await Organization.deleteMany({});
+    try {
+      await cloudinary.api.delete_resources_by_prefix("orgProfile");
+    } catch (error) {
+      console.error("failed to delete all report images", error);
+    }
     res.status(200).json({
       success: true,
       message: "all organizations deleted",
@@ -315,6 +334,13 @@ exports.login = async (req, res) => {
 exports.verify = async (req, res) => {
   try {
     const { id } = req.params;
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid organization id",
+        error: "invalid param",
+      });
+    }
     const org = await Organization.findById(id);
     if (!org) {
       return res.status(404).json({

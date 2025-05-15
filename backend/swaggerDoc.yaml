@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Charity Platform API
+  title: cdrp(croudsourced disaster response platform) API
   description: API for managing charity ads, announcements, incidents, news, volunteers, organizations, reports, and users.
   version: 1.0.0
 servers:
@@ -31,8 +31,23 @@ components:
         charities:
           type: array
           items:
-            type: string
-            format: objectId
+            type: object
+            required:
+              - charity
+            properties:
+              charity:
+                type: string
+                format: objectId
+              response:
+                type: string
+                enum: [Pending, Accepted, Rejected]
+                default: Pending
+        duration:
+          type: integer
+          description: Duration in milliseconds, defaults to 7 days.
+        expiresAt:
+          type: string
+          format: date-time
         createdAt:
           type: string
           format: date-time
@@ -142,12 +157,6 @@ components:
         charity:
           type: string
           format: objectId
-        incident:
-          type: string
-          format: objectId
-          nullable: true
-        duration:
-          type: integer
         title:
           type: string
           minLength: 4
@@ -163,13 +172,36 @@ components:
           pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
         status:
           type: string
-          enum: [open, completed]
+          enum: [open, closed] # Model uses open/closed
           default: open
         volunteers:
           type: array
           items:
             type: string
             format: objectId
+        duration:
+          type: integer
+          description: Duration in milliseconds as stored in the model. Input for creation/update is typically in days.
+        expiresAt:
+          type: string
+          format: date-time
+        categories:
+          type: array
+          items:
+            type: string
+          nullable: true
+        requirements:
+          type: array
+          items:
+            type: object
+            properties:
+              location:
+                type: string
+              skills:
+                type: array
+                items:
+                  type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -181,6 +213,8 @@ components:
       required:
         - title
         - description
+        - incident
+        - images
       properties:
         title:
           type: string
@@ -189,12 +223,16 @@ components:
         description:
           type: string
           minLength: 4
-          maxLength: 300
+          maxLength: 1000
           pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
         images:
           type: array
+          minItems: 1
           items:
             type: object
+            required:
+              - url
+              - cloudinaryId
             properties:
               url:
                 type: string
@@ -203,8 +241,6 @@ components:
                 type: string
         incident:
           type: string
-          format: objectId
-        type: string
           format: objectId
         createdAt:
           type: string
@@ -215,13 +251,13 @@ components:
     Organization:
       type: object
       required:
-        - name
+        - organizationName
         - email
         - phone
         - password
         - role
       properties:
-        name:
+        organizationName: # Changed from name
           type: string
           minLength: 5
           pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
@@ -250,8 +286,8 @@ components:
           default: false
         status:
           type: string
-          enum: [pending, active]
-          default: pending
+          enum: [active, inactive] # Changed from pending, active
+          default: active # Changed from pending
         createdAt:
           type: string
           format: date-time
@@ -268,7 +304,11 @@ components:
         - phone
         - expertise
         - contribution
+        - charityAdId # Added based on controller
       properties:
+        charityAdId: # Added based on controller
+          type: string
+          format: objectId
         user:
           type: string
           format: objectId
@@ -343,6 +383,8 @@ components:
                 type: number
               minItems: 2
               maxItems: 2
+            name: # Added from model
+              type: string
         reportedBy:
           type: string
           format: objectId
@@ -365,24 +407,22 @@ components:
           type: string
         error:
           type: string
-    PaginatedResponse:
+    PaginatedResponse: # Base for pagination fields
       type: object
       properties:
         success:
           type: boolean
-        count:
-          type: integer
         page:
           type: integer
-        data:
-          type: array
-          items:
-            type: object
     PaginatedAnnouncementResponse:
       allOf:
         - $ref: "#/components/schemas/PaginatedResponse"
         - type: object
           properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
             data:
               type: array
               items:
@@ -392,6 +432,10 @@ components:
         - $ref: "#/components/schemas/PaginatedResponse"
         - type: object
           properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
             data:
               type: array
               items:
@@ -401,6 +445,12 @@ components:
         - $ref: "#/components/schemas/PaginatedResponse"
         - type: object
           properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
+            message: # User controller includes a message here
+              type: string
             data:
               type: array
               items:
@@ -410,6 +460,10 @@ components:
         - $ref: "#/components/schemas/PaginatedResponse"
         - type: object
           properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
             data:
               type: array
               items:
@@ -419,6 +473,10 @@ components:
         - $ref: "#/components/schemas/PaginatedResponse"
         - type: object
           properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
             data:
               type: array
               items:
@@ -428,6 +486,10 @@ components:
         - $ref: "#/components/schemas/PaginatedResponse"
         - type: object
           properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
             data:
               type: array
               items:
@@ -437,6 +499,10 @@ components:
         - $ref: "#/components/schemas/PaginatedResponse"
         - type: object
           properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
             data:
               type: array
               items:
@@ -446,6 +512,11 @@ components:
         - $ref: "#/components/schemas/PaginatedResponse"
         - type: object
           properties:
+            totalCount: # Controller currently doesn't return searchCount for reports
+              type: integer
+            searchCount:
+              type: integer
+              description: "Note: Controller currently does not provide searchCount for reports."
             data:
               type: array
               items:
@@ -500,7 +571,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin or charity role with verification
+      description: Requires admin or verified charity role.
     post:
       summary: Create a new announcement
       tags:
@@ -523,7 +594,7 @@ paths:
                   minLength: 4
                   maxLength: 300
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
-                charities:
+                charities: # Controller expects array of ObjectIds for 'charities' field in Announcement model
                   type: array
                   items:
                     type: string
@@ -531,6 +602,7 @@ paths:
               required:
                 - title
                 - description
+                # charities implicitly required by controller logic for non-empty array
       responses:
         "201":
           description: Announcement created
@@ -563,7 +635,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires government role
+      description: Requires government role.
   /announcement/{id}:
     get:
       summary: Get an announcement by ID
@@ -610,6 +682,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      description: Requires authentication.
     put:
       summary: Update an announcement
       tags:
@@ -659,7 +732,7 @@ paths:
                   data:
                     $ref: "#/components/schemas/Announcement"
         "400":
-          description: Invalid ID
+          description: Invalid ID or bad request
           content:
             application/json:
               schema:
@@ -682,7 +755,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires government role
+      description: Requires government role.
     delete:
       summary: Delete an announcement
       tags:
@@ -708,6 +781,8 @@ paths:
                     type: boolean
                   message:
                     type: string
+                  data: # Controller returns deleted announcement
+                    $ref: "#/components/schemas/Announcement"
         "400":
           description: Invalid ID
           content:
@@ -732,7 +807,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires government or admin role
+      description: Requires government or admin role.
   /charityad:
     get:
       summary: Get all charity ads
@@ -743,7 +818,7 @@ paths:
       parameters:
         - name: search
           in: query
-          description: Search term (matches title, status, or charity)
+          description: Search term (matches title, description, status, or categories)
           required: false
           schema:
             type: string
@@ -761,7 +836,7 @@ paths:
           required: false
           schema:
             type: integer
-            default: 10
+            default: 5 # Controller uses 5
             minimum: 1
       responses:
         "200":
@@ -776,6 +851,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      description: Requires authentication.
     post:
       summary: Create a new charity ad
       tags:
@@ -792,10 +868,6 @@ paths:
                 charity:
                   type: string
                   format: objectId
-                incident:
-                  type: string
-                  format: objectId
-                  nullable: true
                 title:
                   type: string
                   minLength: 4
@@ -803,6 +875,9 @@ paths:
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
                 duration:
                   type: integer
+                  minimum: 1
+                  maximum: 30 # As per controller logic for days
+                  description: Duration in days
                 description:
                   type: string
                   minLength: 4
@@ -813,12 +888,19 @@ paths:
                   format: binary
                 status:
                   type: string
-                  enum: [open, completed]
+                  enum: [open, closed]
                   default: open
+                categories: # Added
+                  type: string # Sent as stringified JSON array
+                  description: JSON string of an array of category strings. E.g., '["Medical Aid", "Food Drive"]'
+                requirements: # Added
+                  type: string # Sent as stringified JSON array
+                  description: JSON string of an array of requirement objects. E.g., '[{"location": "North", "skills": ["Driving"]}]'
               required:
                 - charity
                 - title
                 - description
+                - duration # Model requires duration
       responses:
         "201":
           description: Charity ad created
@@ -831,7 +913,7 @@ paths:
                     type: boolean
                   message:
                     type: string
-                  response:
+                  data: # Controller uses 'data' key
                     $ref: "#/components/schemas/CharityAd"
         "400":
           description: Bad request
@@ -851,7 +933,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires charity role with verification
+      description: Requires verified charity role.
     delete:
       summary: Delete all charity ads
       tags:
@@ -884,7 +966,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin role
+      description: Requires admin role.
   /charityad/{id}:
     get:
       summary: Get a charity ad by ID
@@ -909,8 +991,16 @@ paths:
                 properties:
                   success:
                     type: boolean
+                  message: # Controller adds message
+                    type: string
                   data:
                     $ref: "#/components/schemas/CharityAd"
+        "400": # Controller specific error for invalid ID
+          description: Invalid charity ad ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -923,6 +1013,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      description: Requires authentication.
     put:
       summary: Update a charity ad
       tags:
@@ -946,10 +1037,10 @@ paths:
                 charity:
                   type: string
                   format: objectId
-                incident:
-                  type: string
-                  format: objectId
-                  nullable: true
+                # incident: # Not in model or controller update logic
+                #   type: string
+                #   format: objectId
+                #   nullable: true
                 title:
                   type: string
                   minLength: 4
@@ -957,6 +1048,7 @@ paths:
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
                 duration:
                   type: integer
+                  description: Duration in days
                 description:
                   type: string
                   minLength: 4
@@ -967,11 +1059,14 @@ paths:
                   format: binary
                 status:
                   type: string
-                  enum: [open, completed]
-              required:
-                - charity
-                - title
-                - description
+                  enum: [open, closed]
+                categories: # Added
+                  type: string
+                  description: JSON string of an array of category strings.
+                requirements: # Added
+                  type: string
+                  description: JSON string of an array of requirement objects.
+              # No 'required' fields for PUT as it's a partial update by controller
       responses:
         "200":
           description: Charity ad updated
@@ -987,7 +1082,7 @@ paths:
                   data:
                     $ref: "#/components/schemas/CharityAd"
         "400":
-          description: Bad request
+          description: Bad request or invalid ID
           content:
             application/json:
               schema:
@@ -1010,7 +1105,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires charity role with verification
+      description: Requires verified charity role.
     delete:
       summary: Delete a charity ad
       tags:
@@ -1036,6 +1131,14 @@ paths:
                     type: boolean
                   message:
                     type: string
+                  data: # Controller returns deleted ad
+                    $ref: "#/components/schemas/CharityAd"
+        "400": # Controller specific error for invalid ID
+          description: Invalid charity ad ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1054,7 +1157,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires charity role with verification
+      description: Requires verified charity role.
   /incidents:
     get:
       summary: Get all incidents
@@ -1104,7 +1207,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin or government role
+      description: Requires admin or government role.
     delete:
       summary: Delete all incidents
       tags:
@@ -1123,7 +1226,7 @@ paths:
                     type: boolean
                   message:
                     type: string
-                  count:
+                  count: # Controller returns countCount
                     type: integer
         "401":
           description: Unauthorized
@@ -1137,7 +1240,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin or government role
+      description: Requires admin or government role.
   /incidents/{id}:
     get:
       summary: Get an incident by ID
@@ -1182,7 +1285,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin or government role
+      description: Requires admin or government role.
     delete:
       summary: Delete an incident
       tags:
@@ -1232,7 +1335,68 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin or government role
+      description: Requires admin or government role.
+  /incidents/images/{id}:
+    get:
+      summary: Get all images from reports of an incident
+      tags:
+        - Incidents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: List of images from reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        url:
+                          type: string
+                          format: uri
+                        cloudinaryId:
+                          type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Incident not found (or no images, controller doesn't differentiate)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin or government role.
   /news:
     get:
       summary: Get all news
@@ -1269,13 +1433,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaginatedNewsResponse"
+                $ref: "#/components/schemas/PaginatedNewsResponse" # This already expects success, totalCount, searchCount, data, page
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires authentication.
     post:
       summary: Create a new news item
       tags:
@@ -1285,7 +1456,7 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          multipart/form-data: # Controller uses upload.none() but parses 'images' as stringified JSON from form data
             schema:
               type: object
               properties:
@@ -1296,14 +1467,19 @@ paths:
                 description:
                   type: string
                   minLength: 4
-                  maxLength: 300
+                  maxLength: 1000
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
-                image:
+                images: # Sent as a stringified JSON array of objects
                   type: string
-                  format: binary
+                  description: "A JSON string representing an array of image objects, e.g., '[{\"url\":\"http://...\", \"cloudinaryId\":\"...\"}]'"
+                incident:
+                  type: string
+                  format: objectId
               required:
                 - title
                 - description
+                - incident
+                - images
       responses:
         "201":
           description: News item created
@@ -1336,7 +1512,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires government role
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government role.
     delete:
       summary: Delete all news
       tags:
@@ -1353,7 +1535,7 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  message:
+                  message: # Controller uses 'messages'
                     type: string
                   count:
                     type: integer
@@ -1369,7 +1551,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin or government role
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin or government role.
   /news/{id}:
     get:
       summary: Get a news item by ID
@@ -1416,6 +1604,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires authentication.
     put:
       summary: Update a news item
       tags:
@@ -1432,7 +1627,7 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          multipart/form-data: # Controller uses upload.none() but parses 'images' as stringified JSON
             schema:
               type: object
               properties:
@@ -1443,11 +1638,19 @@ paths:
                 description:
                   type: string
                   minLength: 4
-                  maxLength: 300
+                  maxLength: 1000
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
-                image:
+                images: # Sent as a stringified JSON array of objects
                   type: string
-                  format: binary
+                  description: "A JSON string representing an array of image objects, e.g., '[{\"url\":\"http://...\", \"cloudinaryId\":\"...\"}]'"
+                incident:
+                  type: string
+                  format: objectId
+              required: # Added based on controller logic
+                - title
+                - description
+                - incident
+                - images
       responses:
         "200":
           description: News item updated
@@ -1486,7 +1689,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires government role
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government role.
     patch:
       summary: Partially update a news item
       tags:
@@ -1503,7 +1712,7 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          multipart/form-data: # Controller uses upload.none() but parses 'images' as stringified JSON
             schema:
               type: object
               properties:
@@ -1514,11 +1723,19 @@ paths:
                 description:
                   type: string
                   minLength: 4
-                  maxLength: 300
+                  maxLength: 1000
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
-                image:
+                images: # Sent as a stringified JSON array of objects
                   type: string
-                  format: binary
+                  description: "A JSON string representing an array of image objects, e.g., '[{\"url\":\"http://...\", \"cloudinaryId\":\"...\"}]'"
+                incident:
+                  type: string
+                  format: objectId
+              required: # Added based on controller logic (same as PUT for this controller)
+                - title
+                - description
+                - incident
+                - images
       responses:
         "200":
           description: News item updated
@@ -1557,7 +1774,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires government role
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government role.
     delete:
       summary: Delete a news item
       tags:
@@ -1607,7 +1830,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires government or admin role
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government or admin role.
   /volunteer:
     get:
       summary: Get all volunteers
@@ -1657,9 +1886,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin or charity role
+      description: Requires admin or charity role.
     post:
-      summary: Register a new volunteer
+      summary: Register a new volunteer for a charity ad
       tags:
         - Volunteers
       security:
@@ -1671,6 +1900,9 @@ paths:
             schema:
               type: object
               properties:
+                charityAdId: # Added
+                  type: string
+                  format: objectId
                 user:
                   type: string
                   format: objectId
@@ -1696,6 +1928,7 @@ paths:
                 contribution:
                   type: string
               required:
+                - charityAdId # Added
                 - user
                 - fullName
                 - age
@@ -1718,7 +1951,7 @@ paths:
                   data:
                     $ref: "#/components/schemas/Volunteer"
         "400":
-          description: Bad request
+          description: Bad request (e.g., already registered, ad closed)
           content:
             application/json:
               schema:
@@ -1735,7 +1968,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires user role
+        "404":
+          description: CharityAd not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires user role.
     delete:
       summary: Delete all volunteers
       tags:
@@ -1768,7 +2007,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin role
+        "404": # Controller can return 404 if no volunteers found
+          description: No volunteers found to delete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin role.
   /volunteer/{id}:
     get:
       summary: Get a volunteer by ID
@@ -1815,7 +2060,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires user or charity role
+      description: Requires user or charity role.
     put:
       summary: Update a volunteer
       tags:
@@ -1835,7 +2080,7 @@ paths:
           application/json:
             schema:
               type: object
-              properties:
+              properties: # Note: user and charityAdId are not updatable via this endpoint by design in controller
                 fullName:
                   type: string
                   minLength: 5
@@ -1872,7 +2117,7 @@ paths:
                   data:
                     $ref: "#/components/schemas/Volunteer"
         "400":
-          description: Bad request
+          description: Bad request (e.g., duplicate email/phone on different volunteer)
           content:
             application/json:
               schema:
@@ -1895,9 +2140,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires user role
+      description: Requires user role (to update their own volunteer registration).
     delete:
-      summary: Delete a volunteer
+      summary: Delete a volunteer registration
       tags:
         - Volunteers
       security:
@@ -1945,7 +2190,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires user role
+      description: Requires user role (to delete their own volunteer registration).
   /org:
     get:
       summary: Get all organizations
@@ -1995,11 +2240,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin or government role
+      description: Requires admin or government role.
     post:
       summary: Create a new organization
       tags:
         - Organizations
+      # No bearerAuth for public registration
       requestBody:
         required: true
         content:
@@ -2007,7 +2253,7 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                organizationName: # Changed from name
                   type: string
                   minLength: 5
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
@@ -2033,11 +2279,12 @@ paths:
                   enum: [charity, government]
                   default: charity
               required:
-                - name
+                - organizationName # Changed from name
                 - email
                 - phone
                 - password
                 - role
+                - taxId # Model taxId is required
       responses:
         "201":
           description: Organization created
@@ -2052,12 +2299,15 @@ paths:
                     type: string
                   data:
                     $ref: "#/components/schemas/Organization"
+                  token: # Controller returns token
+                    type: string
         "400":
-          description: Bad request
+          description: Bad request (e.g., name/email/phone taken, image upload failed)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      description: Public endpoint for charity registration. Government organizations can only be created by an admin (controller logic handles this).
     delete:
       summary: Delete all organizations
       tags:
@@ -2090,7 +2340,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin role
+      description: Requires admin role.
   /org/login:
     post:
       summary: Organization login
@@ -2099,12 +2349,13 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          application/json: # Controller uses req.body directly
             schema:
               type: object
               properties:
                 identifier:
                   type: string
+                  description: Email or phone number
                 password:
                   type: string
               required:
@@ -2132,13 +2383,13 @@ paths:
                       phone:
                         type: string
         "400":
-          description: Bad request
+          description: Bad request (e.g., missing fields, incorrect password)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Unauthorized
+          description: Unauthorized (user not found)
           content:
             application/json:
               schema:
@@ -2187,7 +2438,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-    put:
+      description: Requires authentication.
+    patch:
       summary: Update an organization
       tags:
         - Organizations
@@ -2207,7 +2459,7 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                organizationName: # Changed from name
                   type: string
                   minLength: 5
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
@@ -2216,8 +2468,8 @@ paths:
                   format: email
                 phone:
                   type: string
-                password:
-                  type: string
+                # password: # Password update should be a separate endpoint for security
+                #   type: string
                 taxId:
                   type: string
                 image:
@@ -2228,7 +2480,7 @@ paths:
                   minLength: 5
                   maxLength: 100
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
-                role:
+                role: # Role change might have implications, controller prevents changing to 'government' here
                   type: string
                   enum: [charity, government]
       responses:
@@ -2246,7 +2498,7 @@ paths:
                   data:
                     $ref: "#/components/schemas/Organization"
         "400":
-          description: Bad request
+          description: Bad request (e.g., name/email/phone taken)
           content:
             application/json:
               schema:
@@ -2269,57 +2521,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires charity or government role
-    patch:
-      summary: Verify an organization
-      tags:
-        - Organizations
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: objectId
-      responses:
-        "200":
-          description: Organization verified
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  message:
-                    type: string
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Organization not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      description: Requires admin role
+      description: Requires charity or government role (for self-update).
     delete:
       summary: Delete an organization
       tags:
@@ -2369,7 +2571,58 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires charity, government, or admin role
+      description: Requires charity, government (for self-delete), or admin role.
+  /org/verify/{id}:
+    patch:
+      summary: Verify an organization
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: Organization verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Bad request (e.g., already verified, invalid ID)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin role.
   /report:
     get:
       summary: Get all reports
@@ -2380,7 +2633,7 @@ paths:
       parameters:
         - name: search
           in: query
-          description: Search term (matches title, status, type, or date)
+          description: Search term (matches title, status, type, or date) # Status/date not in model for search
           required: false
           schema:
             type: string
@@ -2419,7 +2672,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin or government role
+      description: Requires admin or government role.
     post:
       summary: Create a new report
       tags:
@@ -2449,27 +2702,30 @@ paths:
                   maxLength: 300
                   pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
                   description: Description of the report
-                image:
+                image: # Matches upload.array("image", 10)
                   type: array
                   items:
                     type: string
                     format: binary
+                  maxItems: 10
                   description: Up to 10 image files for the report
                 longitude:
                   type: number
+                  format: double
                   description: Longitude of the report location
                 latitude:
                   type: number
+                  format: double
                   description: Latitude of the report location
                 reportedBy:
                   type: string
                   format: objectId
                   description: ID of the user reporting the incident
-                incident:
+                incident: # This is for associating with an existing incident, but controller logic mainly auto-associates or creates new.
                   type: string
                   format: objectId
                   nullable: true
-                  description: Associated incident ID (optional)
+                  description: Associated incident ID (optional, controller logic may override)
               required:
                 - type
                 - description
@@ -2501,16 +2757,16 @@ paths:
                             type: string
                           reportCount:
                             type: integer
-                        description: Existing incident
+                        description: Existing incident details if matched
                       - type: object
                         properties:
                           type:
                             type: string
                           status:
                             type: string
-                        description: New incident
+                        description: New incident details if created
         "400":
-          description: Bad request
+          description: Bad request (e.g., missing fields, invalid location, already reported)
           content:
             application/json:
               schema:
@@ -2527,7 +2783,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires user role
+        "404": # If reportedBy user not found
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires user role.
     delete:
       summary: Delete all reports
       tags:
@@ -2560,7 +2822,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin role
+      description: Requires admin role.
   /report/{id}:
     get:
       summary: Get a report by ID
@@ -2607,6 +2869,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      description: Requires authentication.
     put:
       summary: Update a report
       tags:
@@ -2648,16 +2911,15 @@ paths:
                   items:
                     type: string
                     format: binary
+                  maxItems: 10
                   description: Up to 10 image files to replace or add to the report
-                reportedBy:
-                  type: string
-                  format: objectId
-                  description: ID of the user updating the report
-                incident:
-                  type: string
-                  format: objectId
-                  nullable: true
-                  description: Associated incident ID (optional)
+                # reportedBy: # Cannot change reportedBy
+                #   type: string
+                #   format: objectId
+                # incident: # Incident association is handled by controller logic
+                #   type: string
+                #   format: objectId
+                #   nullable: true
       responses:
         "200":
           description: Report updated
@@ -2673,7 +2935,7 @@ paths:
                   data:
                     $ref: "#/components/schemas/Report"
         "400":
-          description: Bad request
+          description: Bad request or invalid ID
           content:
             application/json:
               schema:
@@ -2685,7 +2947,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "403":
-          description: Forbidden
+          description: Forbidden (e.g., not owner of report)
           content:
             application/json:
               schema:
@@ -2696,7 +2958,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires user role
+      description: Requires user role (owner of the report).
     delete:
       summary: Delete a report
       tags:
@@ -2746,7 +3008,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires user or admin role
+      description: Requires user (owner) or admin role.
   /user:
     get:
       summary: Get all users
@@ -2796,11 +3058,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin role
+      description: Requires admin role.
     post:
-      summary: Create a new user
+      summary: Create a new user (Register)
       tags:
         - Users
+      # No bearerAuth for public registration
       requestBody:
         required: true
         content:
@@ -2836,7 +3099,7 @@ paths:
                 - email
                 - phone
                 - password
-                - role
+                # role is not required in request as it defaults, or can be set by admin (handled by Mongoose)
       responses:
         "201":
           description: User created
@@ -2851,8 +3114,10 @@ paths:
                     type: string
                   data:
                     $ref: "#/components/schemas/User"
+                  token: # Controller returns token
+                    type: string
         "400":
-          description: Bad request
+          description: Bad request (e.g., email/phone taken, image upload failed)
           content:
             application/json:
               schema:
@@ -2889,7 +3154,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires admin role
+      description: Requires admin role.
   /user/login:
     post:
       summary: User login
@@ -2898,12 +3163,13 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          application/json: # Controller expects JSON
             schema:
               type: object
               properties:
                 identifier:
                   type: string
+                  description: Email or phone number
                 password:
                   type: string
               required:
@@ -2917,8 +3183,8 @@ paths:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
+                  # success: # Controller does not return success field
+                  #   type: boolean
                   message:
                     type: string
                   token:
@@ -2936,17 +3202,20 @@ paths:
                       phone:
                         type: string
         "400":
-          description: Bad request
+          description: Bad request (missing fields)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Unauthorized
+          description: Unauthorized (user not found or incorrect password)
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+              schema: # Controller returns simple { error: "message" }
+                type: object
+                properties:
+                  error:
+                    type: string
   /user/{id}:
     get:
       summary: Get a user by ID
@@ -2993,7 +3262,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-    put:
+      description: Requires authentication.
+    patch:
       summary: Update a user
       tags:
         - Users
@@ -3026,11 +3296,15 @@ paths:
                   format: email
                 phone:
                   type: string
-                password:
-                  type: string
+                # password: # Password update should be via /changePassword
+                #   type: string
                 image:
                   type: string
                   format: binary
+                role: # Added from controller logic, only admin can change
+                  type: string
+                  enum: [user, admin]
+                  description: "User role, can only be changed by an admin."
       responses:
         "200":
           description: User updated
@@ -3046,7 +3320,7 @@ paths:
                   data:
                     $ref: "#/components/schemas/User"
         "400":
-          description: Bad request
+          description: Bad request (e.g., email/phone taken, role update by non-admin)
           content:
             application/json:
               schema:
@@ -3058,7 +3332,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "403":
-          description: Forbidden
+          description: Forbidden (e.g., trying to update another user without admin rights)
           content:
             application/json:
               schema:
@@ -3069,7 +3343,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires user role
+      description: Requires user role (for self-update) or admin role (for any user update, including role).
     delete:
       summary: Delete a user
       tags:
@@ -3095,6 +3369,8 @@ paths:
                     type: boolean
                   message:
                     type: string
+                  data: # Controller returns deleted user
+                    $ref: "#/components/schemas/User"
         "400":
           description: Invalid ID
           content:
@@ -3119,6 +3395,111 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-      description: Requires user or admin role
+      description: Requires user (for self-delete) or admin role.
+  /user/changePassword/{id}:
+    patch:
+      summary: Change user password
+      description: Allows an authenticated user to change their password. Requires user or admin role.
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - oldPassword
+                - newPassword
+              properties:
+                oldPassword:
+                  type: string
+                  example: oldpass123
+                newPassword:
+                  type: string
+                  example: newpass456
+      responses:
+        "200":
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Password changed successfully
+        "400":
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Old password and new password required
+                  error:
+                    type: string
+                    example: missing fields
+        "401":
+          description: Incorrect password or Unauthorized
+          content:
+            application/json:
+              schema: # Controller returns simple { error: "message" } or auth middleware error
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: incorrect password
+                  message: # From auth middleware
+                    type: string
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: User not found
+                  error:
+                    type: string
+                    example: document not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Internal Server error
+                  error:
+                    type: string
+                    example: Detailed error message
 security:
   - bearerAuth: []

@@ -5,6 +5,7 @@ const authRoles = require("../middleware/authorize");
 const {
   getAllIncidents,
   getIncidentById,
+  getIncidentImages,
   deleteIncident,
   deleteAllIncidents,
 } = require("../controllers/incidentController");
@@ -18,5 +19,8 @@ router
   .route("/:id")
   .get(authToken, authRoles("admin", "government"), getIncidentById)
   .delete(authToken, authRoles("admin", "government"), deleteIncident);
+router
+  .route("/images/:id")
+  .get(authToken, authRoles("admin", "government"), getIncidentImages);
 
 module.exports = router;

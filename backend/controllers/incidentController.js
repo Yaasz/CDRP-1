@@ -45,6 +45,7 @@ exports.getIncidentById = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid incident ID",
+        error: "invalid param",
       });
     }
 
@@ -121,6 +122,76 @@ exports.deleteAllIncidents = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "internal server error",
+      error: error.message,
+    });
+  }
+};
+
+//fetch all the images of the incident
+
+const getIncidentImages = async (incidentId) => {
+  try {
+    const result = await Incident.aggregate([
+      // Match the specific incident
+      { $match: { _id: new mongoose.Types.ObjectId(incidentId) } },
+      // Lookup reports associated with the incident
+      {
+        $lookup: {
+          from: "reports",
+          localField: "reports",
+          foreignField: "_id",
+          as: "reportData",
+        },
+      },
+      // Unwind the reportData array
+      { $unwind: { path: "$reportData", preserveNullAndEmptyArrays: true } },
+      // Project only the images from reports
+      {
+        $project: {
+          images: "$reportData.image",
+        },
+      },
+      // Unwind the images array
+      { $unwind: { path: "$images", preserveNullAndEmptyArrays: true } },
+      // Group to collect all images
+      {
+        $group: {
+          _id: null,
+          images: { $push: "$images" },
+        },
+      },
+      // Project to clean up output
+      {
+        $project: {
+          _id: 0,
+          images: 1,
+        },
+      },
+    ]);
+
+    // Return images or empty array if none found
+    return result.length > 0
+      ? result[0].images.filter((img) => img.url && img.cloudinaryId)
+      : [];
+  } catch (error) {
+    throw new Error(`Failed to fetch images: ${error.message}`);
+  }
+};
+
+// Example usage in a controller
+exports.getIncidentImages = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const images = await getIncidentImages(id);
+    res.status(200).json({
+      success: true,
+      message: "Images fetched successfully",
+      data: images,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
       error: error.message,
     });
   }
