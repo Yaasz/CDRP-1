@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const validator = require("validator");
 const VolunteerSchema = new mongoose.Schema({
   charityAdId: {
     type: mongoose.Schema.Types.ObjectId,

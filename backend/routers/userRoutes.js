@@ -21,7 +21,7 @@ router
   .delete(authToken, authRoles("admin"), deleteAll);
 
 // Explicitly handle form data and JSON for login
-router.post("/login", login);
+router.post("/login", upload.none(), login);
 
 router
   .route("/:id")
@@ -35,6 +35,6 @@ router
   .delete(authToken, authRoles("user", "admin"), deleteUser);
 router
   .route("/changePassword/:id")
-  .patch(authToken, authRoles("user", "admin"), changePassword);
+  .patch(authToken, authRoles("user", "admin"), upload.none(), changePassword);
 
 module.exports = router;

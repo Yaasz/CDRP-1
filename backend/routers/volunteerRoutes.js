@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authToken = require("../middleware/auth");
 const authRoles = require("../middleware/authorize");
+const upload = require("../config/multer");
 const {
   registerVolunteer,
   getVolunteer,
@@ -15,13 +16,13 @@ router
   .route("/")
   .get(authToken, authRoles("admin", "charity"), getAllVolunteers)
   .delete(authToken, authRoles("admin"), deleteAllVolunteers)
-  .post(authToken, authRoles("user"), registerVolunteer);
+  .post(authToken, authRoles("user"), upload.none(), registerVolunteer);
 
 // routers tied to a charityad
 router
   .route("/:id")
   .get(authToken, authRoles("user", "charity"), getVolunteer)
-  .put(authToken, authRoles("user"), updateVolunteer)
+  .put(authToken, authRoles("user"), upload.none(), updateVolunteer)
   .delete(authToken, authRoles("user"), deleteVolunteer);
 
 module.exports = router;
