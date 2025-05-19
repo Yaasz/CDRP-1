@@ -6,6 +6,8 @@ info:
 servers:
   - url: http://localhost:5555/api
     description: Local development server
+  - url: https://cdrp-1.onrender.com/api
+    description: Production server
 components:
   securitySchemes:
     bearerAuth:
