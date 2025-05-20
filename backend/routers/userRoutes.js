@@ -12,6 +12,7 @@ const {
   deleteAll,
   login,
   changePassword,
+  forceResetPassword,
 } = require("../controllers/userController");
 
 router
@@ -21,7 +22,7 @@ router
   .delete(authToken, authRoles("admin"), deleteAll);
 
 // Explicitly handle form data and JSON for login
-router.post("/login", upload.none(), login);
+router.post("/login", login);
 
 router
   .route("/:id")
@@ -33,8 +34,15 @@ router
     updateUser
   )
   .delete(authToken, authRoles("user", "admin"), deleteUser);
+
+// Password change routes
 router
   .route("/changePassword/:id")
-  .patch(authToken, authRoles("user", "admin"), upload.none(), changePassword);
+  .patch(authToken, authRoles("user", "admin"), changePassword);
+
+// Force reset password (admin only)
+router
+  .route("/forceResetPassword/:id")
+  .patch(authToken, authRoles("admin"), forceResetPassword);
 
 module.exports = router;

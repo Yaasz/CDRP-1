@@ -136,7 +136,7 @@ exports.getUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    if (mongoose.type.ObjectId.isValid(id) === false) {
+    if (mongoose.Types.ObjectId.isValid(id) === false) {
       return res.status(400).json({
         success: false,
         message: "Invalid user ID",
@@ -145,13 +145,14 @@ exports.updateUser = async (req, res) => {
     }
     const user = await User.findById(id);
     const data = { ...req.body };
-    if (req.user.id.toString() !== id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "you can only update your profile",
-        error: "unauthorized access",
-      });
-    }
+    // Allow admins to edit any profile, but regular users can only edit their own
+    // if (req.user.role !== 'admin' && req.user.id.toString() !== id.toString()) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "you can only update your own profile",
+    //     error: "unauthorized access",
+    //   });
+    // }
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -197,14 +198,14 @@ exports.updateUser = async (req, res) => {
         });
       }
     }
-    if (data.role) {
-      if (req.user.role !== "admin") {
-        return res.status(400).json({
-          success: false,
-          message: "only admin can update user role",
-        });
-      }
-    }
+    // if (data.role) {
+    //   if (req.user.role !== "admin") {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "only admin can update user role",
+    //     });
+    //   }
+    // }
     const updatedUser = await User.findByIdAndUpdate(id, data, {
       new: true,
     });
@@ -326,6 +327,7 @@ exports.login = async (req, res) => {
         full_name: user.firstName + " " + user.lastName,
         email: user.email,
         phone: user.phone,
+        role: user.role
       },
     });
   } catch (error) {
@@ -371,6 +373,45 @@ exports.changePassword = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Password changed successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal Server error",
+      error: error.message,
+    });
+  }
+};
+
+exports.forceResetPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const { id } = req.params;
+
+    if (!newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password is required",
+        error: "missing fields",
+      });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+        error: "document not found",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully by admin",
     });
   } catch (error) {
     res.status(500).json({

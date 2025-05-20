@@ -1,13 +1,11 @@
 openapi: 3.0.3
 info:
-  title: Charity and Incident Management API
-  description: API for managing charity ads, incidents, reports, users, organizations, volunteers, news, and announcements
+  title: cdrp(croudsourced disaster response platform) API
+  description: API for managing charity ads, announcements, incidents, news, volunteers, organizations, reports, and users.
   version: 1.0.0
 servers:
-  - url: http://localhost:5555/api
-    description: Local development server
-  - url: https://cdrp-1.onrender.com/api
-    description: Production server
+  - url: /api
+    description: cdrp backend
 components:
   securitySchemes:
     bearerAuth:
@@ -15,302 +13,77 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    User:
+    Announcement:
       type: object
-      properties:
-        _id:
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
-        phone:
-          type: string
-        role:
-          type: string
-          enum: [user, admin]
-        image:
-          type: string
-          nullable: true
-        cloudinaryId:
-          type: string
-          nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
       required:
-        - firstName
-        - lastName
-        - email
-        - phone
-        - role
-    UserInput:
-      type: object
+        - title
+        - description
       properties:
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
-        phone:
-          type: string
-        password:
-          type: string
-        role:
-          type: string
-          enum: [user, admin]
-        image:
-          type: string
-          format: binary
-          nullable: true
-      required:
-        - firstName
-        - lastName
-        - email
-        - phone
-        - password
-        - role
-    Organization:
-      type: object
-      properties:
-        _id:
-          type: string
-        organizationName:
-          type: string
-        email:
-          type: string
-        phone:
-          type: string
-        taxId:
-          type: string
-        image:
-          type: string
-          nullable: true
-        cloudinaryId:
-          type: string
-          nullable: true
-        mission:
-          type: string
-        role:
-          type: string
-          enum: [charity, government]
-        isVerified:
-          type: boolean
-        status:
-          type: string
-          enum: [active, inactive]
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      required:
-        - organizationName
-        - email
-        - phone
-        - taxId
-        - role
-        - isVerified
-        - status
-    OrganizationInput:
-      type: object
-      properties:
-        organizationName:
-          type: string
-        email:
-          type: string
-        phone:
-          type: string
-        password:
-          type: string
-        taxId:
-          type: string
-        image:
-          type: string
-          format: binary
-          nullable: true
-        mission:
-          type: string
-        role:
-          type: string
-          enum: [charity, government]
-      required:
-        - organizationName
-        - email
-        - phone
-        - password
-        - taxId
-        - role
-    CharityAd:
-      type: object
-      properties:
-        _id:
-          type: string
-        charity:
-          $ref: "#/components/schemas/Organization"
         title:
           type: string
-        image:
-          type: string
-          nullable: true
-        cloudinaryId:
-          type: string
-          nullable: true
+          minLength: 4
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
         description:
           type: string
-        status:
-          type: string
-          enum: [open, closed]
-        volunteers:
+          minLength: 4
+          maxLength: 300
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        charities:
           type: array
           items:
-            $ref: "#/components/schemas/Volunteer"
+            type: object
+            required:
+              - charity
+            properties:
+              charity:
+                type: string
+                format: objectId
+              response:
+                type: string
+                enum: [Pending, Accepted, Rejected]
+                default: Pending
         duration:
-          type: number
+          type: integer
+          description: Duration in milliseconds, defaults to 7 days.
         expiresAt:
           type: string
           format: date-time
-        categories:
-          type: array
-          items:
-            type: string
-        requirements:
-          type: array
-          items:
-            type: object
-            properties:
-              location:
-                type: string
-                nullable: true
-              skills:
-                type: array
-                items:
-                  type: string
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-      required:
-        - charity
-        - title
-        - description
-        - status
-        - duration
-        - expiresAt
-    CharityAdInput:
-      type: object
-      properties:
-        charity:
-          type: string
-        title:
-          type: string
-        image:
-          type: string
-          format: binary
-          nullable: true
-        description:
-          type: string
-        duration:
-          type: number
-        categories:
-          type: array
-          items:
-            type: string
-        requirements:
-          type: array
-          items:
-            type: object
-            properties:
-              location:
-                type: string
-                nullable: true
-              skills:
-                type: array
-                items:
-                  type: string
-      required:
-        - charity
-        - title
-        - description
-        - duration
     Incident:
       type: object
-      properties:
-        _id:
-          type: string
-        type:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        dateOccurred:
-          type: string
-          format: date-time
-        location:
-          type: object
-          properties:
-            type:
-              type: string
-              enum: [Point]
-            coordinates:
-              type: array
-              items:
-                type: number
-        status:
-          type: string
-          enum: [pending, validated]
-        reports:
-          type: array
-          items:
-            $ref: "#/components/schemas/Report"
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
       required:
         - type
         - title
         - description
         - dateOccurred
         - location
-        - status
-    Report:
-      type: object
       properties:
-        _id:
-          type: string
         type:
           type: string
+          minLength: 4
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
         title:
           type: string
-          nullable: true
+          minLength: 4
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
         description:
           type: string
-        image:
-          type: array
-          items:
-            type: object
-            properties:
-              url:
-                type: string
-                nullable: true
-              cloudinaryId:
-                type: string
-                nullable: true
+          minLength: 4
+          maxLength: 300
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        dateOccurred:
+          type: string
+          format: date-time
         location:
           type: object
+          required:
+            - type
+            - coordinates
           properties:
             type:
               type: string
@@ -319,481 +92,531 @@ components:
               type: array
               items:
                 type: number
-            name:
-              type: string
-              nullable: true
-        reportedBy:
-          $ref: "#/components/schemas/User"
-          nullable: true
-        incident:
-          $ref: "#/components/schemas/Incident"
-          nullable: true
-        createdAt:
+              minItems: 2
+              maxItems: 2
+        status:
           type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      required:
-        - type
-        - description
-        - location
-    ReportInput:
-      type: object
-      properties:
-        type:
-          type: string
-        title:
-          type: string
-          nullable: true
-        description:
-          type: string
-        image:
+          enum: [pending, validated]
+          default: pending
+        reports:
           type: array
           items:
             type: string
-            format: binary
-        location:
-          type: object
-          properties:
-            type:
-              type: string
-              enum: [Point]
-            coordinates:
-              type: array
-              items:
-                type: number
-            name:
-              type: string
-              nullable: true
-        incident:
-          type: string
-          nullable: true
-      required:
-        - type
-        - description
-        - location
-    Volunteer:
-      type: object
-      properties:
-        _id:
-          type: string
-        charityAdId:
-          $ref: "#/components/schemas/CharityAd"
-        user:
-          $ref: "#/components/schemas/User"
-        fullName:
-          type: string
-        sex:
-          type: string
-          enum: [male, female]
-          nullable: true
-        age:
-          type: number
-        email:
-          type: string
-        phone:
-          type: string
-        expertise:
-          type: string
-        contribution:
-          type: string
-      required:
-        - charityAdId
-        - user
-        - fullName
-        - age
-        - email
-        - phone
-        - expertise
-        - contribution
-    VolunteerInput:
-      type: object
-      properties:
-        charityAdId:
-          type: string
-        user:
-          type: string
-        fullName:
-          type: string
-        sex:
-          type: string
-          enum: [male, female]
-          nullable: true
-        age:
-          type: number
-        email:
-          type: string
-        phone:
-          type: string
-        expertise:
-          type: string
-        contribution:
-          type: string
-      required:
-        - charityAdId
-        - user
-        - fullName
-        - age
-        - email
-        - phone
-        - expertise
-        - contribution
-    News:
-      type: object
-      properties:
-        _id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        images:
-          type: array
-          items:
-            type: object
-            properties:
-              url:
-                type: string
-                nullable: true
-              cloudinaryId:
-                type: string
-                nullable: true
-        incident:
-          $ref: "#/components/schemas/Incident"
+            format: objectId
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
+    User:
+      type: object
       required:
+        - firstName
+        - lastName
+        - email
+        - phone
+        - password
+        - role
+      properties:
+        firstName:
+          type: string
+          minLength: 4
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        lastName:
+          type: string
+          minLength: 4
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+        image:
+          type: string
+          default: default-profile.png
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CharityAd:
+      type: object
+      required:
+        - charity
         - title
         - description
-        - incident
-    NewsInput:
-      type: object
       properties:
+        charity:
+          type: string
+          format: objectId
         title:
           type: string
+          minLength: 4
+          maxLength: 50
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        image:
+          type: string
+          default: ""
         description:
           type: string
-        incident:
+          minLength: 4
+          maxLength: 1000
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        status:
           type: string
-      required:
-        - title
-        - description
-        - incident
-    Announcement:
-      type: object
-      properties:
-        _id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        charities:
+          enum: [open, closed] # Model uses open/closed
+          default: open
+        volunteers:
           type: array
           items:
-            type: object
-            properties:
-              charity:
-                $ref: "#/components/schemas/Organization"
-              response:
-                type: string
-                enum: [Pending, Accepted, Rejected]
+            type: string
+            format: objectId
         duration:
-          type: number
+          type: integer
+          description: Duration in milliseconds as stored in the model. Input for creation/update is typically in days.
         expiresAt:
           type: string
           format: date-time
+        categories:
+          type: array
+          items:
+            type: string
+          nullable: true
+        requirements:
+          type: array
+          items:
+            type: object
+            properties:
+              location:
+                type: string
+              skills:
+                type: array
+                items:
+                  type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
+    News:
+      type: object
       required:
         - title
         - description
-        - charities
-    AnnouncementInput:
-      type: object
+        - incident
+        - images
       properties:
         title:
           type: string
+          minLength: 4
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
         description:
           type: string
-        charities:
+          minLength: 4
+          maxLength: 1000
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        images:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - url
+              - cloudinaryId
+            properties:
+              url:
+                type: string
+                format: uri
+              cloudinaryId:
+                type: string
+        incident:
+          type: string
+          format: objectId
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Organization:
+      type: object
+      required:
+        - organizationName
+        - email
+        - phone
+        - password
+        - role
+      properties:
+        organizationName: # Changed from name
+          type: string
+          minLength: 5
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        password:
+          type: string
+        taxId:
+          type: string
+        image:
+          type: string
+        mission:
+          type: string
+          minLength: 5
+          maxLength: 100
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        role:
+          type: string
+          enum: [charity, government]
+          default: charity
+        isVerified:
+          type: boolean
+          default: false
+        status:
+          type: string
+          enum: [active, inactive] # Changed from pending, active
+          default: active # Changed from pending
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Volunteer:
+      type: object
+      required:
+        - user
+        - fullName
+        - age
+        - email
+        - phone
+        - expertise
+        - contribution
+        - charityAdId # Added based on controller
+      properties:
+        charityAdId: # Added based on controller
+          type: string
+          format: objectId
+        user:
+          type: string
+          format: objectId
+        fullName:
+          type: string
+          minLength: 5
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        sex:
+          type: string
+          enum: [male, female]
+        age:
+          type: integer
+          minimum: 1
+          maximum: 120
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          pattern: ^\+?[1-9]\d{1,14}$
+        expertise:
+          type: string
+        contribution:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Report:
+      type: object
+      required:
+        - type
+        - description
+      properties:
+        type:
+          type: string
+          minLength: 4
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        title:
+          type: string
+          minLength: 10
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        description:
+          type: string
+          minLength: 4
+          maxLength: 300
+          pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+        image:
           type: array
           items:
             type: object
             properties:
-              charity:
+              url:
                 type: string
-              response:
+                format: uri
+              cloudinaryId:
                 type: string
-                enum: [Pending, Accepted, Rejected]
-        duration:
-          type: number
-      required:
-        - title
-        - description
-        - charities
+        location:
+          type: object
+          required:
+            - type
+            - coordinates
+          properties:
+            type:
+              type: string
+              enum: [Point]
+            coordinates:
+              type: array
+              items:
+                type: number
+              minItems: 2
+              maxItems: 2
+            name: # Added from model
+              type: string
+        reportedBy:
+          type: string
+          format: objectId
+        incident:
+          type: string
+          format: objectId
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     Error:
       type: object
       properties:
+        success:
+          type: boolean
         message:
           type: string
-        status:
-          type: number
-      required:
-        - message
-        - status
-security:
-  - bearerAuth: []
+        error:
+          type: string
+    PaginatedResponse: # Base for pagination fields
+      type: object
+      properties:
+        success:
+          type: boolean
+        page:
+          type: integer
+    PaginatedAnnouncementResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Announcement"
+    PaginatedIncidentResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Incident"
+    PaginatedUserResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
+            message: # User controller includes a message here
+              type: string
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/User"
+    PaginatedCharityAdResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/CharityAd"
+    PaginatedNewsResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/News"
+    PaginatedOrganizationResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Organization"
+    PaginatedVolunteerResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            totalCount:
+              type: integer
+            searchCount:
+              type: integer
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Volunteer"
+    PaginatedReportResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginatedResponse"
+        - type: object
+          properties:
+            totalCount: # Controller currently doesn't return searchCount for reports
+              type: integer
+            searchCount:
+              type: integer
+              description: "Note: Controller currently does not provide searchCount for reports."
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Report"
 paths:
-  /user:
+  /announcement:
     get:
-      summary: Get all users
+      summary: Get all announcements
       tags:
-        - User
+        - Announcements
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches title)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
       responses:
         "200":
-          description: List of users
+          description: List of announcements
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/PaginatedAnnouncementResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin or verified charity role.
     post:
-      summary: Create a new user
+      summary: Create a new announcement
       tags:
-        - User
+        - Announcements
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              $ref: "#/components/schemas/UserInput"
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 300
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                charities: # Controller expects array of ObjectIds for 'charities' field in Announcement model
+                  type: array
+                  items:
+                    type: string
+                    format: objectId
+              required:
+                - title
+                - description
+                # charities implicitly required by controller logic for non-empty array
       responses:
         "201":
-          description: User created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    delete:
-      summary: Delete all users
-      tags:
-        - User
-      security:
-        - bearerAuth: []
-      responses:
-        "204":
-          description: All users deleted
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /user/login:
-    post:
-      summary: User login
-      tags:
-        - User
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                identifier:
-                  type: string
-                password:
-                  type: string
-              required:
-                - identifier
-                - password
-      responses:
-        "200":
-          description: Login successful
+          description: Announcement created
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  token:
-                    type: string
-                  user:
-                    $ref: "#/components/schemas/User"
-        "401":
-          description: Invalid credentials
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /user/{id}:
-    get:
-      summary: Get a user by ID
-      tags:
-        - User
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: User ID
-      responses:
-        "200":
-          description: User details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "404":
-          description: User not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    patch:
-      summary: Update a user
-      tags:
-        - User
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: User ID
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: "#/components/schemas/UserInput"
-      responses:
-        "200":
-          description: User updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    delete:
-      summary: Delete a user
-      tags:
-        - User
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: User ID
-      responses:
-        "204":
-          description: User deleted
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /user/changePassword/{id}:
-    patch:
-      summary: Change user password
-      tags:
-        - User
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: User ID
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                oldPassword:
-                  type: string
-                newPassword:
-                  type: string
-              required:
-                - oldPassword
-                - newPassword
-      responses:
-        "200":
-          description: Password changed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
+                  success:
+                    type: boolean
                   message:
                     type: string
+                  data:
+                    $ref: "#/components/schemas/Announcement"
         "400":
           description: Bad request
           content:
@@ -806,176 +629,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /org:
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government role.
+  /announcement/{id}:
     get:
-      summary: Get all organizations
+      summary: Get an announcement by ID
       tags:
-        - Organization
+        - Announcements
       security:
         - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
       responses:
         "200":
-          description: List of organizations
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Organization"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    post:
-      summary: Create a new organization
-      tags:
-        - Organization
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: "#/components/schemas/OrganizationInput"
-      responses:
-        "201":
-          description: Organization created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Organization"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    delete:
-      summary: Delete all organizations
-      tags:
-        - Organization
-      security:
-        - bearerAuth: []
-      responses:
-        "204":
-          description: All organizations deleted
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /org/login:
-    post:
-      summary: Organization login
-      tags:
-        - Organization
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                identifier:
-                  type: string
-                password:
-                  type: string
-              required:
-                - identifier
-                - password
-      responses:
-        "200":
-          description: Login successful
+          description: Announcement details
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  token:
+                  success:
+                    type: boolean
+                  message:
                     type: string
-                  organization:
-                    $ref: "#/components/schemas/Organization"
-        "401":
-          description: Invalid credentials
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /org/{id}:
-    get:
-      summary: Get an organization by ID
-      tags:
-        - Organization
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Organization ID
-      responses:
-        "200":
-          description: Organization details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Organization"
-        "404":
-          description: Organization not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    patch:
-      summary: Update an organization
-      tags:
-        - Organization
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Organization ID
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: "#/components/schemas/OrganizationInput"
-      responses:
-        "200":
-          description: Organization updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Organization"
+                  data:
+                    $ref: "#/components/schemas/Announcement"
         "400":
-          description: Bad request
+          description: Invalid ID
           content:
             application/json:
               schema:
@@ -986,68 +676,63 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-    delete:
-      summary: Delete an organization
-      tags:
-        - Organization
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Organization ID
-      responses:
-        "204":
-          description: Organization deleted
-        "401":
-          description: Unauthorized
+        "404":
+          description: Announcement not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /org/verify/{id}:
-    patch:
-      summary: Verify an organization
+      description: Requires authentication.
+    put:
+      summary: Update an announcement
       tags:
-        - Organization
+        - Announcements
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: Organization ID
+            format: objectId
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               properties:
-                isVerified:
-                  type: boolean
-              required:
-                - isVerified
+                title:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 300
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                charities:
+                  type: array
+                  items:
+                    type: string
+                    format: objectId
       responses:
         "200":
-          description: Organization verified
+          description: Announcement updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Organization"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Announcement"
         "400":
-          description: Bad request
+          description: Invalid ID or bad request
           content:
             application/json:
               schema:
@@ -1064,32 +749,113 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /charityAd:
+        "404":
+          description: Announcement not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government role.
+    delete:
+      summary: Delete an announcement
+      tags:
+        - Announcements
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: Announcement deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data: # Controller returns deleted announcement
+                    $ref: "#/components/schemas/Announcement"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Announcement not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government or admin role.
+  /charityad:
     get:
       summary: Get all charity ads
       tags:
-        - Charity Ad
+        - CharityAds
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches title, description, status, or categories)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 5 # Controller uses 5
+            minimum: 1
       responses:
         "200":
           description: List of charity ads
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CharityAd"
+                $ref: "#/components/schemas/PaginatedCharityAdResponse"
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      description: Requires authentication.
     post:
       summary: Create a new charity ad
       tags:
-        - Charity Ad
+        - CharityAds
       security:
         - bearerAuth: []
       requestBody:
@@ -1097,14 +863,58 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/CharityAdInput"
+              type: object
+              properties:
+                charity:
+                  type: string
+                  format: objectId
+                title:
+                  type: string
+                  minLength: 4
+                  maxLength: 50
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                duration:
+                  type: integer
+                  minimum: 1
+                  maximum: 30 # As per controller logic for days
+                  description: Duration in days
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 1000
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                image:
+                  type: string
+                  format: binary
+                status:
+                  type: string
+                  enum: [open, closed]
+                  default: open
+                categories: # Added
+                  type: string # Sent as stringified JSON array
+                  description: JSON string of an array of category strings. E.g., '["Medical Aid", "Food Drive"]'
+                requirements: # Added
+                  type: string # Sent as stringified JSON array
+                  description: JSON string of an array of requirement objects. E.g., '[{"location": "North", "skills": ["Driving"]}]'
+              required:
+                - charity
+                - title
+                - description
+                - duration # Model requires duration
       responses:
         "201":
           description: Charity ad created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharityAd"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data: # Controller uses 'data' key
+                    $ref: "#/components/schemas/CharityAd"
         "400":
           description: Bad request
           content:
@@ -1123,15 +933,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      description: Requires verified charity role.
     delete:
       summary: Delete all charity ads
       tags:
-        - Charity Ad
+        - CharityAds
       security:
         - bearerAuth: []
       responses:
-        "204":
+        "200":
           description: All charity ads deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -1144,67 +966,123 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /charityAd/{id}:
+      description: Requires admin role.
+  /charityad/{id}:
     get:
       summary: Get a charity ad by ID
       tags:
-        - Charity Ad
+        - CharityAds
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: Charity Ad ID
+            format: objectId
       responses:
         "200":
           description: Charity ad details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharityAd"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message: # Controller adds message
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/CharityAd"
+        "400": # Controller specific error for invalid ID
+          description: Invalid charity ad ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "404":
           description: Charity ad not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+      description: Requires authentication.
     put:
       summary: Update a charity ad
       tags:
-        - Charity Ad
+        - CharityAds
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: Charity Ad ID
+            format: objectId
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/CharityAdInput"
+              type: object
+              properties:
+                charity:
+                  type: string
+                  format: objectId
+                # incident: # Not in model or controller update logic
+                #   type: string
+                #   format: objectId
+                #   nullable: true
+                title:
+                  type: string
+                  minLength: 4
+                  maxLength: 50
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                duration:
+                  type: integer
+                  description: Duration in days
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 1000
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                image:
+                  type: string
+                  format: binary
+                status:
+                  type: string
+                  enum: [open, closed]
+                categories: # Added
+                  type: string
+                  description: JSON string of an array of category strings.
+                requirements: # Added
+                  type: string
+                  description: JSON string of an array of requirement objects.
+              # No 'required' fields for PUT as it's a partial update by controller
       responses:
         "200":
           description: Charity ad updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharityAd"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/CharityAd"
         "400":
-          description: Bad request
+          description: Bad request or invalid ID
           content:
             application/json:
               schema:
@@ -1221,22 +1099,46 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "404":
+          description: Charity ad not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires verified charity role.
     delete:
       summary: Delete a charity ad
       tags:
-        - Charity Ad
+        - CharityAds
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: Charity Ad ID
+            format: objectId
       responses:
-        "204":
+        "200":
           description: Charity ad deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data: # Controller returns deleted ad
+                    $ref: "#/components/schemas/CharityAd"
+        "400": # Controller specific error for invalid ID
+          description: Invalid charity ad ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1249,6 +1151,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "404":
+          description: Charity ad not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires verified charity role.
   /incidents:
     get:
       summary: Get all incidents
@@ -1256,15 +1165,36 @@ paths:
         - Incidents
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches title, status, type, or date)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
       responses:
         "200":
           description: List of incidents
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Incident"
+                $ref: "#/components/schemas/PaginatedIncidentResponse"
         "401":
           description: Unauthorized
           content:
@@ -1277,6 +1207,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      description: Requires admin or government role.
     delete:
       summary: Delete all incidents
       tags:
@@ -1284,8 +1215,19 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "204":
+        "200":
           description: All incidents deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count: # Controller returns countCount
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -1298,6 +1240,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      description: Requires admin or government role.
   /incidents/{id}:
     get:
       summary: Get an incident by ID
@@ -1306,21 +1249,26 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: Incident ID
+            format: objectId
       responses:
         "200":
           description: Incident details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Incident"
-        "404":
-          description: Incident not found
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/Incident"
+        "400":
+          description: Invalid ID
           content:
             application/json:
               schema:
@@ -1331,6 +1279,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "404":
+          description: Incident not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin or government role.
     delete:
       summary: Delete an incident
       tags:
@@ -1338,15 +1293,30 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: Incident ID
+            format: objectId
       responses:
-        "204":
+        "200":
           description: Incident deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1359,399 +1329,74 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /incidents/images/{id}:
-    get:
-      summary: Get images for an incident
-      tags:
-        - Incidents
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Incident ID
-      responses:
-        "200":
-          description: List of image URLs
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
         "404":
           description: Incident not found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /report:
+      description: Requires admin or government role.
+  /incidents/images/{id}:
     get:
-      summary: Get all reports
+      summary: Get all images from reports of an incident
       tags:
-        - Report
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: List of reports
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Report"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    post:
-      summary: Create a new report
-      tags:
-        - Report
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: "#/components/schemas/ReportInput"
-      responses:
-        "201":
-          description: Report created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Report"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    delete:
-      summary: Delete all reports
-      tags:
-        - Report
-      security:
-        - bearerAuth: []
-      responses:
-        "204":
-          description: All reports deleted
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /report/{id}:
-    get:
-      summary: Get a report by ID
-      tags:
-        - Report
+        - Incidents
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: Report ID
+            format: objectId
       responses:
         "200":
-          description: Report details
+          description: List of images from reports
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Report"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        url:
+                          type: string
+                          format: uri
+                        cloudinaryId:
+                          type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "404":
-          description: Report not found
+          description: Incident not found (or no images, controller doesn't differentiate)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
+        "500":
+          description: Internal server error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-    put:
-      summary: Update a report
-      tags:
-        - Report
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Report ID
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: "#/components/schemas/ReportInput"
-      responses:
-        "200":
-          description: Report updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Report"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    delete:
-      summary: Delete a report
-      tags:
-        - Report
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Report ID
-      responses:
-        "204":
-          description: Report deleted
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /volunteer:
-    get:
-      summary: Get all volunteers
-      tags:
-        - Volunteer
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: List of volunteers
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Volunteer"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    post:
-      summary: Register a new volunteer
-      tags:
-        - Volunteer
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: "#/components/schemas/VolunteerInput"
-      responses:
-        "201":
-          description: Volunteer registered
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Volunteer"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    delete:
-      summary: Delete all volunteers
-      tags:
-        - Volunteer
-      security:
-        - bearerAuth: []
-      responses:
-        "204":
-          description: All volunteers deleted
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /volunteer/{id}:
-    get:
-      summary: Get a volunteer by ID
-      tags:
-        - Volunteer
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Volunteer ID
-      responses:
-        "200":
-          description: Volunteer details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Volunteer"
-        "404":
-          description: Volunteer not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    put:
-      summary: Update a volunteer
-      tags:
-        - Volunteer
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Volunteer ID
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: "#/components/schemas/VolunteerInput"
-      responses:
-        "200":
-          description: Volunteer updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Volunteer"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    delete:
-      summary: Delete a volunteer
-      tags:
-        - Volunteer
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Volunteer ID
-      responses:
-        "204":
-          description: Volunteer deleted
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+      description: Requires admin or government role.
   /news:
     get:
       summary: Get all news
@@ -1759,21 +1404,49 @@ paths:
         - News
       security:
         - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches title)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
       responses:
         "200":
           description: List of news
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/News"
+                $ref: "#/components/schemas/PaginatedNewsResponse" # This already expects success, totalCount, searchCount, data, page
         "401":
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires authentication.
     post:
       summary: Create a new news item
       tags:
@@ -1783,16 +1456,44 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          multipart/form-data: # Controller uses upload.none() but parses 'images' as stringified JSON from form data
             schema:
-              $ref: "#/components/schemas/NewsInput"
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 1000
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                images: # Sent as a stringified JSON array of objects
+                  type: string
+                  description: "A JSON string representing an array of image objects, e.g., '[{\"url\":\"http://...\", \"cloudinaryId\":\"...\"}]'"
+                incident:
+                  type: string
+                  format: objectId
+              required:
+                - title
+                - description
+                - incident
+                - images
       responses:
         "201":
-          description: News created
+          description: News item created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/News"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/News"
         "400":
           description: Bad request
           content:
@@ -1805,6 +1506,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government role.
     delete:
       summary: Delete all news
       tags:
@@ -1812,8 +1526,19 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "204":
+        "200":
           description: All news deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message: # Controller uses 'messages'
+                    type: string
+                  count:
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -1826,6 +1551,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin or government role.
   /news/{id}:
     get:
       summary: Get a news item by ID
@@ -1834,21 +1566,28 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: News ID
+            format: objectId
       responses:
         "200":
-          description: News details
+          description: News item details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/News"
-        "404":
-          description: News not found
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/News"
+        "400":
+          description: Invalid ID
           content:
             application/json:
               schema:
@@ -1859,6 +1598,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "404":
+          description: News item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires authentication.
     put:
       summary: Update a news item
       tags:
@@ -1866,25 +1618,53 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: News ID
+            format: objectId
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          multipart/form-data: # Controller uses upload.none() but parses 'images' as stringified JSON
             schema:
-              $ref: "#/components/schemas/NewsInput"
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 1000
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                images: # Sent as a stringified JSON array of objects
+                  type: string
+                  description: "A JSON string representing an array of image objects, e.g., '[{\"url\":\"http://...\", \"cloudinaryId\":\"...\"}]'"
+                incident:
+                  type: string
+                  format: objectId
+              required: # Added based on controller logic
+                - title
+                - description
+                - incident
+                - images
       responses:
         "200":
-          description: News updated
+          description: News item updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/News"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/News"
         "400":
           description: Bad request
           content:
@@ -1897,6 +1677,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: News item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government role.
     patch:
       summary: Partially update a news item
       tags:
@@ -1904,25 +1703,53 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: News ID
+            format: objectId
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          multipart/form-data: # Controller uses upload.none() but parses 'images' as stringified JSON
             schema:
-              $ref: "#/components/schemas/NewsInput"
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 1000
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                images: # Sent as a stringified JSON array of objects
+                  type: string
+                  description: "A JSON string representing an array of image objects, e.g., '[{\"url\":\"http://...\", \"cloudinaryId\":\"...\"}]'"
+                incident:
+                  type: string
+                  format: objectId
+              required: # Added based on controller logic (same as PUT for this controller)
+                - title
+                - description
+                - incident
+                - images
       responses:
         "200":
-          description: News updated
+          description: News item updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/News"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/News"
         "400":
           description: Bad request
           content:
@@ -1935,6 +1762,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: News item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government role.
     delete:
       summary: Delete a news item
       tags:
@@ -1942,43 +1788,30 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: News ID
-      responses:
-        "204":
-          description: News deleted
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /announcement:
-    get:
-      summary: Get all announcements
-      tags:
-        - Announcement
-      security:
-        - bearerAuth: []
+            format: objectId
       responses:
         "200":
-          description: List of announcements
+          description: News item deleted
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Announcement"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized
           content:
@@ -1991,46 +1824,138 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-    post:
-      summary: Create a new announcement
+        "404":
+          description: News item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires government or admin role.
+  /volunteer:
+    get:
+      summary: Get all volunteers
       tags:
-        - Announcement
+        - Volunteers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches fullName, sex, expertise, or contribution)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+      responses:
+        "200":
+          description: List of volunteers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedVolunteerResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin or charity role.
+    post:
+      summary: Register a new volunteer for a charity ad
+      tags:
+        - Volunteers
       security:
         - bearerAuth: []
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          multipart/form-data::
             schema:
-              $ref: "#/components/schemas/AnnouncementInput"
+              type: object
+              properties:
+                charityAdId: # Added
+                  type: string
+                  format: objectId
+                user:
+                  type: string
+                  format: objectId
+                fullName:
+                  type: string
+                  minLength: 5
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                sex:
+                  type: string
+                  enum: [male, female]
+                age:
+                  type: integer
+                  minimum: 1
+                  maximum: 120
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                  pattern: ^\+?[1-9]\d{1,14}$
+                expertise:
+                  type: string
+                contribution:
+                  type: string
+              required:
+                - charityAdId # Added
+                - user
+                - fullName
+                - age
+                - email
+                - phone
+                - expertise
+                - contribution
       responses:
         "201":
-          description: Announcement created
+          description: Volunteer registered
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Announcement"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Volunteer"
         "400":
-          description: Bad request
+          description: Bad request (e.g., already registered, ad closed)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    delete:
-      summary: Delete all announcements
-      tags:
-        - Announcement
-      security:
-        - bearerAuth: []
-      responses:
-        "204":
-          description: All announcements deleted
         "401":
           description: Unauthorized
           content:
@@ -2043,29 +1968,82 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /announcement/{id}:
-    get:
-      summary: Get an announcement by ID
-      tags:
-        - Announcement
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Announcement ID
-      responses:
-        "200":
-          description: Announcement details
+        "404":
+          description: CharityAd not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Announcement"
-        "404":
-          description: Announcement not found
+                $ref: "#/components/schemas/Error"
+      description: Requires user role.
+    delete:
+      summary: Delete all volunteers
+      tags:
+        - Volunteers
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All volunteers deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404": # Controller can return 404 if no volunteers found
+          description: No volunteers found to delete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin role.
+  /volunteer/{id}:
+    get:
+      summary: Get a volunteer by ID
+      tags:
+        - Volunteers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: Volunteer details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Volunteer"
+        "400":
+          description: Invalid ID
           content:
             application/json:
               schema:
@@ -2076,60 +2054,280 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "404":
+          description: Volunteer not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires user or charity role.
     put:
-      summary: Update an announcement
+      summary: Update a volunteer
       tags:
-        - Announcement
+        - Volunteers
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
             type: string
-          description: Announcement ID
+            format: objectId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: # Note: user and charityAdId are not updatable via this endpoint by design in controller
+                fullName:
+                  type: string
+                  minLength: 5
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                sex:
+                  type: string
+                  enum: [male, female]
+                age:
+                  type: integer
+                  minimum: 1
+                  maximum: 120
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                  pattern: ^\+?[1-9]\d{1,14}$
+                expertise:
+                  type: string
+                contribution:
+                  type: string
+      responses:
+        "200":
+          description: Volunteer updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Volunteer"
+        "400":
+          description: Bad request (e.g., duplicate email/phone on different volunteer)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Volunteer not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires user role (to update their own volunteer registration).
+    delete:
+      summary: Delete a volunteer registration
+      tags:
+        - Volunteers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: Volunteer deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Volunteer not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires user role (to delete their own volunteer registration).
+  /org:
+    get:
+      summary: Get all organizations
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches name or role)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+      responses:
+        "200":
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedOrganizationResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin or government role.
+    post:
+      summary: Create a new organization
+      tags:
+        - Organizations
+      # No bearerAuth for public registration
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/AnnouncementInput"
+              type: object
+              properties:
+                organizationName: # Changed from name
+                  type: string
+                  minLength: 5
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                password:
+                  type: string
+                taxId:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+                mission:
+                  type: string
+                  minLength: 5
+                  maxLength: 100
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                role:
+                  type: string
+                  enum: [charity, government]
+                  default: charity
+              required:
+                - organizationName # Changed from name
+                - email
+                - phone
+                - password
+                - role
+                - taxId # Model taxId is required
       responses:
-        "200":
-          description: Announcement updated
+        "201":
+          description: Organization created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Announcement"
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Organization"
+                  token: # Controller returns token
+                    type: string
         "400":
-          description: Bad request
+          description: Bad request (e.g., name/email/phone taken, image upload failed)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+      description: Public endpoint for charity registration. Government organizations can only be created by an admin (controller logic handles this).
     delete:
-      summary: Delete an announcement
+      summary: Delete all organizations
       tags:
-        - Announcement
+        - Organizations
       security:
         - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Announcement ID
       responses:
-        "204":
-          description: Announcement deleted
+        "200":
+          description: All organizations deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
         "401":
           description: Unauthorized
           content:
@@ -2142,3 +2340,1166 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+      description: Requires admin role.
+  /org/login:
+    post:
+      summary: Organization login
+      tags:
+        - Organizations
+      requestBody:
+        required: true
+        content:
+          application/json: # Controller uses req.body directly
+            schema:
+              type: object
+              properties:
+                identifier:
+                  type: string
+                  description: Email or phone number
+                password:
+                  type: string
+              required:
+                - identifier
+                - password
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      phone:
+                        type: string
+        "400":
+          description: Bad request (e.g., missing fields, incorrect password)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized (user not found)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /org/{id}:
+    get:
+      summary: Get an organization by ID
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: "#/components/schemas/Organization"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires authentication.
+    patch:
+      summary: Update an organization
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                organizationName: # Changed from name
+                  type: string
+                  minLength: 5
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                # password: # Password update should be a separate endpoint for security
+                #   type: string
+                taxId:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+                mission:
+                  type: string
+                  minLength: 5
+                  maxLength: 100
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                role: # Role change might have implications, controller prevents changing to 'government' here
+                  type: string
+                  enum: [charity, government]
+      responses:
+        "200":
+          description: Organization updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Organization"
+        "400":
+          description: Bad request (e.g., name/email/phone taken)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires charity or government role (for self-update).
+    delete:
+      summary: Delete an organization
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: Organization deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires charity, government (for self-delete), or admin role.
+  /org/verify/{id}:
+    patch:
+      summary: Verify an organization
+      tags:
+        - Organizations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: Organization verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Bad request (e.g., already verified, invalid ID)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin role.
+  /report:
+    get:
+      summary: Get all reports
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches title, status, type, or date) # Status/date not in model for search
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+      responses:
+        "200":
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedReportResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin or government role.
+    post:
+      summary: Create a new report
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Type of disaster (e.g., wild fire, earth quake)
+                title:
+                  type: string
+                  minLength: 10
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Title of the report (optional)
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 300
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Description of the report
+                image: # Matches upload.array("image", 10)
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  maxItems: 10
+                  description: Up to 10 image files for the report
+                longitude:
+                  type: number
+                  format: double
+                  description: Longitude of the report location
+                latitude:
+                  type: number
+                  format: double
+                  description: Latitude of the report location
+                reportedBy:
+                  type: string
+                  format: objectId
+                  description: ID of the user reporting the incident
+                incident: # This is for associating with an existing incident, but controller logic mainly auto-associates or creates new.
+                  type: string
+                  format: objectId
+                  nullable: true
+                  description: Associated incident ID (optional, controller logic may override)
+              required:
+                - type
+                - description
+                - longitude
+                - latitude
+                - reportedBy
+      responses:
+        "201":
+          description: Report created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Report"
+                  incident:
+                    oneOf:
+                      - type: object
+                        properties:
+                          id:
+                            type: string
+                            format: objectId
+                          status:
+                            type: string
+                          reportCount:
+                            type: integer
+                        description: Existing incident details if matched
+                      - type: object
+                        properties:
+                          type:
+                            type: string
+                          status:
+                            type: string
+                        description: New incident details if created
+        "400":
+          description: Bad request (e.g., missing fields, invalid location, already reported)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404": # If reportedBy user not found
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires user role.
+    delete:
+      summary: Delete all reports
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All reports deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  deletedCount:
+                    type: integer
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin role.
+  /report/{id}:
+    get:
+      summary: Get a report by ID
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: Report details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Report"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires authentication.
+    put:
+      summary: Update a report
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Type of disaster (e.g., wild fire, earth quake)
+                title:
+                  type: string
+                  minLength: 10
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Title of the report (optional)
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 300
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                  description: Description of the report
+                image:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  maxItems: 10
+                  description: Up to 10 image files to replace or add to the report
+                # reportedBy: # Cannot change reportedBy
+                #   type: string
+                #   format: objectId
+                # incident: # Incident association is handled by controller logic
+                #   type: string
+                #   format: objectId
+                #   nullable: true
+      responses:
+        "200":
+          description: Report updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Report"
+        "400":
+          description: Bad request or invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden (e.g., not owner of report)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires user role (owner of the report).
+    delete:
+      summary: Delete a report
+      tags:
+        - Reports
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: Report deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires user (owner) or admin role.
+  /user:
+    get:
+      summary: Get all users
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Search term (matches firstName, lastName, or role)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedUserResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin role.
+    post:
+      summary: Create a new user (Register)
+      tags:
+        - Users
+      # No bearerAuth for public registration
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                lastName:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [user, admin]
+                  default: user
+                image:
+                  type: string
+                  format: binary
+              required:
+                - firstName
+                - lastName
+                - email
+                - phone
+                - password
+                # role is not required in request as it defaults, or can be set by admin (handled by Mongoose)
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+                  token: # Controller returns token
+                    type: string
+        "400":
+          description: Bad request (e.g., email/phone taken, image upload failed)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete all users
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All users deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  count:
+                    type: integer
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires admin role.
+  /user/login:
+    post:
+      summary: User login
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json: # Controller expects JSON
+            schema:
+              type: object
+              properties:
+                identifier:
+                  type: string
+                  description: Email or phone number
+                password:
+                  type: string
+              required:
+                - identifier
+                - password
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  # success: # Controller does not return success field
+                  #   type: boolean
+                  message:
+                    type: string
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: objectId
+                      full_name:
+                        type: string
+                      email:
+                        type: string
+                      phone:
+                        type: string
+        "400":
+          description: Bad request (missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized (user not found or incorrect password)
+          content:
+            application/json:
+              schema: # Controller returns simple { error: "message" }
+                type: object
+                properties:
+                  error:
+                    type: string
+  /user/{id}:
+    get:
+      summary: Get a user by ID
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires authentication.
+    patch:
+      summary: Update a user
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                lastName:
+                  type: string
+                  minLength: 4
+                  pattern: ^[A-Za-z0-9\s.,!?'"&()-]+$
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                # password: # Password update should be via /changePassword
+                #   type: string
+                image:
+                  type: string
+                  format: binary
+                role: # Added from controller logic, only admin can change
+                  type: string
+                  enum: [user, admin]
+                  description: "User role, can only be changed by an admin."
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request (e.g., email/phone taken, role update by non-admin)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden (e.g., trying to update another user without admin rights)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires user role (for self-update) or admin role (for any user update, including role).
+    delete:
+      summary: Delete a user
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectId
+      responses:
+        "200":
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data: # Controller returns deleted user
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      description: Requires user (for self-delete) or admin role.
+  /user/changePassword/{id}:
+    patch:
+      summary: Change user password
+      description: Allows an authenticated user to change their password. Requires user or admin role.
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - oldPassword
+                - newPassword
+              properties:
+                oldPassword:
+                  type: string
+                  example: oldpass123
+                newPassword:
+                  type: string
+                  example: newpass456
+      responses:
+        "200":
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Password changed successfully
+        "400":
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Old password and new password required
+                  error:
+                    type: string
+                    example: missing fields
+        "401":
+          description: Incorrect password or Unauthorized
+          content:
+            application/json:
+              schema: # Controller returns simple { error: "message" } or auth middleware error
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: incorrect password
+                  message: # From auth middleware
+                    type: string
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: User not found
+                  error:
+                    type: string
+                    example: document not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Internal Server error
+                  error:
+                    type: string
+                    example: Detailed error message
+security:
+  - bearerAuth: []

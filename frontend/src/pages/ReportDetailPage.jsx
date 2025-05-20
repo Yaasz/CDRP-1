@@ -48,15 +48,15 @@ export default function ReportDetailPage() {
 
   const fetchReport = async () => {
     try {
-      setLoading(true);
-      setError(false);
+    setLoading(true);
+    setError(false);
       
       const response = await api.get(`/report/${reportId}`);
       console.log('Report details:', response.data);
       setReport(response.data);
     } catch (err) {
       console.error('Error fetching report:', err);
-      setError(true);
+        setError(true);
     } finally {
       setLoading(false);
     }
@@ -68,25 +68,25 @@ export default function ReportDetailPage() {
 
     try {
       setSubmittingComment(true);
-      
+
       // In a real implementation, you would have a comments API endpoint
       // For now, we'll just update the UI as if the comment was added
-      const comment = {
+    const comment = {
         id: Date.now(),
         user: user ? (user.firstName && user.lastName 
           ? `${user.firstName} ${user.lastName}` 
           : user.name || user.email || 'User') 
           : "Anonymous",
-        date: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-        content: newComment
-      };
+      date: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+      content: newComment
+    };
 
-      // Simulate update (in real app, call API then update state)
-      setReport(prevReport => ({
-        ...prevReport,
+    // Simulate update (in real app, call API then update state)
+    setReport(prevReport => ({
+      ...prevReport,
         comments: [...(prevReport.comments || []), comment]
-      }));
-      setNewComment('');
+    }));
+    setNewComment('');
     } catch (err) {
       console.error('Error adding comment:', err);
       alert('Failed to add comment. Please try again.');
@@ -236,8 +236,8 @@ export default function ReportDetailPage() {
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">Images</h3>
                   <div className="space-y-2">
                     <div className="flex items-center p-3 bg-gray-50 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors">
-                      <Paperclip className="h-4 w-4 text-gray-500 mr-2 flex-shrink-0" />
-                      <div className="flex-1 overflow-hidden">
+                        <Paperclip className="h-4 w-4 text-gray-500 mr-2 flex-shrink-0" />
+                        <div className="flex-1 overflow-hidden">
                         <div className="text-sm font-medium text-blue-600 truncate">Incident Photo</div>
                       </div>
                       <a 
@@ -261,16 +261,16 @@ export default function ReportDetailPage() {
             <div className="p-5 space-y-4">
               {report.comments && report.comments.length > 0 ? (
                 report.comments.map(comment => (
-                  <div key={comment.id} className="flex items-start space-x-3">
-                     <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-semibold">
+                <div key={comment.id} className="flex items-start space-x-3">
+                   <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-semibold">
                       {typeof comment.user === 'string' 
                         ? comment.user.substring(0, 2).toUpperCase()
                         : typeof comment.user === 'object' && comment.user.name 
                           ? comment.user.name.substring(0, 2).toUpperCase()
                           : 'U'}
-                     </div>
-                    <div className="flex-1 bg-gray-50 border border-gray-100 rounded-md p-3">
-                      <div className="flex justify-between items-center mb-1">
+                   </div>
+                  <div className="flex-1 bg-gray-50 border border-gray-100 rounded-md p-3">
+                    <div className="flex justify-between items-center mb-1">
                         <span className="text-xs font-semibold text-gray-800">
                           {typeof comment.user === 'string' 
                             ? comment.user
@@ -278,14 +278,14 @@ export default function ReportDetailPage() {
                               ? comment.user.name
                               : 'User'}
                         </span>
-                        <span className="text-xs text-gray-500">{comment.date}</span>
-                      </div>
-                      <p className="text-xs text-gray-700">{comment.content}</p>
+                      <span className="text-xs text-gray-500">{comment.date}</span>
                     </div>
+                    <p className="text-xs text-gray-700">{comment.content}</p>
                   </div>
+                </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 text-center py-4">No comments yet.</p>
+                  <p className="text-sm text-gray-500 text-center py-4">No comments yet.</p>
               )}
             </div>
             {/* Add Comment Form */}
@@ -348,9 +348,9 @@ export default function ReportDetailPage() {
 
           {/* Map Card */}
           {report.location && report.location.coordinates && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="p-5 border-b border-gray-200"><h3 className="text-base font-semibold text-gray-800">Location</h3></div>
-              <div className="p-5">
+             <div className="p-5">
                 <div className="h-48 bg-gray-100 rounded-md flex items-center justify-center relative overflow-hidden border border-gray-200 mb-2">
                   {/* Simple map placeholder */}
                   <div className="text-center">
@@ -378,7 +378,7 @@ export default function ReportDetailPage() {
               <div className="p-5 border-b border-gray-200"><h3 className="text-base font-semibold text-gray-800">Uploaded Image</h3></div>
               <div className="aspect-w-16 aspect-h-9">
                 <img src={report.image} alt="Report" className="object-cover w-full h-full" />
-              </div>
+                             </div>
               <div className="p-3 text-center">
                 <a 
                   href={report.image} 
@@ -388,8 +388,8 @@ export default function ReportDetailPage() {
                 >
                   View Full Size
                 </a>
-              </div>
-            </div>
+             </div>
+          </div>
           )}
         </div>
       </div>

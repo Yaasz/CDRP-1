@@ -62,9 +62,109 @@ exports.getIncidentById = async (req, res) => {
       });
     }
 
+    // Get assignments for this incident if they exist
+    let assignments = [];
+    if (mongoose.models.Assignment) {
+      const Assignment = mongoose.model('Assignment');
+      assignments = await Assignment.find({ incident: id })
+        .populate("organization", "organizationName email phone")
+        .populate("assignedBy", "organizationName")
+        .sort({ createdAt: -1 });
+    }
+
+    // Get news related to this incident
+    let news = [];
+    if (mongoose.models.News) {
+      const News = mongoose.model('News');
+      news = await News.find({ incident: id }).sort({ createdAt: -1 });
+    }
+
     res.status(200).json({
       success: true,
       data: incident,
+      assignments,
+      news
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// Update an incident
+exports.updateIncident = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type, title, description, status, location, dateOccurred } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid incident ID",
+        error: "invalid param",
+      });
+    }
+
+    // Find the incident
+    const incident = await Incident.findById(id);
+    if (!incident) {
+      return res.status(404).json({
+        success: false,
+        message: "Incident not found",
+        error: "doc not found",
+      });
+    }
+
+    // Prepare update data
+    const updateData = {};
+    
+    if (type) updateData.type = type;
+    if (title) updateData.title = title;
+    if (description) updateData.description = description;
+    if (status) updateData.status = status;
+    if (dateOccurred) updateData.dateOccurred = new Date(dateOccurred);
+    
+    // Handle location update
+    if (location) {
+      if (typeof location === 'object' && location.coordinates && location.coordinates.length === 2) {
+        updateData.location = {
+          type: 'Point',
+          coordinates: location.coordinates
+        };
+      } else if (typeof location === 'string') {
+        // If location is passed as a string like "lat,lng"
+        try {
+          const [lat, lng] = location.split(',').map(coord => parseFloat(coord.trim()));
+          if (!isNaN(lat) && !isNaN(lng)) {
+            updateData.location = {
+              type: 'Point',
+              coordinates: [lng, lat] // GeoJSON uses [longitude, latitude]
+            };
+          }
+        } catch (error) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid location format. Expected 'latitude,longitude'",
+            error: "invalid param",
+          });
+        }
+      }
+    }
+
+    // Update the incident
+    const updatedIncident = await Incident.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true, runValidators: true }
+    ).populate("reports", "title description image");
+
+    res.status(200).json({
+      success: true,
+      message: "Incident updated successfully",
+      data: updatedIncident,
     });
   } catch (error) {
     res.status(500).json({

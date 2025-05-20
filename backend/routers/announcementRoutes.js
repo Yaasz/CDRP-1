@@ -3,7 +3,6 @@ const router = express.Router();
 const authToken = require("../middleware/auth");
 const authRoles = require("../middleware/authorize");
 const requireVerification = require("../middleware/requireVerification");
-const upload = require("../config/multer");
 // Import controller functions
 const {
   createAnnouncement,
@@ -18,20 +17,16 @@ router
   .route("/")
   .get(
     authToken,
-    authRoles("admin", "charity", "government"),
+    authRoles("admin", "charity"),
     requireVerification,
     getAllAnnouncements
   )
-  .post(authToken, authRoles("government"), upload.none(), createAnnouncement);
+  .post(authToken, authRoles("government"), createAnnouncement);
 
 router
   .route("/:id")
-  .get(
-    authToken,
-    authRoles("admin", "charity", "government"),
-    getAnnouncementById
-  )
-  .put(authToken, authRoles("government"), upload.none(), updateAnnouncement)
+  .get(authToken, getAnnouncementById)
+  .put(authToken, authRoles("government"), updateAnnouncement)
   .delete(authToken, authRoles("government", "admin"), deleteAnnouncement);
 
 module.exports = router;

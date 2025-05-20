@@ -145,9 +145,9 @@ export default function NewsListPage() {
           >
             {categories.map((category) => (
               <option key={category} value={category}>
-                {category}
+            {category}
               </option>
-            ))}
+        ))}
           </select>
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
             <ChevronRight className="h-5 w-5 text-gray-400 transform rotate-90" />
@@ -204,16 +204,16 @@ export default function NewsListPage() {
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-1" />
                       <span>{formatDate(news.createdAt)}</span>
-                    </div>
+                  </div>
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-1" />
                       <span>{calculateReadTime(news.content)}</span>
-                    </div>
+                </div>
                   </div>
                 </div>
               </div>
             </Link>
-          ))}
+        ))}
         </div>
       )}
     </div>

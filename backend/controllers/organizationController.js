@@ -155,12 +155,12 @@ exports.updateOrganization = async (req, res) => {
         message: "Organization not found",
       });
     }
-    if (data.role && data.role == "government") {
-      return res.status(400).json({
-        success: false,
-        message: "government organization can only be created by admin",
-      });
-    }
+    // if (data.role && data.role == "government") {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "government organization can only be created by admin",
+    //   });
+    // }
 
     if (
       data.name !== exists.name ||
@@ -316,9 +316,11 @@ exports.login = async (req, res) => {
       success: true,
       token,
       data: {
+        id: org._id,
         email: org.email,
         role: org.role,
         phone: org.phone,
+        organizationName: org.organizationName,
       },
     });
   } catch (error) {

@@ -1,229 +1,282 @@
-import { useState, useRef } from 'react';
-import Modal from './Modal'; // Import the base modal
+"use client"
+
+import { useState, useRef } from "react"
+import { User, Mail, Calendar } from "lucide-react"
 
 export default function VolunteerRegistrationModal({ isOpen, onClose, onSubmit }) {
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phoneNumber: '',
-    sex: '',
-    age: '',
-    availableDate: '',
-    contributionType: ''
-  });
-  
-  const modalRef = useRef(null);
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    sex: "",
+    age: "",
+    availableDate: "",
+    contributionType: "",
+  })
+
+  const modalRef = useRef(null)
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked } = e.target
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
-    });
-  };
+      [name]: type === "checkbox" ? checked : value,
+    })
+  }
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  // Contribution types
-  const contributionTypes = [
-    { id: 'labor', label: 'Labor (Physical Work)' },
-    { id: 'logistics', label: 'Logistics (Transportation)' },
-    { id: 'supplies', label: 'Supplies/Resources' },
-    { id: 'medical', label: 'Medical Assistance' },
-    { id: 'admin', label: 'Administrative Support' },
-    { id: 'other', label: 'Other' }
-  ];
+    e.preventDefault()
+    onSubmit(formData)
+  }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Volunteer Registration">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm text-gray-600 mb-4">
-          Register to volunteer your time and skills to help with disaster response and recovery efforts.
-        </p>
+    <div
+      className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+    >
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto transform transition-all duration-300">
+        <div className="flex flex-col md:flex-row h-full">
+          {/* Left side - Volunteer graphic */}
+          <div className="md:w-1/2 bg-gradient-to-br from-blue-500 to-blue-700 p-8 flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-6xl font-bold text-white mb-8">VOLUNTEER</h1>
+              <div className="flex justify-center">
+                {/* Stylized hands illustration */}
+                <div className="flex space-x-2">
+                  {[...Array(5)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-12 h-32 rounded-t-full ${i % 2 === 0 ? "bg-blue-400" : "bg-yellow-500"} relative`}
+                      style={{
+                        transform: `rotate(${-10 + i * 5}deg)`,
+                      }}
+                    >
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-10 h-3 bg-inherit rounded-t-full"></div>
+                      {[...Array(4)].map((_, j) => (
+                        <div
+                          key={j}
+                          className="absolute top-0 w-2 h-10 bg-inherit rounded-t-full"
+                          style={{
+                            left: `${j * 3 + 2}px`,
+                            transform: `rotate(${-5 + j * 3}deg)`,
+                            transformOrigin: "bottom",
+                          }}
+                        ></div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <div className="space-y-2">
-          <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-            Full Name <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            <input
-              id="fullName"
-              name="fullName"
-              type="text"
-              required
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          {/* Right side - Form */}
+          <div className="md:w-1/2 bg-gray-100 p-6">
+            <div className="bg-blue-600 text-white text-center py-3 rounded-md mb-6">
+              <h2 className="text-lg font-semibold">Volunteer Registration</h2>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <User size={16} className="text-gray-400" />
+                  </div>
+                  <input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    required
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <Mail size={16} className="text-gray-400" />
+                  </div>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter your email"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <div className="relative flex">
+                  <div className="w-16">
+                    <select className="block w-full h-full py-2 pl-3 pr-0 border border-gray-300 rounded-l-md bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                      <option>+1</option>
+                      <option>+44</option>
+                      <option>+91</option>
+                      <option>+251</option>
+                    </select>
+                  </div>
+                  <input
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    type="tel"
+                    required
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    placeholder="Enter phone number"
+                    className="block w-full py-2 pl-3 pr-3 border border-gray-300 border-l-0 rounded-r-md bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sex</label>
+                <div className="flex space-x-4">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="sex"
+                      value="Male"
+                      checked={formData.sex === "Male"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Male</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="sex"
+                      value="Female"
+                      checked={formData.sex === "Female"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Female</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="sex"
+                      value="Other"
+                      checked={formData.sex === "Other"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Other</span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
+                  Age
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <User size={16} className="text-gray-400" />
+                  </div>
+                  <input
+                    id="age"
+                    name="age"
+                    type="number"
+                    min="16"
+                    max="100"
+                    required
+                    value={formData.age}
+                    onChange={handleChange}
+                    placeholder="Enter your age"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="availableDate" className="block text-sm font-medium text-gray-700 mb-1">
+                  Available Date
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <Calendar size={16} className="text-gray-400" />
+                  </div>
+                  <input
+                    id="availableDate"
+                    name="availableDate"
+                    type="date"
+                    required
+                    value={formData.availableDate}
+                    onChange={handleChange}
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contribution Type</label>
+                <div className="space-y-2">
+                  <label className="inline-flex items-center block">
+                    <input
+                      type="radio"
+                      name="contributionType"
+                      value="Expertise"
+                      checked={formData.contributionType === "Expertise"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Expertise</span>
+                  </label>
+                  <label className="inline-flex items-center block">
+                    <input
+                      type="radio"
+                      name="contributionType"
+                      value="Material"
+                      checked={formData.contributionType === "Material"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Material</span>
+                  </label>
+                  <label className="inline-flex items-center block">
+                    <input
+                      type="radio"
+                      name="contributionType"
+                      value="Labor"
+                      checked={formData.contributionType === "Labor"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Labor</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Submit Registration
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-
-        <div className="space-y-2">
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email Address <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-              <polyline points="22,6 12,13 2,6"></polyline>
-            </svg>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
-            Phone Number <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-            </svg>
-            <input
-              id="phoneNumber"
-              name="phoneNumber"
-              type="tel"
-              required
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="Enter your phone number"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Sex</label>
-          <div className="flex gap-4">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="sex"
-                value="Male"
-                checked={formData.sex === "Male"}
-                onChange={handleChange}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">Male</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="sex"
-                value="Female"
-                checked={formData.sex === "Female"}
-                onChange={handleChange}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">Female</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="sex"
-                value="Other"
-                checked={formData.sex === "Other"}
-                onChange={handleChange}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">Other</span>
-            </label>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="age" className="block text-sm font-medium text-gray-700">
-            Age <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="age"
-            name="age"
-            type="number"
-            min="16"
-            max="100"
-            required
-            value={formData.age}
-            onChange={handleChange}
-            placeholder="Enter your age"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="availableDate" className="block text-sm font-medium text-gray-700">
-            Available Date <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <input
-              id="availableDate"
-              name="availableDate"
-              type="date"
-              required
-              value={formData.availableDate}
-              onChange={handleChange}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Contribution Type <span className="text-red-500">*</span></label>
-          <div className="space-y-2 grid grid-cols-2 gap-2">
-            {contributionTypes.map(type => (
-              <label key={type.id} className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="contributionType"
-                  value={type.id}
-                  checked={formData.contributionType === type.id}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">{type.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="pt-4 flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Register
-          </button>
-        </div>
-      </form>
-    </Modal>
-  );
+      </div>
+    </div>
+  )
 }

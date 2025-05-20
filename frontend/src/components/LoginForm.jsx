@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Eye, EyeOff, Mail, LockKeyhole } from "lucide-react";
+import api from "../utils/api";
 
-export default function LoginForm({ onSubmit, onSwitch }) {
+export default function LoginForm({ onSwitch, onSubmit }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState(null);
   const [accountType, setAccountType] = useState("user");
@@ -24,9 +25,20 @@ export default function LoginForm({ onSubmit, onSwitch }) {
     setLoginError(null);
 
     try {
-      await onSubmit({...loginData, accountType});
+      // Let the parent component handle login via onSubmit
+      await onSubmit({ 
+        ...loginData, 
+        accountType 
+      });
     } catch (err) {
-      setLoginError(err.message || "Login failed. Please check your credentials.");
+      console.error("Login error:", err);
+      // Provide user-friendly error message
+      setLoginError(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Login failed. Please check your credentials."
+      );
     }
   };
 
@@ -77,7 +89,7 @@ export default function LoginForm({ onSubmit, onSwitch }) {
             value={loginData.email}
             onChange={handleChange}
             placeholder="Enter your email"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="block w-full pl-10 pr-3 py-2 border border-[#CDC1FF] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7371FC] focus:border-[#7371FC] sm:text-sm"
           />
         </div>
       </div>
@@ -99,7 +111,7 @@ export default function LoginForm({ onSubmit, onSwitch }) {
             value={loginData.password}
             onChange={handleChange}
             placeholder="Enter your password"
-            className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="block w-full pl-10 pr-10 py-2 border border-[#CDC1FF] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7371FC] focus:border-[#7371FC] sm:text-sm"
           />
           <button
             type="button"
@@ -124,13 +136,13 @@ export default function LoginForm({ onSubmit, onSwitch }) {
             type="checkbox"
             checked={loginData.rememberMe}
             onChange={handleChange}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            className="h-4 w-4 text-[#7371FC] focus:ring-[#A594F9] border-[#CDC1FF] rounded"
           />
           <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
             Remember me
           </label>
         </div>
-        <button type="button" className="text-sm font-medium text-blue-600 hover:text-blue-800">
+        <button type="button" className="text-sm font-medium text-[#7371FC] hover:text-[#A594F9]">
           Forgot your password?
         </button>
       </div>
@@ -143,7 +155,7 @@ export default function LoginForm({ onSubmit, onSwitch }) {
 
       <button
         type="submit"
-        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        className="w-full py-3 px-4 bg-[#7371FC] hover:bg-[#A594F9] text-white font-medium rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7371FC]"
       >
         Login
       </button>
@@ -154,7 +166,7 @@ export default function LoginForm({ onSubmit, onSwitch }) {
           <button
             type="button"
             onClick={onSwitch}
-            className="font-medium text-blue-600 hover:text-blue-800"
+            className="font-medium text-[#7371FC] hover:text-[#A594F9]"
           >
             Sign up
           </button>

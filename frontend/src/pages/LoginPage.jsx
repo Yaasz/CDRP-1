@@ -1,108 +1,203 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import LoginForm from "../components/LoginForm";
-import SignupForm from "../components/SignupForm";
-import { useAuth } from "../context/AuthContext";
-import api from "../utils/api";
+"use client"
+
+import { useState, useEffect } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { ArrowLeft } from "lucide-react"
+import LoginForm from "../components/LoginForm"
+import SignupForm from "../components/SignupForm"
+import { useAuth } from "../context/AuthContext"
+import api from "../utils/api"
 
 export default function LoginPage() {
-  const navigate = useNavigate();
-  const [isLoginView, setIsLoginView] = useState(true);
-  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate()
+  const [isLoginView, setIsLoginView] = useState(true)
+  const { login, isAuthenticated, user } = useAuth()
+
+  console.log('LoginPage render - isAuthenticated:', isAuthenticated, 'user:', user)
 
   // Redirect if already authenticated
   useEffect(() => {
+    console.log('LoginPage useEffect - isAuthenticated:', isAuthenticated, 'user:', user)
+    
     if (isAuthenticated) {
-      navigate("/dashboard");
+      console.log('User is authenticated, redirecting based on role')
+      
+      // Get the most up-to-date values from localStorage
+      const accountType = localStorage.getItem('accountType');
+      const userRole = localStorage.getItem('userRole');
+      
+      console.log('Redirection data - accountType:', accountType, 'userRole:', userRole, 'user:', user)
+      
+      try {
+        if (accountType === 'organization') {
+          // For organizations, use user.role directly
+          const orgRole = user ? user.role : null;
+          
+          console.log('Organization login detected, role:', orgRole);
+          
+          if (orgRole === 'charity') {
+            console.log('Redirecting to charity dashboard');
+            navigate('/charity');
+          } else if (orgRole === 'government') {
+            console.log('Redirecting to government dashboard');
+            navigate('/government');
+          } else {
+            console.error('Unknown organization role:', orgRole);
+            console.log('Redirecting to default dashboard (fallback)');
+            navigate('/dashboard');
+          }
+        } else {
+          // For regular users
+          // First check user object, then fallback to localStorage
+          const role = user ? user.role : userRole;
+          
+          console.log('User login detected, role:', role);
+          
+          if (role === 'admin') {
+            console.log('Redirecting to admin dashboard');
+            navigate('/admin');
+          } else if (role === 'user') {
+            console.log('Redirecting to user dashboard');
+            navigate('/dashboard');
+          } else {
+            console.error('Unknown user role:', role);
+            console.log('Redirecting to default dashboard (fallback)');
+            navigate('/dashboard');
+          }
+        }
+      } catch (error) {
+        console.error('Error during redirection:', error);
+        // Fallback to dashboard on error
+        navigate('/dashboard');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, user])
 
+  // Avoid having LoginForm handle any navigation
   const handleLoginSubmit = async (loginData) => {
-    console.log("Attempting login with:", loginData);
+    console.log("Attempting login with:", loginData)
 
     try {
       // Determine which API endpoint to use based on account type
-      const apiUrl =
-        loginData.accountType === "user" ? `user/login` : `org/login`;
+      const apiUrl = loginData.accountType === "user" ? `/user/login` : `/org/login`
 
-      console.log(`Sending login request to: ${apiUrl}`);
-      console.log("login data", loginData);
+      console.log(`Sending login request to: ${apiUrl}`)
+
       const response = await api.post(apiUrl, {
         identifier: loginData.email,
         password: loginData.password,
-      });
-      console.log("response", response);
+      })
 
-      const data = response.data;
+      const data = response.data
+      console.log("Login response data:", data)
 
       if (data.token) {
-        // Use the auth context to login
-        login({
-          token: data.token,
-          accountType: loginData.accountType,
-          user: loginData.accountType === "user" ? data.user : data.data, // org controller returns data object
-        });
-
-        console.log("Login successful, redirecting to dashboard.");
-        navigate("/dashboard");
+        console.log("Received token, calling login function from context")
+        
+        // Extract user data correctly based on account type
+        if (loginData.accountType === "user") {
+          // Handle user login response
+          if (!data.user?.role) {
+            console.error("User role not found in response:", data);
+            throw new Error("User role information is missing");
+          }
+          
+          const userData = {
+            ...data.user,
+            id: data.user.id,
+            role: data.user.role
+          };
+          
+          console.log("Extracted user data:", userData);
+          
+          // Call the login function from AuthContext
+          login({
+            token: data.token,
+            accountType: loginData.accountType,
+            user: userData
+          });
+        } else {
+          // Handle organization login response
+          if (!data.data?.role) {
+            console.error("Organization role not found in response:", data);
+            throw new Error("Organization role information is missing");
+          }
+          
+          const orgData = {
+            ...data.data,
+            id: data.data.id || data.data._id,
+            role: data.data.role
+          };
+          
+          console.log("Extracted organization data:", orgData);
+          
+          // Call the login function from AuthContext
+          login({
+            token: data.token,
+            accountType: loginData.accountType,
+            user: orgData
+          });
+        }
+        
+        console.log("Login context function called, state should update and trigger useEffect");
       } else {
-        throw new Error("Login successful, but no token received.");
+        throw new Error("Login successful, but no token received.")
       }
     } catch (err) {
-      console.error("Login failed:", err);
-      throw err;
+      console.error("Login failed:", err)
+      throw err
     }
-  };
+  }
 
   const handleSignupSubmit = async (signupData) => {
     if (signupData.password !== signupData.confirmPassword) {
-      throw new Error("Passwords do not match.");
+      throw new Error("Passwords do not match.")
     }
 
     try {
-      let apiUrl;
-      let payload;
+      let apiUrl
+      let payload
 
       if (signupData.accountType === "user") {
-        apiUrl = `user`;
+        apiUrl = `user`
         payload = {
           firstName: signupData.firstName,
           lastName: signupData.lastName,
           email: signupData.email,
           phone: signupData.phone,
           password: signupData.password,
-        };
+        }
       } else {
-        // Handle organization signup
-        apiUrl = `org`;
+        // Handle organization signup - only include required fields
+        apiUrl = `org`
         payload = {
           name: signupData.name,
           email: signupData.email,
           phone: signupData.phone,
           password: signupData.password,
-          mission: signupData.mission,
-          type: signupData.type, // charity or government
-        };
+          taxId: signupData.taxId,
+          mission: signupData.mission || "", // Make sure mission is at least empty string
+          role: signupData.role, // This matches the backend model 'role' field
+        }
       }
 
-      console.log(`Attempting ${signupData.accountType} signup with:`, payload);
-      console.log(`Sending signup request to: ${apiUrl}`);
+      console.log(`Attempting ${signupData.accountType} signup with:`, payload)
+      console.log(`Sending signup request to: ${apiUrl}`)
 
-      const response = await api.post(apiUrl, payload);
-      const data = response.data;
+      const response = await api.post(apiUrl, payload)
+      const data = response.data
 
-      console.log("Signup successful:", data);
-      return data;
+      console.log("Signup successful:", data)
+      return data
     } catch (err) {
-      console.error("Signup failed:", err);
-      throw err;
+      console.error("Signup failed:", err)
+      throw err
     }
-  };
+  }
 
   const toggleView = () => {
-    setIsLoginView(!isLoginView);
-  };
+    setIsLoginView(!isLoginView)
+  }
 
   return (
     <div className="flex w-full min-h-screen">
@@ -112,15 +207,13 @@ export default function LoginPage() {
             className="absolute inset-0"
             style={{
               backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.08' fill-rule='evenodd'/%3E%3C/svg%3E\")",
+                "url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fillOpacity='0.08' fillRule='evenodd'/%3E%3C/svg%3E\")",
               backgroundSize: "24px 24px",
             }}
           ></div>
         </div>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-12 text-center">
-          <h2 className="text-3xl font-bold mb-6">
-            {isLoginView ? "Welcome Back!" : "Join CDRP"}
-          </h2>
+          <h2 className="text-3xl font-bold mb-6">{isLoginView ? "Welcome Back!" : "Join CDRP"}</h2>
           <p className="text-xl mb-8">
             {isLoginView
               ? "Sign in to continue your work with disaster response coordination."
@@ -141,10 +234,7 @@ export default function LoginPage() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
           <div className="md:hidden mb-6">
-            <Link
-              to="/"
-              className="text-gray-600 hover:text-gray-900 flex items-center"
-            >
+            <Link to="/" className="text-gray-600 hover:text-gray-900 flex items-center">
               <ArrowLeft size={20} className="mr-1" />
               <span>Back to Homepage</span>
             </Link>
@@ -157,14 +247,8 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2">
-              {isLoginView ? "Welcome back" : "Create an account"}
-            </h1>
-            <p className="text-gray-500">
-              {isLoginView
-                ? "Please sign in to your account"
-                : "Join us today!"}
-            </p>
+            <h1 className="text-2xl font-bold mb-2">{isLoginView ? "Welcome back" : "Create an account"}</h1>
+            <p className="text-gray-500">{isLoginView ? "Please sign in to your account" : "Join us today!"}</p>
           </div>
 
           <div className="flex gap-4 mb-8">
@@ -200,5 +284,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

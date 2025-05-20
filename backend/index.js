@@ -14,6 +14,7 @@ const organizationRoutes = require("./routers/organizationRoutes");
 const userRoutes = require("./routers/userRoutes");
 const reportRoutes = require("./routers/reportRoutes");
 const volunteerRoutes = require("./routers/volunteerRoutes");
+const assignmentRoutes = require("./routers/assignmentRoutes");
 
 const app = express();
 app.use(cors());
@@ -44,6 +45,7 @@ app.use("/api/report", reportRoutes);
 app.use("/api/volunteer", volunteerRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/incidents", incidentRoutes);
+app.use("/api/assignments", assignmentRoutes);
 app.use("/api/charityad", charityAdRoutes);
 app.use("/api/announcement", announcementRoutes);
 
