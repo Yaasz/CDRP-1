@@ -84,6 +84,14 @@ const organizationSchema = new mongoose.Schema(
       default: "active",
       required: true,
     },
+    verificationToken: {
+      type: String,
+      default: null, // Token for email verification
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false, // Flag to check if email is verified
+    },
   },
   { timestamps: true }
 );

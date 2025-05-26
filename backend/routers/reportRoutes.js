@@ -10,6 +10,7 @@ const {
   updateReport,
   deleteReport,
   deleteAllReports,
+  getUserReports,
 } = require("../controllers/reportController");
 
 router
@@ -24,5 +25,9 @@ router
   .get(authToken, getReportById)
   .put(authToken, authRoles("user"), upload.array("image", 10), updateReport)
   .delete(authToken, authRoles("user", "admin"), deleteReport);
+
+router
+  .route("/user/:id")
+  .get(authToken, authRoles("user", "admin"), getUserReports);
 
 module.exports = router;

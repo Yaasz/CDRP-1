@@ -88,7 +88,7 @@ exports.getAllNews = async (req, res) => {
       success: true,
       totalCount: await News.countDocuments(),
       searchCount: await News.countDocuments(searchFilter),
-      data: newsAnnouncements,
+      news: newsAnnouncements,
       page: parseInt(page),
     });
   } catch (error) {

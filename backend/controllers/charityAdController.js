@@ -6,6 +6,7 @@ const fs = require("fs").promises;
 exports.createCharityAd = async (req, res) => {
   try {
     const data = { ...req.body };
+    console.log("Received data:", data);
 
     // Required field validations
     if (!data.charity) {
@@ -56,11 +57,11 @@ exports.createCharityAd = async (req, res) => {
         ? data.categories
         : JSON.parse(data.categories);
     }
-    if (data.requirements) {
-      data.requirements = Array.isArray(data.requirements)
-        ? data.requirements
-        : JSON.parse(data.requirements);
-    }
+    // if (data.requirements) {
+    //   data.requirements = Array.isArray(data.requirements)
+    //     ? data.requirements
+    //     : JSON.parse(data.requirements);
+    // }
 
     const charityAd = new CharityAd(data);
     const savedAd = await charityAd.save();
@@ -95,7 +96,7 @@ exports.getAllCharityAds = async (req, res) => {
       : {};
 
     const charityAds = await CharityAd.find(searchFilter)
-      .populate("charity", "name")
+      .populate("charity", "_id organizationName")
       .populate({
         path: "volunteers",
         select: "fullName email phone contribution expertise",

@@ -4,11 +4,19 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const fs = require("fs").promises;
 const mongoose = require("mongoose");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 // Create a new organization
 exports.createOrganization = async (req, res) => {
   try {
     const data = { ...req.body };
-    if (!data.name || !data.email || !data.phone || !data.password) {
+    console.log("data org data", data);
+    if (
+      !data.organizationName ||
+      !data.email ||
+      !data.phone ||
+      !data.password
+    ) {
       return res.status(400).json({
         success: false,
         message: "name, email, phone and password are required",
@@ -22,7 +30,9 @@ exports.createOrganization = async (req, res) => {
         });
       }
     }
-    const nameExists = await Organization.findOne({ name: data.name });
+    const nameExists = await Organization.findOne({
+      name: data.organizationName,
+    });
     if (nameExists) {
       return res.status(400).json({
         success: false,
@@ -54,21 +64,45 @@ exports.createOrganization = async (req, res) => {
         });
       }
     }
-    const organization = new Organization(data);
 
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    data.verificationToken = verificationToken;
+
+    const organization = new Organization(data);
     const savedOrganization = await organization.save();
-    const token = await jwt.sign(
-      { id: savedOrganization._id, role: savedOrganization.role },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
-    );
+    const verifyLink = `${process.env.FRONTEND_URL}/verify-org-email/?token=${verificationToken}`;
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASS,
+      },
+    });
+
+    await transporter
+      .sendMail({
+        from: `"Organization email verification" <${process.env.EMAIL}>`,
+        to: data.email,
+        subject: `verify your email`,
+        html: `
+          <p>Hi ${savedOrganization.organizationName},</p>
+          <p>Thank you for registering with us. Please click the link below to verify your email address:</p>
+          <a href="${verifyLink}">Verify Email</a>
+          `,
+      })
+      .catch(async (error) => {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to send verification email",
+          error: error.message,
+        });
+      });
+
     res.status(201).json({
       success: true,
-      message: "Organization created successfully",
+      message:
+        "Registered successfully. Please check your email to verify your account.",
       data: savedOrganization,
-      token: token,
     });
   } catch (error) {
     res.status(500).json({
@@ -82,7 +116,7 @@ exports.createOrganization = async (req, res) => {
 // Get all organizations
 exports.getAllOrganizations = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = "" } = req.query;
+    const { page = 1, limit = 5, search = "" } = req.query;
     const searchFilter = search
       ? {
           $or: [
@@ -93,7 +127,8 @@ exports.getAllOrganizations = async (req, res) => {
       : {};
     const organizations = await Organization.find(searchFilter)
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
     res.status(200).json({
       success: true,
       totalCount: await Organization.countDocuments(),
@@ -156,10 +191,13 @@ exports.updateOrganization = async (req, res) => {
       });
     }
     // if (data.role && data.role == "government") {
+    // if(req.user!=="admin"){
     //   return res.status(400).json({
-    //     success: false,
-    //     message: "government organization can only be created by admin",
-    //   });
+    //      success: false,
+    //      message: "government organization can only be created by admin",
+    //    });
+    // }
+    //
     // }
 
     if (
@@ -372,3 +410,48 @@ exports.verify = async (req, res) => {
     });
   }
 };
+
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Verification token is required",
+      });
+    }
+
+    const org = await Organization.findOne({ verificationToken: token });
+
+    if (!org) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found",
+        error: "document not found",
+      });
+    }
+
+    if (org.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Organization already verified",
+      });
+    }
+
+    org.emailVerified = true;
+    org.verificationToken = null; // Clear the verification token after successful verification
+    await org.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
+  }
+};
+//note: start by creating org email verify frontend

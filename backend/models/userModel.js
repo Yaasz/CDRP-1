@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema(
         },
         message: "name must be text",
       },
-      minlength: [4, "name must be at least 5 characters "],
+      minlength: [3, "name must be at least 3 characters "],
     },
     email: {
       type: String,
@@ -63,6 +63,14 @@ const UserSchema = new mongoose.Schema(
       },
     },
     cloudinaryId: {
+      type: String,
+      required: false,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
       type: String,
       required: false,
     },

@@ -530,3 +530,26 @@ exports.deleteAllReports = async (req, res) => {
     });
   }
 };
+exports.getUserReports = async (req, res) => {
+  try {
+    const { page = 1, limit = 5 } = req.query;
+    console.log("user id", req.user.id);
+    const reports = await Report.find({ reportedBy: req.user.id })
+      .sort({ createdAt: -1 })
+      .populate("reportedBy", "name email")
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+    res.status(200).json({
+      success: true,
+      page: parseInt(page),
+      totalCount: await Report.countDocuments({ reportedBy: req.user.id }),
+      reports: reports,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
+  }
+};

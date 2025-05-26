@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Announcement = require("../models/announcementModel");
 const createAnnouncement = async (req, res) => {
   try {
-    const { title, description, charities } = req.body;
+    const { incident, title, description, charities } = req.body;
     const empty = [];
     if (!title) {
       empty.push("title");
@@ -17,6 +17,24 @@ const createAnnouncement = async (req, res) => {
         error: "missing fields",
       });
     }
+    if (!incident || !mongoose.Types.ObjectId.isValid(incident)) {
+      return res.status(400).json({
+        success: false,
+        message: "incident is required and must be an id",
+        error: "missing/invalid fields",
+      });
+    }
+
+    charities.forEach((charity) => {
+      console.log(charity);
+      if (!mongoose.Types.ObjectId.isValid(charity)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid charity ID",
+          error: "invalid data",
+        });
+      }
+    });
 
     if (empty.length > 0) {
       return res.status(400).json({
@@ -74,13 +92,11 @@ const getAnnouncementById = async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Invalid announcement ID",
-          error: "invalid param",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid announcement ID",
+        error: "invalid param",
+      });
     }
     const announcement = await Announcement.findById(id);
     if (!announcement) {

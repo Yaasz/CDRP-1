@@ -91,20 +91,18 @@ const CharityAdSchema = new mongoose.Schema(
         required: false,
       },
     ],
-    requirements: [
-      {
-        location: {
+    requirements: {
+      location: {
+        type: String,
+        required: false,
+      },
+      skills: [
+        {
           type: String,
           required: false,
         },
-        skills: [
-          {
-            type: String,
-            required: false,
-          },
-        ],
-      },
-    ],
+      ],
+    },
   },
   { timestamps: true }
 );

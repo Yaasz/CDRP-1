@@ -1,14 +1,23 @@
-import { useState, useEffect } from 'react';
-import { Users, AlertTriangle, FileBarChart, Clock, ArrowUp, ArrowRight, BarChart2, Calendar } from 'lucide-react';
-import api from '../../utils/api';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import {
+  Users,
+  AlertTriangle,
+  FileBarChart,
+  Clock,
+  ArrowUp,
+  ArrowRight,
+  BarChart2,
+  Calendar,
+} from "lucide-react";
+import api from "../../utils/api";
+import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeIncidents: 0,
     dailyReports: 0,
-    systemLoad: 0
+    systemLoad: 0,
   });
   const [recentUsers, setRecentUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,32 +26,32 @@ export default function AdminDashboard() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch user statistics
-        const userResponse = await api.get('/user', { params: { limit: 1 } });
-        
+        const userResponse = await api.get("/user", { params: { limit: 1 } });
+
         // Fetch incident statistics
-        const incidentResponse = await api.get('/incident', { 
-          params: { 
-            status: 'active',
-            limit: 1
-          } 
-        });
-        
-        // Fetch report statistics
-        const reportResponse = await api.get('/report', { 
-          params: { 
+        const incidentResponse = await api.get("/incidents", {
+          params: {
+            status: "active",
             limit: 1,
-            period: 'day'
-          } 
+          },
         });
-        
+
+        // Fetch report statistics
+        const reportResponse = await api.get("/report", {
+          params: {
+            limit: 1,
+            period: "day",
+          },
+        });
+
         // Fetch recent user registrations
-        const recentUsersResponse = await api.get('/user', {
+        const recentUsersResponse = await api.get("/user", {
           params: {
             limit: 10,
-            sort: '-createdAt'
-          }
+            sort: "-createdAt",
+          },
         });
 
         // Set dashboard data
@@ -50,32 +59,68 @@ export default function AdminDashboard() {
           totalUsers: userResponse.data?.totalCount || 248,
           activeIncidents: incidentResponse.data?.totalCount || 15,
           dailyReports: reportResponse.data?.totalCount || 42,
-          systemLoad: Math.floor(Math.random() * 40) + 40 // Mock system load between 40-80%
+          systemLoad: Math.floor(Math.random() * 40) + 40, // Mock system load between 40-80%
         });
-        
+
         if (recentUsersResponse.data && recentUsersResponse.data.data) {
           setRecentUsers(recentUsersResponse.data.data);
         } else {
           // Fallback mock data if API call fails
           setRecentUsers([
-            { _id: '1', firstName: 'John', lastName: 'Doe', email: 'john@example.com', role: 'user' },
-            { _id: '2', firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com', role: 'admin' },
-            { _id: '3', firstName: 'Robert', lastName: 'Johnson', email: 'robert@example.com', role: 'user' }
+            {
+              _id: "1",
+              firstName: "John",
+              lastName: "Doe",
+              email: "john@example.com",
+              role: "user",
+            },
+            {
+              _id: "2",
+              firstName: "Jane",
+              lastName: "Smith",
+              email: "jane@example.com",
+              role: "admin",
+            },
+            {
+              _id: "3",
+              firstName: "Robert",
+              lastName: "Johnson",
+              email: "robert@example.com",
+              role: "user",
+            },
           ]);
         }
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error("Error fetching dashboard data:", error);
         // Set fallback data
         setStats({
           totalUsers: 248,
           activeIncidents: 15,
           dailyReports: 42,
-          systemLoad: 68
+          systemLoad: 68,
         });
         setRecentUsers([
-          { _id: '1', firstName: 'John', lastName: 'Doe', email: 'john@example.com', role: 'user' },
-          { _id: '2', firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com', role: 'admin' },
-          { _id: '3', firstName: 'Robert', lastName: 'Johnson', email: 'robert@example.com', role: 'user' }
+          {
+            _id: "1",
+            firstName: "John",
+            lastName: "Doe",
+            email: "john@example.com",
+            role: "user",
+          },
+          {
+            _id: "2",
+            firstName: "Jane",
+            lastName: "Smith",
+            email: "jane@example.com",
+            role: "admin",
+          },
+          {
+            _id: "3",
+            firstName: "Robert",
+            lastName: "Johnson",
+            email: "robert@example.com",
+            role: "user",
+          },
         ]);
       } finally {
         setLoading(false);
@@ -96,48 +141,50 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-1">
+          Admin Dashboard
+        </h1>
         <p className="text-gray-600">Welcome to the CDRP Admin Panel</p>
       </div>
-      
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Users" 
-          value={stats.totalUsers.toLocaleString()} 
+        <StatCard
+          title="Total Users"
+          value={stats.totalUsers.toLocaleString()}
           icon={<Users className="w-5 h-5" />}
-          iconBg="bg-blue-100" 
+          iconBg="bg-blue-100"
           iconColor="text-blue-600"
           trend={+12}
           trendLabel="vs. last month"
         />
-        
-        <StatCard 
-          title="Active Incidents" 
-          value={stats.activeIncidents} 
+
+        <StatCard
+          title="Active Incidents"
+          value={stats.activeIncidents}
           icon={<AlertTriangle className="w-5 h-5" />}
-          iconBg="bg-orange-100" 
+          iconBg="bg-orange-100"
           iconColor="text-orange-600"
           trend={+5}
           trendLabel="vs. last week"
         />
-        
-        <StatCard 
-          title="Daily Reports" 
-          value={stats.dailyReports} 
+
+        <StatCard
+          title="Daily Reports"
+          value={stats.dailyReports}
           icon={<FileBarChart className="w-5 h-5" />}
-          iconBg="bg-green-100" 
+          iconBg="bg-green-100"
           iconColor="text-green-600"
           trend={-8}
           trendLabel="vs. yesterday"
           trendDown
         />
-        
-        <StatCard 
-          title="System Load" 
-          value={`${stats.systemLoad}%`} 
+
+        <StatCard
+          title="System Load"
+          value={`${stats.systemLoad}%`}
           icon={<BarChart2 className="w-5 h-5" />}
-          iconBg="bg-purple-100" 
+          iconBg="bg-purple-100"
           iconColor="text-purple-600"
           progress={stats.systemLoad}
         />
@@ -147,11 +194,19 @@ export default function AdminDashboard() {
         {/* Recent Activity Panel */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 lg:col-span-2">
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h3 className="text-lg font-medium text-gray-800">Recent Activity</h3>
+            <h3 className="text-lg font-medium text-gray-800">
+              Recent Activity
+            </h3>
             <div className="flex items-center space-x-2">
-              <button className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md">Today</button>
-              <button className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 rounded-md">Week</button>
-              <button className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 rounded-md">Month</button>
+              <button className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md">
+                Today
+              </button>
+              <button className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 rounded-md">
+                Week
+              </button>
+              <button className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 rounded-md">
+                Month
+              </button>
             </div>
           </div>
           <div className="p-6">
@@ -182,7 +237,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-        
+
         {/* Quick Stats Panel */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
@@ -191,45 +246,70 @@ export default function AdminDashboard() {
           <div className="p-6 space-y-6">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">Server Uptime</span>
-                <span className="text-sm font-semibold text-gray-800">99.8%</span>
+                <span className="text-sm font-medium text-gray-600">
+                  Server Uptime
+                </span>
+                <span className="text-sm font-semibold text-gray-800">
+                  99.8%
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: '99.8%' }}></div>
+                <div
+                  className="bg-green-500 h-2 rounded-full"
+                  style={{ width: "99.8%" }}
+                ></div>
               </div>
             </div>
-            
+
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">CPU Usage</span>
+                <span className="text-sm font-medium text-gray-600">
+                  CPU Usage
+                </span>
                 <span className="text-sm font-semibold text-gray-800">42%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '42%' }}></div>
+                <div
+                  className="bg-blue-500 h-2 rounded-full"
+                  style={{ width: "42%" }}
+                ></div>
               </div>
             </div>
-            
+
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">Memory Usage</span>
+                <span className="text-sm font-medium text-gray-600">
+                  Memory Usage
+                </span>
                 <span className="text-sm font-semibold text-gray-800">68%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-orange-500 h-2 rounded-full" style={{ width: '68%' }}></div>
+                <div
+                  className="bg-orange-500 h-2 rounded-full"
+                  style={{ width: "68%" }}
+                ></div>
               </div>
             </div>
-            
+
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">Storage</span>
+                <span className="text-sm font-medium text-gray-600">
+                  Storage
+                </span>
                 <span className="text-sm font-semibold text-gray-800">45%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-purple-500 h-2 rounded-full" style={{ width: '45%' }}></div>
+                <div
+                  className="bg-purple-500 h-2 rounded-full"
+                  style={{ width: "45%" }}
+                ></div>
               </div>
             </div>
-            
-            <Link to="/admin/platform-monitoring" className="mt-4 flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
+
+            <Link
+              to="/admin/platform-monitoring"
+              className="mt-4 flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
+            >
               View detailed statistics <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
@@ -248,10 +328,18 @@ export default function AdminDashboard() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -262,21 +350,32 @@ export default function AdminDashboard() {
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center">
                           {user.image ? (
-                            <img src={user.image} alt={user.firstName} className="h-9 w-9 rounded-full object-cover" />
+                            <img
+                              src={user.image}
+                              alt={user.firstName}
+                              className="h-9 w-9 rounded-full object-cover"
+                            />
                           ) : (
                             <span className="text-blue-600 font-medium">
-                              {user.firstName?.charAt(0) || ''}{user.lastName?.charAt(0) || ''}
+                              {user.firstName?.charAt(0) || ""}
+                              {user.lastName?.charAt(0) || ""}
                             </span>
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</div>
-                          <div className="text-xs text-gray-500">{user.email}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.firstName} {user.lastName}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {user.email}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 capitalize">{user.role}</div>
+                      <div className="text-sm text-gray-900 capitalize">
+                        {user.role}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 py-1 inline-flex text-xs leading-4 font-medium rounded-full bg-green-100 text-green-800">
@@ -284,7 +383,7 @@ export default function AdminDashboard() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Link 
+                      <Link
                         to={`/admin/users/edit/${user._id}`}
                         className="text-blue-600 hover:text-blue-800 font-medium"
                       >
@@ -295,7 +394,10 @@ export default function AdminDashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td
+                    colSpan="4"
+                    className="px-6 py-4 text-center text-sm text-gray-500"
+                  >
                     No recent user registrations
                   </td>
                 </tr>
@@ -304,7 +406,7 @@ export default function AdminDashboard() {
           </table>
         </div>
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <Link 
+          <Link
             to="/admin/users"
             className="flex items-center justify-center w-full text-sm font-medium text-blue-600 hover:text-blue-800"
           >
@@ -317,7 +419,17 @@ export default function AdminDashboard() {
 }
 
 // Stat Card Component
-function StatCard({ title, value, icon, iconBg, iconColor, trend, trendLabel, trendDown, progress }) {
+function StatCard({
+  title,
+  value,
+  icon,
+  iconBg,
+  iconColor,
+  trend,
+  trendLabel,
+  trendDown,
+  progress,
+}) {
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
       <div className="flex items-center mb-4">
@@ -326,13 +438,17 @@ function StatCard({ title, value, icon, iconBg, iconColor, trend, trendLabel, tr
         </div>
         <p className="text-sm font-medium text-gray-500">{title}</p>
       </div>
-      
+
       <div className="flex items-end justify-between">
         <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
-        
+
         {trend !== undefined && (
           <div className="flex items-center">
-            <span className={`flex items-center text-xs font-medium ${trendDown ? 'text-red-600' : 'text-green-600'}`}>
+            <span
+              className={`flex items-center text-xs font-medium ${
+                trendDown ? "text-red-600" : "text-green-600"
+              }`}
+            >
               {trendDown ? (
                 <ArrowUp className="w-3 h-3 mr-1 transform rotate-180" />
               ) : (
@@ -343,13 +459,17 @@ function StatCard({ title, value, icon, iconBg, iconColor, trend, trendLabel, tr
             <span className="text-xs text-gray-500 ml-1">{trendLabel}</span>
           </div>
         )}
-        
+
         {progress !== undefined && (
           <div className="w-24 bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className={`h-2 rounded-full ${
-                progress > 80 ? 'bg-red-500' : progress > 60 ? 'bg-orange-500' : 'bg-green-500'
-              }`} 
+                progress > 80
+                  ? "bg-red-500"
+                  : progress > 60
+                  ? "bg-orange-500"
+                  : "bg-green-500"
+              }`}
               style={{ width: `${progress}%` }}
             ></div>
           </div>
@@ -357,4 +477,4 @@ function StatCard({ title, value, icon, iconBg, iconColor, trend, trendLabel, tr
       </div>
     </div>
   );
-} 
+}

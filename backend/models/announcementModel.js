@@ -3,6 +3,11 @@ const validator = require("validator");
 
 const AnnouncementSchema = new mongoose.Schema(
   {
+    incident: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Incident",
+      required: true,
+    },
     title: {
       type: String,
       validate: {

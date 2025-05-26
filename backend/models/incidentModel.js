@@ -58,7 +58,14 @@ const incidentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "validated", "assigned", "in progress", "critical", "resolved"],
+      enum: [
+        "pending",
+        "validated",
+        "assigned",
+        "in progress",
+        "critical",
+        "resolved",
+      ],
       default: "pending",
     },
     reports: [
@@ -67,6 +74,11 @@ const incidentSchema = new mongoose.Schema(
         ref: "Report",
       },
     ],
+    priority: {
+      type: String,
+      enum: ["high", "medium", "low"],
+      default: "medium",
+    },
   },
   {
     timestamps: true,

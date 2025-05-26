@@ -12,6 +12,7 @@ const {
   verify,
   deleteAll,
   login,
+  verifyEmail,
 } = require("../controllers/organizationController");
 
 router
@@ -21,7 +22,7 @@ router
   .delete(authToken, authRoles("admin"), deleteAll);
 
 router.post("/login", upload.none(), login);
-
+router.get("/verifyEmail", verifyEmail);
 router
   .route("/:id")
   .get(authToken, getOrganization)
@@ -36,6 +37,7 @@ router
     authRoles("charity", "government", "admin"),
     deleteOrganization
   );
+
 router.route("/verify/:id").patch(authToken, authRoles("admin"), verify);
 
 module.exports = router;

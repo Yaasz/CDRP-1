@@ -13,6 +13,7 @@ const {
   login,
   changePassword,
   forceResetPassword,
+  verifyUser,
 } = require("../controllers/userController");
 
 router
@@ -23,6 +24,7 @@ router
 
 // Explicitly handle form data and JSON for login
 router.post("/login", login);
+router.get("/verify", verifyUser);
 
 router
   .route("/:id")

@@ -5,12 +5,14 @@ const cloudinary = require("../config/cloudinary");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const fs = require("fs").promises;
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
-// Create a new public user
+// Create a new user
 exports.createUser = async (req, res) => {
   try {
     const data = { ...req.body };
-    //console.log(data);
+    data.email = data.email.toLowerCase();
     const existingEmail = await User.findOne({ email: data.email });
     if (existingEmail) {
       return res.status(400).json({
@@ -18,6 +20,7 @@ exports.createUser = async (req, res) => {
         message: "Email already in use",
       });
     }
+
     const existingPhone = await User.find({ phone: data.phone });
     if (existingPhone.length > 0) {
       return res.status(400).json({
@@ -25,6 +28,7 @@ exports.createUser = async (req, res) => {
         message: "Phone number already in use",
       });
     }
+
     if (req.file) {
       try {
         const result = await cloudinary.uploader.upload(req.file.path, {
@@ -34,32 +38,55 @@ exports.createUser = async (req, res) => {
         data.cloudinaryId = result.public_id;
         await fs.unlink(req.file.path);
       } catch (error) {
-        console.error(
-          "failed to upload user image to cloudinary",
-          error.message
-        );
-        res.status(400).json({
+        return res.status(400).json({
           success: false,
           message: "failed to upload image. try again later",
           error: error.message,
         });
       }
     }
+
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    data.verificationToken = verificationToken;
+    // console.log("create user :", data);
     const user = new User(data);
     const savedUser = await user.save();
-    const token = await jwt.sign(
-      { id: savedUser._id, role: savedUser.role },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
-    );
-    console.log("saved user", savedUser);
+
+    // Send email via Resend
+    const verifyLink = `${process.env.FRONTEND_URL}/verify/?token=${verificationToken}`;
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASS,
+      },
+    });
+
+    await transporter
+      .sendMail({
+        from: `"email verification" <${process.env.EMAIL}>`,
+        to: data.email,
+        subject: `verify your email`,
+        html: `
+        <p>Hi ${savedUser.firstName},</p>
+        <p>Thank you for registering with us. Please click the link below to verify your email address:</p>
+        <a href="${verifyLink}">Verify Email</a>
+      `,
+      })
+      .catch(async (error) => {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to send verification email",
+          error: error.message,
+        });
+      });
+
     res.status(201).json({
       success: true,
-      message: "registered successfully",
+      message:
+        "Registered successfully. Please check your email to verify your account.",
       data: savedUser,
-      token: token,
     });
   } catch (error) {
     res.status(500).json({
@@ -94,7 +121,7 @@ exports.getAllUsers = async (req, res) => {
       page: parseInt(page),
       totalCount: await User.countDocuments(),
       searchCount: await User.countDocuments(searchFilter),
-      data: users,
+      users: users,
     });
   } catch (error) {
     res.status(500).json({
@@ -121,7 +148,7 @@ exports.getUser = async (req, res) => {
     res.status(200).json({
       message: "user fetched by id",
       success: true,
-      data: user,
+      user: user,
     });
   } catch (error) {
     res.status(500).json({
@@ -327,7 +354,7 @@ exports.login = async (req, res) => {
         full_name: user.firstName + " " + user.lastName,
         email: user.email,
         phone: user.phone,
-        role: user.role
+        role: user.role,
       },
     });
   } catch (error) {
@@ -405,13 +432,53 @@ exports.forceResetPassword = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
+    //const hashedPassword = await bcrypt.hash(newPassword, 10);
+    //user.password = hashedPassword;
     await user.save();
 
     res.status(200).json({
       success: true,
       message: "Password reset successfully by admin",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal Server error",
+      error: error.message,
+    });
+  }
+};
+exports.verifyUser = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Verification token is required",
+        error: "missing fields",
+      });
+    }
+    // console.log("Verification token:", token);
+
+    const user = await User.findOne({ verificationToken: token });
+    //console.log("User found for verification:", user);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid or expired verification token",
+        error: "document not found",
+      });
+    }
+
+    user.isVerified = true;
+    user.verificationToken = undefined; // Clear the token after verification
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "User verified successfully",
+      data: user,
     });
   } catch (error) {
     res.status(500).json({
