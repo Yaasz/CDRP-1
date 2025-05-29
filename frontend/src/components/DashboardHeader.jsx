@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, UserCircle, Menu, X, LogOut, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import GoogleTranslateButton from './GoogleTranslateButton';
 import api from '../utils/api';
 
 // Avatar component specific for header
@@ -93,6 +94,8 @@ export default function DashboardHeader({ onMobileNavOpen }) {
 
           {/* Right side (Notifications, Profile) */}
           <div className="hidden md:flex items-center space-x-4">
+             <GoogleTranslateButton />
+
              <button className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 <span className="sr-only">View notifications</span>
                 <Bell className="h-6 w-6" />

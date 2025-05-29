@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { ChevronDown } from "lucide-react"
+import GoogleTranslateButton from "./GoogleTranslateButton"
 import "../styles/theme.css"
 
 const Navbar = () => {
@@ -97,6 +98,8 @@ const Navbar = () => {
               Volunteer
             </Link>
 
+            <GoogleTranslateButton />
+
             <Link
               to="/login"
               className="btn btn-primary"
@@ -106,7 +109,8 @@ const Navbar = () => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center space-x-2">
+            <GoogleTranslateButton />
             <button onClick={toggleMobileMenu} className="outline-none focus:outline-none" aria-label="Toggle menu">
               <svg
                 className="w-6 h-6" style={{color: 'var(--primary-dark)'}}
