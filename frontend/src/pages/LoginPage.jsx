@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Shield, Users, Zap } from "lucide-react";
 import LoginForm from "../components/LoginForm";
 import SignupForm from "../components/SignupForm";
 import { useAuth } from "../context/AuthContext";
@@ -220,98 +220,173 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex w-full min-h-screen">
-      <div className="hidden md:block md:w-1/2 relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-800">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fillOpacity='0.08' fillRule='evenodd'/%3E%3C/svg%3E\")",
-              backgroundSize: "24px 24px",
-            }}
-          ></div>
-        </div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-12 text-center">
-          <h2 className="text-3xl font-bold mb-6">
-            {isLoginView ? "Welcome Back!" : "Join CDRP"}
-          </h2>
-          <p className="text-xl mb-8">
-            {isLoginView
-              ? "Sign in to continue your work with disaster response coordination."
-              : "Create an account to start contributing to disaster response efforts."}
-          </p>
-          <div className="w-16 h-1 bg-white rounded-full opacity-50"></div>
-        </div>
-        <div className="absolute top-6 left-6">
-          <Link
-            to="/"
-            className="p-2 bg-white/10 backdrop-blur-sm rounded-full text-white hover:bg-white/20 transition-colors inline-flex items-center justify-center"
-          >
-            <ArrowLeft size={20} />
-          </Link>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 -right-20 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute -bottom-20 right-20 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+        <div className="absolute top-40 right-40 w-64 h-64 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-15 animate-pulse animation-delay-4000"></div>
       </div>
 
-      <div className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md">
-          <div className="md:hidden mb-6">
+      <div className="flex min-h-screen">
+        {/* Left side - Form */}
+        <div className="w-full lg:w-7/12 xl:w-1/2 flex items-center justify-center px-4 sm:px-6 lg:px-12 py-12 relative z-10">
+          <div className="w-full max-w-md">
+            
+            {/* Back to home link */}
             <Link
               to="/"
-              className="text-gray-600 hover:text-gray-900 flex items-center"
+              className="inline-flex items-center text-blue-700 hover:text-blue-800 mb-8 transition-colors group"
             >
-              <ArrowLeft size={20} className="mr-1" />
-              <span>Back to Homepage</span>
+              <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              <span className="font-medium">Back to Homepage</span>
             </Link>
-          </div>
 
-          <div className="flex justify-center mb-6">
-            <div className="text-blue-600 font-bold text-2xl">
-              <span className="bg-blue-600 text-white p-1 rounded">CDRP</span>
+            {/* Login card */}
+            <div className="bg-white/90 backdrop-blur-lg shadow-2xl rounded-2xl border border-white/20 p-8">
+              
+              {/* Logo and branding */}
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl mb-6 shadow-lg">
+                  <span className="text-white font-bold text-2xl">C</span>
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Welcome to CDRP
+                </h1>
+                <p className="text-gray-600">
+                  {isLoginView
+                    ? "Sign in to access your dashboard"
+                    : "Create your account to get started"}
+                </p>
+              </div>
+
+              {/* Login/Signup toggle */}
+              <div className="flex rounded-xl bg-gray-100 p-1 mb-8">
+                <button
+                  type="button"
+                  onClick={() => setIsLoginView(true)}
+                  className={`flex-1 py-3 px-4 font-semibold rounded-lg transition-all duration-200 ${
+                    isLoginView
+                      ? "bg-white text-blue-700 shadow-md"
+                      : "text-gray-600 hover:text-gray-800"
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsLoginView(false)}
+                  className={`flex-1 py-3 px-4 font-semibold rounded-lg transition-all duration-200 ${
+                    !isLoginView
+                      ? "bg-white text-blue-700 shadow-md"
+                      : "text-gray-600 hover:text-gray-800"
+                  }`}
+                >
+                  Sign Up
+                </button>
+              </div>
+
+              {/* Form content */}
+              {isLoginView ? (
+                <LoginForm onSubmit={handleLoginSubmit} onSwitch={toggleView} />
+              ) : (
+                <SignupForm onSubmit={handleSignupSubmit} onSwitch={toggleView} />
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="mt-8 text-center">
+              <p className="text-sm text-gray-600">
+                By continuing, you agree to our{" "}
+                <Link to="/terms" className="text-blue-700 hover:text-blue-800 font-medium">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link to="/privacy" className="text-blue-700 hover:text-blue-800 font-medium">
+                  Privacy Policy
+                </Link>
+              </p>
             </div>
           </div>
+        </div>
 
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2">
-              {isLoginView ? "Welcome back" : "Create an account"}
-            </h1>
-            <p className="text-gray-500">
-              {isLoginView
-                ? "Please sign in to your account"
-                : "Join us today!"}
-            </p>
+        {/* Right side - Information panel */}
+        <div className="hidden lg:flex lg:w-5/12 xl:w-1/2 bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 relative">
+          {/* Background pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div
+              className="w-full h-full"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Ccircle cx='50' cy='50' r='2'/%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              }}
+            ></div>
           </div>
 
-          <div className="flex gap-4 mb-8">
-            <button
-              type="button"
-              onClick={() => setIsLoginView(true)}
-              className={`flex-1 py-2 px-4 font-medium rounded-md transition-colors duration-150 ${
-                isLoginView
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-700 border border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              Login
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsLoginView(false)}
-              className={`flex-1 py-2 px-4 font-medium rounded-md transition-colors duration-150 ${
-                !isLoginView
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-700 border border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
+          <div className="relative z-10 flex flex-col justify-center p-12 text-white">
+            <div className="mb-8">
+              <h2 className="text-4xl font-bold mb-4">
+                Community Disaster Response Platform
+              </h2>
+              <p className="text-xl text-blue-100 leading-relaxed">
+                Join thousands of communities worldwide in building resilience and coordinating effective disaster response.
+              </p>
+            </div>
 
-          {isLoginView ? (
-            <LoginForm onSubmit={handleLoginSubmit} onSwitch={toggleView} />
-          ) : (
-            <SignupForm onSubmit={handleSignupSubmit} onSwitch={toggleView} />
-          )}
+            <div className="space-y-6">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Secure & Reliable</h3>
+                  <p className="text-blue-100">
+                    Enterprise-grade security with 99.9% uptime ensures your data is safe and accessible when you need it most.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Community Driven</h3>
+                  <p className="text-blue-100">
+                    Connect with volunteers, organizations, and emergency services to coordinate effective disaster response.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+                  <Zap className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Real-time Response</h3>
+                  <p className="text-blue-100">
+                    AI-powered incident detection and real-time coordination tools reduce response time by up to 40%.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-12 p-6 bg-white/10 backdrop-blur-sm rounded-xl">
+              <div className="grid grid-cols-3 gap-6 text-center">
+                <div>
+                  <div className="text-2xl font-bold">150+</div>
+                  <div className="text-sm text-blue-100">Communities</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">10K+</div>
+                  <div className="text-sm text-blue-100">Volunteers</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">500+</div>
+                  <div className="text-sm text-blue-100">Organizations</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

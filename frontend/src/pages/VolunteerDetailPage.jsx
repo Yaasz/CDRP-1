@@ -1,16 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Clock, MapPin, User, ArrowLeft, Heart, Tag, Building } from 'lucide-react'; // Added Heart, Tag, Building
-import VolunteerRegistrationModal from '../components/VolunteerRegistrationModal'; // Adjust path if needed
-import DonationInfoModal from '../components/DonationInfoModal'; // Adjust path if needed
-
-// Mock opportunities data (Include details for all opportunities listed on the list page)
-const mockOpportunityData = {
-  1: { id: 1, title: "Tree Planting in Gullele Botanical Garden", organization: "Addis Ababa Parks Agency", orgType: "Government Agency", description: "Join us to plant native trees...", location: "Gullele Botanical Garden, Addis Ababa", timeCommitment: "4 hours • July 25, 2024", skillsNeeded: "Willingness to work outdoors...", categories: ["Environment", "Urban Greening", "Addis Ababa"], image: "https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?..." },
-  2: { id: 2, title: "Tutoring Support for Students in Bahir Dar", organization: "Youth Education Initiative Ethiopia", orgType: "Local NGO", description: "Provide academic support...", location: "Bahir Dar", timeCommitment: "3 hours/week (flexible)", skillsNeeded: "Proficiency in Math, Science, or English. Patience.", categories: ["Education", "Youth", "Bahir Dar"], image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?..." },
-  3: { id: 3, title: "Health Checkup Assistance in Hawassa", organization: "Ministry of Health - SNNPR Bureau", orgType: "Government Health Service", description: "Assist medical staff...", location: "Hawassa Referral Hospital", timeCommitment: "Full Day • August 5, 2024", skillsNeeded: "Basic communication skills, empathy. Medical background helpful but not required.", categories: ["Healthcare", "Community Health", "Hawassa"], image: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?..." },
-  // Add details for other opportunities (IDs 4, 5, etc.)
-};
+import { Clock, MapPin, User, ArrowLeft, Heart, Tag, Building } from 'lucide-react';
+import VolunteerRegistrationForm from '../components/VolunteerRegistrationForm';
+import DonationInfoModal from '../components/DonationInfoModal';
+import api from '../utils/api';
 
 // Reusable Image Placeholder
 const ImagePlaceholder = ({ src, alt, className = "", ...props }) => (
@@ -20,44 +13,41 @@ const ImagePlaceholder = ({ src, alt, className = "", ...props }) => (
 );
 
 export default function VolunteerDetailPage() {
-  const { volunteerId } = useParams(); // Use a more specific name like volunteerId
+  const { volunteerId } = useParams(); // This is actually the charity ad ID
   const navigate = useNavigate();
-  const [opportunity, setOpportunity] = useState(null);
+  const [charityAd, setCharityAd] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [isRegistered, setIsRegistered] = useState(false);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [showDonationModal, setShowDonationModal] = useState(false);
 
   useEffect(() => {
-    // Check volunteer registration status
-    const registrationStatus = localStorage.getItem('volunteerRegistrationStatus');
-    setIsRegistered(registrationStatus === 'registered');
+    // Fetch charity ad details
+    fetchCharityAdDetails();
+  }, [volunteerId]);
 
-    // Fetch opportunity details
-    setLoading(true);
-    setError(false);
-    const timer = setTimeout(() => {
-      const idToFind = parseInt(volunteerId);
-      const foundOpportunity = mockOpportunityData[idToFind];
-      if (foundOpportunity) {
-        setOpportunity(foundOpportunity);
+  const fetchCharityAdDetails = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      
+      const response = await api.get(`/charityad/${volunteerId}`);
+      
+      if (response.data && response.data.data) {
+        setCharityAd(response.data.data);
       } else {
         setError(true);
       }
+    } catch (err) {
+      console.error('Error fetching charity ad details:', err);
+      setError(true);
+    } finally {
       setLoading(false);
-    }, 300); // Simulate fetch delay
-
-     return () => clearTimeout(timer);
-  }, [volunteerId]);
+    }
+  };
 
   const handleVolunteerClick = () => {
-    if (isRegistered) {
-      alert(`Applying for opportunity: ${opportunity?.title} (Mock - Already Registered)`);
-      // Add logic to sign up for this specific opportunity
-    } else {
-      setShowRegistrationModal(true);
-    }
+    setShowRegistrationModal(true);
   };
 
   const handleDonateClick = () => {
@@ -66,14 +56,39 @@ export default function VolunteerDetailPage() {
 
   const handleRegistrationSubmit = (formData) => {
     console.log('Registration submitted:', formData);
-    localStorage.setItem('volunteerRegistrationStatus', 'registered');
-    localStorage.setItem('volunteerData', JSON.stringify(formData));
-    setIsRegistered(true);
     setShowRegistrationModal(false);
-    alert('Thank you for registering! You can now apply for this opportunity.');
-    // Optionally auto-apply after registration
-    // alert(`Applying for opportunity: ${opportunity?.title} (Mock)`);
+    // The toast notification is handled in the registration form component
   };
+
+  // Format the charity ad data to match the expected structure
+  const formatCharityAdData = (ad) => {
+    if (!ad) return null;
+    
+    // Calculate days from duration in milliseconds
+    const durationDays = Math.floor(ad.duration / (24 * 60 * 60 * 1000));
+    
+    // Format expiration date
+    const expiresAt = ad.expiresAt ? new Date(ad.expiresAt).toLocaleDateString() : 'No expiration date';
+    
+    return {
+      id: ad._id,
+      title: ad.title,
+      organization: ad.charity?.organizationName || ad.charity?.name || `Charity (ID: ${ad.charity?._id?.slice(-6) || 'Unknown'})`,
+      orgType: 'Charity Organization',
+      description: ad.description,
+      location: ad.requirements?.location || 'Location not specified',
+      timeCommitment: `Duration: ${durationDays} days • Expires: ${expiresAt}`,
+      skillsNeeded: ad.requirements?.skills?.join(', ') || 'No specific skills required',
+      categories: ad.categories || [],
+      image: ad.image || 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+      status: ad.status,
+      volunteersCount: ad.volunteers?.length || 0,
+      expiresAt: ad.expiresAt,
+      createdAt: ad.createdAt
+    };
+  };
+
+  const opportunity = formatCharityAdData(charityAd);
 
   if (loading) {
     return (
@@ -88,6 +103,23 @@ export default function VolunteerDetailPage() {
       <div className="text-center py-12 max-w-lg mx-auto bg-white p-8 rounded-lg shadow border border-gray-200">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Opportunity Not Found</h1>
         <p className="text-gray-600 mb-6">The volunteer opportunity you're looking for doesn't exist or is no longer available.</p>
+        <Link
+          to="/dashboard/volunteer"
+          className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+        >
+           <ArrowLeft className="h-4 w-4 mr-2" />
+           Back to Volunteer Hub
+        </Link>
+      </div>
+    );
+  }
+
+  // Check if the charity ad is closed
+  if (charityAd?.status === 'closed') {
+    return (
+      <div className="text-center py-12 max-w-lg mx-auto bg-white p-8 rounded-lg shadow border border-gray-200">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Opportunity Closed</h1>
+        <p className="text-gray-600 mb-6">This volunteer opportunity is no longer accepting applications.</p>
         <Link
           to="/dashboard/volunteer"
           className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
@@ -137,7 +169,7 @@ export default function VolunteerDetailPage() {
                 className="inline-flex items-center justify-center px-5 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                  <Heart className="h-4 w-4 mr-2"/>
-                 {isRegistered ? 'Apply Now' : 'Volunteer'}
+                 Volunteer
               </button>
                <button
                   onClick={handleDonateClick}
@@ -173,6 +205,26 @@ export default function VolunteerDetailPage() {
               </div>
           </div>
 
+          {/* Additional Stats Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 pt-4 border-t border-gray-100">
+              <div className="flex items-start">
+                <Heart className="h-5 w-5 text-gray-500 mr-3 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800">Volunteers Registered</h3>
+                  <p className="text-sm text-gray-700">{opportunity.volunteersCount} volunteers have joined</p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <Clock className="h-5 w-5 text-gray-500 mr-3 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800">Campaign Status</h3>
+                  <p className="text-sm text-gray-700">
+                    {charityAd?.expiresAt ? `Expires on ${new Date(charityAd.expiresAt).toLocaleDateString()}` : 'No expiration date'}
+                  </p>
+                </div>
+              </div>
+          </div>
+
           {/* About the Role Section */}
           <section className="mb-6 pt-6 border-t border-gray-100">
             <h2 className="text-lg font-semibold mb-2 text-gray-800">About the Opportunity</h2>
@@ -202,10 +254,11 @@ export default function VolunteerDetailPage() {
       </div>
 
       {/* Modals */}
-      <VolunteerRegistrationModal
+      <VolunteerRegistrationForm
         isOpen={showRegistrationModal}
         onClose={() => setShowRegistrationModal(false)}
-        onSubmit={handleRegistrationSubmit}
+        onSubmitSuccess={handleRegistrationSubmit}
+        charityAdId={charityAd?._id} // Pass the charity ad ID for registration
       />
       <DonationInfoModal
         isOpen={showDonationModal}

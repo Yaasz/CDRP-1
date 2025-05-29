@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, UserCircle, Menu, X, LogOut, User } from 'lucide-react';
+import { UserCircle, Menu, X, LogOut, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import GoogleTranslateButton from './GoogleTranslateButton';
 import api from '../utils/api';
@@ -32,8 +32,8 @@ export default function DashboardHeader({ onMobileNavOpen }) {
       
       try {
         const response = await api.get(`/user/${user.id}`);
-        if (response.data && response.data.data) {
-          setUserProfile(response.data.data);
+        if (response.data && response.data.user) {
+          setUserProfile(response.data.user);
         }
       } catch (err) {
         console.error('Error fetching user profile:', err);
@@ -50,8 +50,9 @@ export default function DashboardHeader({ onMobileNavOpen }) {
     navigate('/login');
   };
 
-  // Get user's display name
+  // Get user's display name with better fallback logic
   const getUserDisplayName = () => {
+    // First try to get from userProfile (full API response)
     if (userProfile) {
       if (userProfile.firstName && userProfile.lastName) {
         return `${userProfile.firstName} ${userProfile.lastName}`;
@@ -59,10 +60,26 @@ export default function DashboardHeader({ onMobileNavOpen }) {
         return userProfile.firstName;
       } else if (userProfile.lastName) {
         return userProfile.lastName;
+      } else if (userProfile.name) {
+        return userProfile.name;
       }
     }
     
-    return user?.name || 'User';
+    // Fallback to auth context user data
+    if (user) {
+      if (user.firstName && user.lastName) {
+        return `${user.firstName} ${user.lastName}`;
+      } else if (user.firstName) {
+        return user.firstName;
+      } else if (user.lastName) {
+        return user.lastName;
+      } else if (user.name) {
+        return user.name;
+      }
+    }
+    
+    // Final fallback
+    return 'Dashboard User';
   };
 
   return (
@@ -92,14 +109,9 @@ export default function DashboardHeader({ onMobileNavOpen }) {
             </div>
           </div>
 
-          {/* Right side (Notifications, Profile) */}
+          {/* Right side (Profile) */}
           <div className="hidden md:flex items-center space-x-4">
              <GoogleTranslateButton />
-
-             <button className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                <span className="sr-only">View notifications</span>
-                <Bell className="h-6 w-6" />
-             </button>
 
              {/* Profile dropdown */}
              <div className="relative">
