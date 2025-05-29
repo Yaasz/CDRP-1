@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { ChevronDown } from "lucide-react"
+import GoogleTranslateButton from "./GoogleTranslateButton"
 import "../styles/theme.css"
 
 const Navbar = () => {
@@ -29,6 +30,11 @@ const Navbar = () => {
 
   const toggleAboutDropdown = () => {
     setIsAboutDropdownOpen(!isAboutDropdownOpen)
+  }
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false)
+    setIsAboutDropdownOpen(false)
   }
 
   return (
@@ -60,6 +66,13 @@ const Navbar = () => {
                 className={`nav-dropdown absolute left-0 mt-2 w-56 transition-all duration-200 ${isAboutDropdownOpen ? "opacity-100 visible" : "opacity-0 invisible"} group-hover:opacity-100 group-hover:visible`}
               >
                 <div className="py-1" role="menu" aria-orientation="vertical">
+                  <Link
+                    to="/about"
+                    className="nav-link block px-4 py-2 text-sm"
+                    role="menuitem"
+                  >
+                    About CDRP
+                  </Link>
                   <Link
                     to="/about/how-it-works"
                     className="nav-link block px-4 py-2 text-sm"
@@ -97,6 +110,12 @@ const Navbar = () => {
               Volunteer
             </Link>
 
+            <Link to="/faq" className="nav-link">
+              FAQ
+            </Link>
+
+            <GoogleTranslateButton />
+
             <Link
               to="/login"
               className="btn btn-primary"
@@ -106,7 +125,8 @@ const Navbar = () => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center space-x-2">
+            <GoogleTranslateButton />
             <button onClick={toggleMobileMenu} className="outline-none focus:outline-none" aria-label="Toggle menu">
               <svg
                 className="w-6 h-6" style={{color: 'var(--primary-dark)'}}
@@ -132,7 +152,7 @@ const Navbar = () => {
               <Link
                 to="/"
                 className="nav-link"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={closeMobileMenu}
               >
                 Home
               </Link>
@@ -140,7 +160,7 @@ const Navbar = () => {
               <div>
                 <button
                   onClick={toggleAboutDropdown}
-                  className="nav-link flex items-center focus:outline-none"
+                  className="nav-link flex items-center focus:outline-none w-full text-left"
                 >
                   About
                   <ChevronDown className="ml-1 h-4 w-4" />
@@ -149,23 +169,30 @@ const Navbar = () => {
                 {isAboutDropdownOpen && (
                   <div className="pl-4 mt-2 space-y-2">
                     <Link
+                      to="/about"
+                      className="block text-sm text-gray-700 hover:text-blue-700 py-1"
+                      onClick={closeMobileMenu}
+                    >
+                      About CDRP
+                    </Link>
+                    <Link
                       to="/about/how-it-works"
-                      className="block text-sm text-gray-700 hover:text-blue-700"
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block text-sm text-gray-700 hover:text-blue-700 py-1"
+                      onClick={closeMobileMenu}
                     >
                       How CDRP Works
                     </Link>
                     <Link
                       to="/about/who-can-use"
-                      className="block text-sm text-gray-700 hover:text-blue-700"
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block text-sm text-gray-700 hover:text-blue-700 py-1"
+                      onClick={closeMobileMenu}
                     >
                       Who Can Use CDRP
                     </Link>
                     <Link
                       to="/about/in-action"
-                      className="block text-sm text-gray-700 hover:text-blue-700"
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block text-sm text-gray-700 hover:text-blue-700 py-1"
+                      onClick={closeMobileMenu}
                     >
                       CDRP in Action
                     </Link>
@@ -176,7 +203,7 @@ const Navbar = () => {
               <Link
                 to="/contact"
                 className="nav-link"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={closeMobileMenu}
               >
                 Contact Us
               </Link>
@@ -184,7 +211,7 @@ const Navbar = () => {
               <Link
                 to="/reports/how-to-report"
                 className="nav-link"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={closeMobileMenu}
               >
                 Reports
               </Link>
@@ -192,15 +219,23 @@ const Navbar = () => {
               <Link
                 to="/volunteer/how-to-volunteer"
                 className="nav-link"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={closeMobileMenu}
               >
                 Volunteer
               </Link>
 
               <Link
+                to="/faq"
+                className="nav-link"
+                onClick={closeMobileMenu}
+              >
+                FAQ
+              </Link>
+
+              <Link
                 to="/login"
                 className="text-white bg-blue-700 hover:bg-blue-800 px-5 py-2 rounded-md font-medium transition-colors inline-block text-center"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={closeMobileMenu}
               >
                 Signup/Login
               </Link>

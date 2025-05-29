@@ -7,3 +7,5 @@
 /backend/code.txt
 /code.sh
 /merged_code.txt
+frontend/.env
+backend/.env

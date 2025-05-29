@@ -5,13 +5,6 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { format, parseISO } from 'date-fns';
 
-// Status badge details
-const statusDetails = {
-  'Pending': { color: 'bg-yellow-100 text-yellow-800 border border-yellow-200', icon: <AlertCircle className="h-4 w-4 text-yellow-600" /> },
-  'In Progress': { color: 'bg-blue-100 text-blue-800 border border-blue-200', icon: <Clock className="h-4 w-4 text-blue-600" /> },
-  'Resolved': { color: 'bg-green-100 text-green-800 border border-green-200', icon: <CheckCircle className="h-4 w-4 text-green-600" /> }
-};
-
 // Priority badge details
 const priorityDetails = {
   'Low': { color: 'bg-gray-100 text-gray-800 border border-gray-200' },
@@ -209,10 +202,10 @@ export default function ReportDetailPage() {
             </div>
           </div>
           <div className="flex gap-2 items-center mt-2 md:mt-0 flex-shrink-0">
-            <span className={`px-2.5 py-1 inline-flex items-center rounded-full text-xs font-medium ${statusDetails[reportStatus]?.color}`}>
+            {/* <span className={`px-2.5 py-1 inline-flex items-center rounded-full text-xs font-medium ${statusDetails[reportStatus]?.color}`}>
               {statusDetails[reportStatus]?.icon}
               <span className="ml-1.5">{reportStatus}</span>
-            </span>
+            </span> */}
              {reportPriority && (
                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${priorityDetails[reportPriority]?.color}`}>
                     {reportPriority} Priority

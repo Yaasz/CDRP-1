@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, AlertTriangle, Search, Plus, ChevronRight, Menu } from "lucide-react";
+import { AlertTriangle, Search, Plus, ChevronRight, Menu } from "lucide-react";
 import api from "../utils/api";
 
 export default function CharityDashboard() {
@@ -129,18 +129,19 @@ export default function CharityDashboard() {
           {/* Header */}
           <header className="bg-white shadow-sm border-b border-gray-200 z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-              <h1 className="text-2xl font-semibold text-[#7371FC]">{user?.organization || 'Charity Dashboard'}</h1>
+              <h1 className="text-2xl font-semibold text-[#7371FC]">{user?.organizationName || 'Charity Dashboard'}</h1>
               <div className="flex items-center space-x-4">
-                <button className="text-gray-500 hover:text-[#7371FC]">
-                  <Bell className="h-6 w-6" />
-                </button>
                 <div className="flex items-center">
                   <img
-                    src={user?.avatar || '/placeholder-avatar.jpg'}
+                    src={user?.avatar || user?.image || '/placeholder-avatar.jpg'}
                     alt="Profile"
                     className="h-8 w-8 rounded-full"
                   />
-                  <span className="ml-2 text-sm font-medium text-gray-700">{user?.name}</span>
+                  <span className="ml-2 text-sm font-medium text-gray-700">
+                    {user?.firstName && user?.lastName 
+                      ? `${user.firstName} ${user.lastName}` 
+                      : user?.name || user?.organizationName || 'User'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -318,7 +319,7 @@ export default function CharityDashboard() {
                     />
                   </svg>
                   Volunteers
-                </Link>
+                </a>
               <a
                 href="#"
                 className="flex items-center px-4 py-2.5 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
@@ -338,7 +339,7 @@ export default function CharityDashboard() {
                     />
                   </svg>
                   Incidents
-                </Link>
+                </a>
               <a
                 href="#"
                 className="flex items-center px-4 py-2.5 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
@@ -383,16 +384,17 @@ export default function CharityDashboard() {
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                 <h1 className="text-2xl font-semibold text-[#7371FC]">{user?.organization || 'Charity Dashboard'}</h1>
                 <div className="flex items-center space-x-4">
-                  <button className="text-gray-500 hover:text-[#7371FC]">
-                    <Bell className="h-6 w-6" />
-                  </button>
                   <div className="flex items-center">
                     <img
-                      src={user?.avatar || '/placeholder-avatar.jpg'}
+                      src={user?.avatar || user?.image || '/placeholder-avatar.jpg'}
                       alt="Profile"
                       className="h-8 w-8 rounded-full"
                     />
-                    <span className="ml-2 text-sm font-medium text-gray-700">{user?.name}</span>
+                    <span className="ml-2 text-sm font-medium text-gray-700">
+                      {user?.firstName && user?.lastName 
+                        ? `${user.firstName} ${user.lastName}` 
+                        : user?.name || user?.organizationName || 'User'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -410,10 +412,6 @@ export default function CharityDashboard() {
             <div className="flex justify-between items-center h-16">
               <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
               <div className="flex items-center space-x-4">
-                <button className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                  <span className="sr-only">View notifications</span>
-                  <Bell className="h-6 w-6" />
-                </button>
                 <div className="flex items-center">
                   <img className="h-8 w-8 rounded-full" src="/placeholder.svg?height=32&width=32" alt="Sarah Johnson" />
                   <span className="ml-2 text-sm font-medium text-gray-700">Sarah Johnson</span>

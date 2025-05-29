@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Search, Users, AlertTriangle } from "lucide-react";
 
 import CharitySidebar from "../../components/charity/CharitySidebar";
+import GoogleTranslateButton from "../../components/GoogleTranslateButton";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Badge } from "../../components/ui/Badge";
@@ -17,6 +18,7 @@ const Dashboard = () => {
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-white px-6">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
           <div className="flex items-center gap-4">
+            <GoogleTranslateButton />
             <div className="relative">
               <span className="absolute right-3 top-1/2 flex h-2 w-2 -translate-y-1/2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#7371FC] opacity-75"></span>

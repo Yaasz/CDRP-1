@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { ToastContainer } from "./components/ui/Toast";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardLayout from "./components/DashboardLayout";
@@ -18,6 +19,15 @@ import ProfilePage from "./pages/ProfilePage";
 import GuidePage from "./pages/GuidePage";
 import HowToReportPage from "./pages/HowToReportPage";
 import HowToVolunteerPage from "./pages/HowToVolunteerPage";
+
+// Import new pages
+import ContactPage from "./pages/ContactPage";
+import AboutPage from "./pages/AboutPage";
+import FaqPage from "./pages/FaqPage";
+import HowItWorksPage from "./pages/about/HowItWorksPage";
+import WhoCanUsePage from "./pages/about/WhoCanUsePage";
+import InActionPage from "./pages/about/InActionPage";
+
 import "./styles/theme.css";
 
 import VerifyEmail from "./components/VerifyEmail";
@@ -62,15 +72,27 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
-          {/*verifying email*/}
+          
+          {/* Contact and About Pages */}
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/faq" element={<FaqPage />} />
+          
+          {/* About Sub-pages */}
+          <Route path="/about/how-it-works" element={<HowItWorksPage />} />
+          <Route path="/about/who-can-use" element={<WhoCanUsePage />} />
+          <Route path="/about/in-action" element={<InActionPage />} />
+          
+          {/* Legacy about route support */}
+          <Route path="/about/:guideId" element={<GuidePage />} />
+          
+          {/* Info Pages */}
+          <Route path="/reports/how-to-report" element={<HowToReportPage />} />
+          <Route path="/volunteer/how-to-volunteer" element={<HowToVolunteerPage />} />
+          
+          {/* Verification Routes */}
           <Route path="/verify" element={<VerifyEmail />} />
           <Route path="/verify-org-email" element={<VerifyOrgEmail />} />
-          <Route path="/about/:guideId" element={<GuidePage />} />
-          <Route path="/reports/how-to-report" element={<HowToReportPage />} />
-          <Route
-            path="/volunteer/how-to-volunteer"
-            element={<HowToVolunteerPage />}
-          />
 
           {/* Protected Dashboard Routes - Using ProtectedRoute as parent */}
           <Route element={<ProtectedRoute />}>
@@ -168,6 +190,9 @@ function App() {
           {/* Top-level 404 route */}
           <Route path="*" element={<div>404 Page Not Found</div>} />
         </Routes>
+        
+        {/* Global Toast Container */}
+        <ToastContainer />
       </Router>
     </AuthProvider>
   );
