@@ -10,7 +10,10 @@ const {
   deleteIncident,
   deleteAllIncidents,
 } = require("../controllers/incidentController");
-const { createAssignment, getAssignmentsForIncident } = require("../controllers/assignmentController");
+const {
+  createAssignment,
+  getAssignmentsForIncident,
+} = require("../controllers/assignmentController");
 
 router
   .route("/")
@@ -20,7 +23,7 @@ router
 router
   .route("/:id")
   .get(authToken, authRoles("admin", "government"), getIncidentById)
-  .put(authToken, authRoles("admin", "government"), updateIncident)
+  //.put(authToken, authRoles("admin", "government"), updateIncident)
   .delete(authToken, authRoles("admin", "government"), deleteIncident);
 
 router

@@ -15,6 +15,7 @@ const userRoutes = require("./routers/userRoutes");
 const reportRoutes = require("./routers/reportRoutes");
 const volunteerRoutes = require("./routers/volunteerRoutes");
 const assignmentRoutes = require("./routers/assignmentRoutes");
+const { login } = require("./controllers/login");
 
 const app = express();
 app.use(cors());
@@ -33,12 +34,11 @@ mongoose
   .catch((err) => {
     console.error("Database connection error:", err);
   });
-
 const swaggerDocument = YAML.load(path.join(__dirname, "swaggerDoc.yaml"));
 
 // Serve Swagger UI at /api-docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
+app.post("/api/login", login); //note created a common login function
 app.use("/api/user", userRoutes);
 app.use("/api/org", organizationRoutes);
 app.use("/api/report", reportRoutes);

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Incident = require("../models/incidentModel");
-
+const Report = require("../models/reportModel");
 // Get all incidents
 exports.getAllIncidents = async (req, res) => {
   try {
@@ -11,14 +11,14 @@ exports.getAllIncidents = async (req, res) => {
             { title: { $regex: search, $options: "i" } },
             { status: { $regex: search, $options: "i" } },
             { type: { $regex: search, $options: "i" } },
-            { date: { $regex: search, $options: "i" } },
+            { createdAt: { $regex: search, $options: "i" } },
           ],
         }
       : {};
     const incidents = await Incident.find(searchFilter)
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
-      .populate("reports", "title description image date");
+      .populate("reports", "title description image location ");
 
     res.status(200).json({
       success: true,
@@ -65,7 +65,7 @@ exports.getIncidentById = async (req, res) => {
     // Get assignments for this incident if they exist
     let assignments = [];
     if (mongoose.models.Assignment) {
-      const Assignment = mongoose.model('Assignment');
+      const Assignment = mongoose.model("Assignment");
       assignments = await Assignment.find({ incident: id })
         .populate("organization", "organizationName email phone")
         .populate("assignedBy", "organizationName")
@@ -75,7 +75,7 @@ exports.getIncidentById = async (req, res) => {
     // Get news related to this incident
     let news = [];
     if (mongoose.models.News) {
-      const News = mongoose.model('News');
+      const News = mongoose.model("News");
       news = await News.find({ incident: id }).sort({ createdAt: -1 });
     }
 
@@ -83,7 +83,7 @@ exports.getIncidentById = async (req, res) => {
       success: true,
       data: incident,
       assignments,
-      news
+      news,
     });
   } catch (error) {
     res.status(500).json({
@@ -95,85 +95,91 @@ exports.getIncidentById = async (req, res) => {
 };
 
 // Update an incident
-exports.updateIncident = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { type, title, description, status, location, dateOccurred } = req.body;
+// exports.updateIncident = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { type, title, description, status, location, dateOccurred } =
+//       req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid incident ID",
-        error: "invalid param",
-      });
-    }
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid incident ID",
+//         error: "invalid param",
+//       });
+//     }
 
-    // Find the incident
-    const incident = await Incident.findById(id);
-    if (!incident) {
-      return res.status(404).json({
-        success: false,
-        message: "Incident not found",
-        error: "doc not found",
-      });
-    }
+//     // Find the incident
+//     const incident = await Incident.findById(id);
+//     if (!incident) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Incident not found",
+//         error: "doc not found",
+//       });
+//     }
 
-    // Prepare update data
-    const updateData = {};
-    
-    if (type) updateData.type = type;
-    if (title) updateData.title = title;
-    if (description) updateData.description = description;
-    if (status) updateData.status = status;
-    if (dateOccurred) updateData.dateOccurred = new Date(dateOccurred);
-    
-    // Handle location update
-    if (location) {
-      if (typeof location === 'object' && location.coordinates && location.coordinates.length === 2) {
-        updateData.location = {
-          type: 'Point',
-          coordinates: location.coordinates
-        };
-      } else if (typeof location === 'string') {
-        // If location is passed as a string like "lat,lng"
-        try {
-          const [lat, lng] = location.split(',').map(coord => parseFloat(coord.trim()));
-          if (!isNaN(lat) && !isNaN(lng)) {
-            updateData.location = {
-              type: 'Point',
-              coordinates: [lng, lat] // GeoJSON uses [longitude, latitude]
-            };
-          }
-        } catch (error) {
-          return res.status(400).json({
-            success: false,
-            message: "Invalid location format. Expected 'latitude,longitude'",
-            error: "invalid param",
-          });
-        }
-      }
-    }
+//     // Prepare update data
+//     const updateData = {};
 
-    // Update the incident
-    const updatedIncident = await Incident.findByIdAndUpdate(
-      id, 
-      updateData, 
-      { new: true, runValidators: true }
-    ).populate("reports", "title description image");
+//     if (type) updateData.type = type;
+//     if (title) updateData.title = title;
+//     if (description) updateData.description = description;
+//     if (status) updateData.status = status;
+//     if (dateOccurred) updateData.dateOccurred = new Date(dateOccurred);
 
-    res.status(200).json({
-      success: true,
-      message: "Incident updated successfully",
-      data: updatedIncident,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "internal server error",
-      error: error.message,
-    });
-  }
-};
+//     // Handle location update
+//     if (location) {
+//       if (
+//         typeof location === "object" &&
+//         location.coordinates &&
+//         location.coordinates.length === 2
+//       ) {
+//         updateData.location = {
+//           type: "Point",
+//           coordinates: location.coordinates,
+//         };
+//       } else if (typeof location === "string") {
+//         // If location is passed as a string like "lat,lng"
+//         try {
+//           const [lat, lng] = location
+//             .split(",")
+//             .map((coord) => parseFloat(coord.trim()));
+//           if (!isNaN(lat) && !isNaN(lng)) {
+//             updateData.location = {
+//               type: "Point",
+//               coordinates: [lng, lat], // GeoJSON uses [longitude, latitude]
+//             };
+//           }
+//         } catch (error) {
+//           return res.status(400).json({
+//             success: false,
+//             message: "Invalid location format. Expected 'latitude,longitude'",
+//             error: "invalid param",
+//           });
+//         }
+//       }
+//     }
+
+//     // Update the incident
+//     const updatedIncident = await Incident.findByIdAndUpdate(id, updateData, {
+//       new: true,
+//       runValidators: true,
+//     }).populate("reports", "title description image");
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Incident updated successfully",
+//       data: updatedIncident,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: "internal server error",
+//       error: error.message,
+//     });
+//   }
+// };
 
 // Delete an incident
 exports.deleteIncident = async (req, res) => {
@@ -188,6 +194,7 @@ exports.deleteIncident = async (req, res) => {
     }
 
     const incident = await Incident.findByIdAndDelete(id);
+    await Report.deleteMany({ _id: { $in: incident.reports } });
     if (!incident) {
       return res.status(404).json({
         success: false,
@@ -278,7 +285,7 @@ const getIncidentImages = async (incidentId) => {
   }
 };
 
-// Example usage in a controller
+// usage in a controller
 exports.getIncidentImages = async (req, res) => {
   try {
     const { id } = req.params;

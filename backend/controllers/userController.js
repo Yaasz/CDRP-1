@@ -172,14 +172,15 @@ exports.updateUser = async (req, res) => {
     }
     const user = await User.findById(id);
     const data = { ...req.body };
-    // Allow admins to edit any profile, but regular users can only edit their own
-    // if (req.user.role !== 'admin' && req.user.id.toString() !== id.toString()) {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "you can only update your own profile",
-    //     error: "unauthorized access",
-    //   });
-    // }
+    console.log("update user data:", data);
+    //Allow admins to edit any profile, but regular users can only edit their own
+    if (req.user.role !== "admin" && req.user.id.toString() !== id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "you can only update your own profile",
+        error: "unauthorized access",
+      });
+    }
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -215,6 +216,37 @@ exports.updateUser = async (req, res) => {
           message: "Email already in use",
         });
       }
+      data.email = data.email.toLowerCase(); // Ensure email is always lowercase
+      data.verificationToken = crypto.randomBytes(32).toString("hex"); // Generate new verification token
+      // Send verification email
+      const verifyLink = `${process.env.FRONTEND_URL}/verify/?token=${data.verificationToken}`;
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL,
+          pass: process.env.PASS,
+        },
+      });
+      await transporter
+        .sendMail({
+          from: `"email verification" <${process.env.EMAIL}>`,
+          to: data.email,
+          subject: `verify your email`,
+          html: `
+          <p>Hi ${user.firstName},</p>
+          <p>Your email has been updated. Please click the link below to verify your new email address:</p>
+          <a href="${verifyLink}">Verify Email</a>
+        `,
+        })
+        .catch(async (error) => {
+          return res.status(500).json({
+            success: false,
+            message: "Failed to send verification email",
+            error: error.message,
+          });
+        });
+
+      data.isVerified = false; // Set isVerified to false since email is changed
     }
     if (data.phone) {
       const existingUser = await User.findOne({ phone: data.phone });
@@ -225,16 +257,20 @@ exports.updateUser = async (req, res) => {
         });
       }
     }
-    // if (data.role) {
-    //   if (req.user.role !== "admin") {
-    //     return res.status(400).json({
-    //       success: false,
-    //       message: "only admin can update user role",
-    //     });
-    //   }
-    // }
+    if (data.role) {
+      if (req.user.role !== "admin") {
+        return res.status(400).json({
+          success: false,
+          message: "only admin can update user role",
+        });
+      }
+    }
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
     const updatedUser = await User.findByIdAndUpdate(id, data, {
       new: true,
+      runValidators: true,
     });
 
     res.status(200).json({
@@ -315,7 +351,7 @@ exports.deleteAll = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { identifier, password } = req.body;
+    let { identifier, password } = req.body;
 
     if (!identifier || !password) {
       return res.status(400).json({
@@ -324,14 +360,14 @@ exports.login = async (req, res) => {
         error: "missing fields",
       });
     }
-
+    identifier = identifier.toLowerCase(); // Ensure identifier is always lowercase
     const user = await User.findOne({
       $or: [{ email: identifier }, { phone: identifier }],
     });
     if (!user) {
       return res
         .status(401)
-        .json({ error: "user with email/password not found  " });
+        .json({ error: "user with email/phone not found  " });
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {

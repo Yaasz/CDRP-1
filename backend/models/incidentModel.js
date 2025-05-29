@@ -1,6 +1,16 @@
 const mongoose = require("mongoose");
 const REPORT_THRESHOLD = process.env.REPORT_THRESHOLD || 5;
 const validator = require("validator");
+const opencage = require("opencage-api-client");
+const axios = require("axios");
+console.log("report treshold", REPORT_THRESHOLD);
+const categoryToPriority = {
+  Urgent: "high",
+  Medium: "medium",
+  "Not Urgent": "low",
+  Unknown: null,
+};
+
 // Define the Incident schema
 const incidentSchema = new mongoose.Schema(
   {
@@ -49,11 +59,15 @@ const incidentSchema = new mongoose.Schema(
         type: String,
         enum: ["Point"],
         required: true,
-        default: "Point",
       },
       coordinates: {
-        type: [Number], // Array of numbers: [longitude, latitude]
+        type: [Number], // [longitude, latitude]
         required: true,
+        index: "2dsphere",
+      },
+      name: {
+        type: String,
+        required: false,
       },
     },
     status: {
@@ -89,11 +103,90 @@ const incidentSchema = new mongoose.Schema(
 incidentSchema.index({ location: "2dsphere" });
 // Pre-save hook to update status
 incidentSchema.pre("save", async function (next) {
-  if (this.isModified("reports") && this.reports.length >= REPORT_THRESHOLD) {
-    this.status = "validated";
+  // Check if reports were modified and if the status should change to validated
+  if (this.isModified("reports")) {
+    if (this.reports.length >= REPORT_THRESHOLD) {
+      this.status = "validated";
+    } else {
+      this.status = "pending";
+    }
+  }
+
+  const coords = this.location?.coordinates;
+
+  // Run only if coordinates were modified and are valid
+  if (
+    this.isModified("location") &&
+    Array.isArray(coords) &&
+    coords.length === 2 &&
+    coords.every((coord) => typeof coord === "number" && isFinite(coord))
+  ) {
+    try {
+      const [lng, lat] = coords;
+
+      // Check for OpenCage API key
+      if (!process.env.OPENCAGE_API_KEY) {
+        throw new Error("OpenCage API key is missing");
+      }
+
+      const result = await opencage.geocode({
+        q: `${lat},${lng}`,
+        key: process.env.OPENCAGE_API_KEY,
+      });
+
+      if (result?.results?.length > 0) {
+        this.location.name = result.results[0].formatted || "Unknown location";
+      } else {
+        this.location.name = "Unknown location";
+      }
+    } catch (error) {
+      console.error("OpenCage geocoding error:", error.message);
+      this.location.name = "Geocoding failed";
+    }
+  }
+
+  // Call FastAPI when status changes to validated
+  if (this.isModified("status") && this.status === "validated") {
+    try {
+      const [lng, lat] = this.location.coordinates;
+      const fastApiPayload = {
+        incidents: [
+          {
+            disaster_type: this.type,
+            latitude: lat,
+            longitude: lng,
+          },
+        ],
+      };
+      console.log("Calling FastAPI with payload:", fastApiPayload);
+      const fastApiResponse = await axios.post(
+        `${process.env.FAST_API}/categorize-incidents-gps/`,
+        fastApiPayload,
+        { timeout: 10000 }
+      );
+      console.log("FastAPI response:", fastApiResponse.data);
+
+      const category = fastApiResponse.data?.categories?.[0] || {
+        category: "Unknown",
+        wereda: "Unknown",
+      };
+      const mappedPriority = categoryToPriority[category.category];
+
+      if (mappedPriority) {
+        this.priority = mappedPriority;
+        console.log("Priority set to:", mappedPriority);
+      }
+      if (category.wereda !== "Unknown") {
+        this.location.name = category.wereda;
+      }
+    } catch (error) {
+      console.error("FastAPI categorization failed:", error.message);
+      // Do not block save if FastAPI fails
+    }
   }
   next();
 });
+
 // Create the Incident model
 const Incident = mongoose.model("Incident", incidentSchema);
 

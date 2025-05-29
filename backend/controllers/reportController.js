@@ -18,16 +18,15 @@ const distanceMap = {
 };
 //note:allowed types of disasters
 const allowedTypes = [
-  "fire",
-  "wild fire",
-  "earth quake",
-  "drought",
-  "land slide",
-  "flood",
-  "locust swarm",
+  "Drought",
+  "Earthquake",
+  "Flood",
+  "Hailstorm",
+  "landslideDisaster",
+  "locuswarm",
   "sinkhole",
   "volcano",
-  "hail storm",
+  "wildefire",
 ];
 // Create a new report
 exports.createReport = async (req, res) => {
@@ -151,7 +150,7 @@ exports.createReport = async (req, res) => {
         },
       });
     }
-    console.log("report data", data);
+    //console.log("report data", data);
     const newReport = new Report(data);
 
     // Look for matching incidents with pending status
@@ -213,7 +212,18 @@ exports.createReport = async (req, res) => {
       });
     }
   } catch (error) {
-    console.log("error", error);
+    console.log("error", error.message);
+    if (error.name === "ValidationError") {
+      const fieldErrors = {};
+      for (let field in error.errors) {
+        fieldErrors[field] = error.errors[field].message;
+      }
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: fieldErrors,
+      });
+    }
     res.status(500).json({
       success: false,
       message: "internal server error",
@@ -297,6 +307,9 @@ exports.updateReport = async (req, res) => {
         });
       }
     }
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
     const updatedReport = await Report.findByIdAndUpdate(
       id,
       { $set: data },
@@ -410,7 +423,6 @@ exports.getAllReports = async (req, res) => {
       ? {
           $or: [
             { title: { $regex: search, $options: "i" } },
-            { status: { $regex: search, $options: "i" } },
             { type: { $regex: search, $options: "i" } },
             { date: { $regex: search, $options: "i" } },
           ],
@@ -490,11 +502,9 @@ exports.deleteReport = async (req, res) => {
     }
 
     // Remove report ID from the associated Incident's reports array
-    await Incident.findByIdAndUpdate(
-      { _id: report.incident, status: "pending" },
-      { $pull: { reports: report._id } }
-    );
-
+    const incident = await Incident.findOne({ _id: report.incident });
+    incident.reports.pull(report._id);
+    await incident.save();
     res.status(200).json({
       success: true,
       message: "Report deleted successfully",

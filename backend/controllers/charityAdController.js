@@ -1,6 +1,7 @@
 const CharityAd = require("../models/charityadModel");
 const cloudinary = require("../config/cloudinary");
 const fs = require("fs").promises;
+const mongoose = require("mongoose");
 
 // Create a new charity ad
 exports.createCharityAd = async (req, res) => {
@@ -15,6 +16,17 @@ exports.createCharityAd = async (req, res) => {
         message: "charity is required",
       });
     }
+
+    // Validate charity reference
+    const Organization = mongoose.model("Organization");
+    const org = await Organization.findById(data.charity);
+    if (!org || org.role !== "charity") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid charity reference",
+      });
+    }
+
     if (!data.title) {
       return res.status(400).json({
         success: false,
@@ -53,17 +65,46 @@ exports.createCharityAd = async (req, res) => {
 
     // Parse categories and requirements if provided
     if (data.categories) {
+      console.log("Original categories:", data.categories);
       data.categories = Array.isArray(data.categories)
         ? data.categories
-        : JSON.parse(data.categories);
+        : data.categories.split(",").map((cat) => cat.trim());
+      console.log("Processed categories:", data.categories);
     }
-    // if (data.requirements) {
-    //   data.requirements = Array.isArray(data.requirements)
-    //     ? data.requirements
-    //     : JSON.parse(data.requirements);
-    // }
+
+    // Handle requirements structure
+    if (data.requirements) {
+      try {
+        console.log("Original requirements:", data.requirements);
+        const parsedRequirements =
+          typeof data.requirements === "string"
+            ? JSON.parse(data.requirements)
+            : data.requirements;
+        console.log("Parsed requirements:", parsedRequirements);
+
+        data.requirements = {
+          location: parsedRequirements.location || "",
+          skills: Array.isArray(parsedRequirements.skills)
+            ? parsedRequirements.skills
+            : typeof parsedRequirements.skills === "string"
+              ? parsedRequirements.skills
+                  .split(",")
+                  .map((skill) => skill.trim())
+              : [],
+        };
+        console.log("Final requirements structure:", data.requirements);
+      } catch (error) {
+        console.error("Error processing requirements:", error);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid requirements format",
+          error: error.message,
+        });
+      }
+    }
 
     const charityAd = new CharityAd(data);
+    console.log("charityAd", charityAd);
     const savedAd = await charityAd.save();
 
     res.status(201).json({
@@ -213,13 +254,45 @@ exports.updateCharityAd = async (req, res) => {
     if (updates.categories) {
       updates.categories = Array.isArray(updates.categories)
         ? updates.categories
-        : JSON.parse(updates.categories);
+        : updates.categories.split(",").map((cat) => cat.trim());
+      //console.log("Processed categories:", updates.categories);
     }
+
+    // Handle requirements structure
     if (updates.requirements) {
-      updates.requirements = Array.isArray(updates.requirements)
-        ? updates.requirements
-        : JSON.parse(updates.requirements);
+      try {
+        //console.log("Original requirements:", updates.requirements);
+        const parsedRequirements =
+          typeof updates.requirements === "string"
+            ? JSON.parse(updates.requirements)
+            : updates.requirements;
+        //console.log("Parsed requirements:", parsedRequirements);
+
+        updates.requirements = {
+          location: parsedRequirements.location || "",
+          skills: Array.isArray(parsedRequirements.skills)
+            ? parsedRequirements.skills
+            : typeof parsedRequirements.skills === "string"
+              ? parsedRequirements.skills
+                  .split(",")
+                  .map((skill) => skill.trim())
+              : [],
+        };
+        //console.log("Final requirements structure:", updates.requirements);
+      } catch (error) {
+        //console.error("Error processing requirements:", error);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid requirements format",
+          error: error.message,
+        });
+      }
     }
+
+    // Remove empty fields
+    Object.keys(updates).forEach((key) => {
+      if (updates[key] === "") delete updates[key];
+    });
 
     const charityAd = await CharityAd.findByIdAndUpdate(id, updates, {
       new: true,
@@ -253,7 +326,7 @@ exports.deleteCharityAd = async (req, res) => {
     }
     const charityAd = await CharityAd.findByIdAndDelete(id);
 
-    if (!charAd) {
+    if (!charityAd) {
       return res.status(404).json({
         success: false,
         error: "document not found",

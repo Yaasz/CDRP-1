@@ -22,7 +22,6 @@ router
   .post(upload.single("image"), createUser)
   .delete(authToken, authRoles("admin"), deleteAll);
 
-// Explicitly handle form data and JSON for login
 router.post("/login", login);
 router.get("/verify", verifyUser);
 

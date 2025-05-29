@@ -8,18 +8,20 @@ exports.createNews = async (req, res) => {
   //upload.single("image") // removed and put in the router
   try {
     const data = { ...req.body };
-    console.log(data.images);
-    data.images = data.images
-      .replace(/\r\n/g, "") // Remove newlines
-      .replace(/\s+/g, " ") // Normalize whitespace
-      .replace(/,(\s*})/g, "$1") // Remove trailing commas before closing braces
-      .trim();
-    data.images = data.images.startsWith("[")
-      ? data.images
-      : `[${data.images}]`;
-    console.log("data images", data.images);
-    data.images = JSON.parse(data.images);
-
+    console.log("hhh", data.images);
+    //images = data.images;
+    //images.map(img) =
+    // data.images = data.images
+    //   .replace(/\r\n/g, "") // Remove newlines
+    //   .replace(/\s+/g, " ") // Normalize whitespace
+    //   .replace(/,(\s*})/g, "$1") // Remove trailing commas before closing braces
+    //   .trim();
+    // data.images = data.images.startsWith("[")
+    //   ? data.images
+    //   : `[${data.images}]`;
+    // console.log("data images", data.images);
+    //data.images = JSON.parse(data.images);
+    console.log("parsed", data.images);
     if (!data.incident) {
       return res.status(400).json({
         success: false,
@@ -205,7 +207,9 @@ exports.updateNews = async (req, res) => {
         });
       }
     });
-
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
     // Update news
     const news = await News.findByIdAndUpdate(id, data, {
       new: true,

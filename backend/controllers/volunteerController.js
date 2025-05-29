@@ -129,7 +129,9 @@ const updateVolunteer = async (req, res) => {
         });
       }
     }
-
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
     const updatedVolunteer = await Volunteer.findByIdAndUpdate(
       id,
       { $set: data },

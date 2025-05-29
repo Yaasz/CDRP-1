@@ -6,6 +6,15 @@ const fs = require("fs").promises;
 const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.PASS,
+  },
+});
+
 // Create a new organization
 exports.createOrganization = async (req, res) => {
   try {
@@ -31,7 +40,7 @@ exports.createOrganization = async (req, res) => {
       }
     }
     const nameExists = await Organization.findOne({
-      name: data.organizationName,
+      organizationName: data.organizationName,
     });
     if (nameExists) {
       return res.status(400).json({
@@ -71,13 +80,6 @@ exports.createOrganization = async (req, res) => {
     const organization = new Organization(data);
     const savedOrganization = await organization.save();
     const verifyLink = `${process.env.FRONTEND_URL}/verify-org-email/?token=${verificationToken}`;
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASS,
-      },
-    });
 
     await transporter
       .sendMail({
@@ -176,6 +178,7 @@ exports.updateOrganization = async (req, res) => {
   try {
     const { id } = req.params;
     const data = { ...req.body };
+
     if (mongoose.Types.ObjectId.isValid(id) === false) {
       return res.status(400).json({
         success: false,
@@ -190,37 +193,76 @@ exports.updateOrganization = async (req, res) => {
         message: "Organization not found",
       });
     }
-    // if (data.role && data.role == "government") {
-    // if(req.user!=="admin"){
-    //   return res.status(400).json({
-    //      success: false,
-    //      message: "government organization can only be created by admin",
-    //    });
-    // }
-    //
-    // }
-
+    if (data.role && data.role == "government") {
+      if (req.user.role !== "admin") {
+        return res.status(400).json({
+          success: false,
+          message: "government organization can only be created by admin",
+        });
+      }
+    }
     if (
-      data.name !== exists.name ||
-      data.email !== exists.email ||
-      data.phone !== exists.phone
+      data.organizationName &&
+      data.organizationName !== exists.organizationName
     ) {
-      const nameExists = await Organization.findOne({ name: data.name });
-      if (nameExists) {
+      const nameExists = await Organization.findOne({
+        organizationName: data.organizationName,
+      });
+      if (nameExists && nameExists._id.toString() !== id) {
         return res.status(400).json({
           success: false,
           message: "organization name taken",
         });
       }
-      const exists = await Organization.findOne({
-        $or: [{ email: data.email }, { phone: data.phone }],
+    }
+
+    //check for phone number
+    if (data.phone && data.phone !== exists.phone) {
+      const phoneExists = await Organization.findOne({
+        phone: data.phone,
       });
-      if (exists) {
+      if (phoneExists && phoneExists._id.toString() !== id) {
         return res.status(400).json({
           success: false,
-          message: "Organization with the same email/phone already exists",
+          message: "Organization with the same phone number already exists",
         });
       }
+    }
+    //check for email
+    if (data.email && data.email !== exists.email) {
+      const emailExists = await Organization.findOne({
+        email: data.email,
+      });
+      if (emailExists && emailExists._id.toString() !== id) {
+        return res.status(400).json({
+          success: false,
+          message: "Organization with the same email already exists",
+        });
+      }
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      data.verificationToken = verificationToken;
+      const verifyLink = `${process.env.FRONTEND_URL}/verify-org-email/?token=${verificationToken}`;
+      await transporter
+        .sendMail({
+          from: `"Organization email verification" <${process.env.EMAIL}>`,
+          to: data.email,
+          subject: `verify your email`,
+          html: `
+          <p>Hi ${exists.organizationName},</p>
+          <p>Your email has been updated. Please click the link below to verify your new email address:</p>
+          <a href="${verifyLink}">Verify Email</a>
+          `,
+        })
+        .catch(async (error) => {
+          return res.status(500).json({
+            success: false,
+            message: "Failed to send verification email",
+            error: error.message,
+          });
+        });
+      data.emailVerified = false; // Reset email verification status
+      // Convert email to lowercase
+      data.email = data.email.toLowerCase();
     }
 
     if (req.file) {
@@ -234,9 +276,16 @@ exports.updateOrganization = async (req, res) => {
       data.cloudinaryId = result.public_id;
       await fs.unlink(req.file.path);
     } else {
-      data.image = exists.image;
-      data.cloudinaryId = exists.cloudinaryId;
+      if (exists.image !== "" || undefined) {
+        data.image = exists.image;
+        data.cloudinaryId = exists.cloudinaryId;
+      }
     }
+
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
+
     const organization = await Organization.findByIdAndUpdate(id, data, {
       new: true,
       runValidators: true,
@@ -244,7 +293,7 @@ exports.updateOrganization = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Organization updated successfully",
+      message: "Organization updated and verification email sent successfully",
       data: organization,
     });
   } catch (error) {

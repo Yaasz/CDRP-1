@@ -29,7 +29,7 @@ router
 router
   .route("/:id")
   .get(authToken, getCharityAd)
-  .put(
+  .patch(
     authToken,
     authRoles("charity"),
     requireVerification,
