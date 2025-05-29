@@ -1,13 +1,35 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, MapPin, ArrowLeft, Image, X, Loader2 } from 'lucide-react';
+import { AlertTriangle, MapPin, ArrowLeft, Image, X, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+
+// Use CDN for Hugging Face Inference (uncomment if not using npm package)
+// <script src="https://cdn.jsdelivr.net/npm/@huggingface/inference@2.8.0/dist/inference.min.js"></script>
+// const InferenceClient = window.HfInference.InferenceClient;
+import { InferenceClient } from '@huggingface/inference';
+
+// Hugging Face endpoint configuration
+const HF_ENDPOINT_URL = 'https://bereket12445-my-tf-image-model.hf.space/predict';
+const HF_API_TOKEN = import.meta.env.REACT_APP_HF_API_TOKEN  // Fallback for testing, remove in production
+
+// Map model labels to formData.type values
+const labelMapping = {
+  drought: 'Drought',
+  earthquake: 'Earthquake',
+  flood: 'Flood',
+  hailstorm: 'Hailstorm',
+  landslidedisaster: 'landslideDisaster',
+  locustwarn: 'locustwarn',
+  sinkhole: 'sinkhole',
+  volcano: 'volcano',
+  wildefire: 'wildefire' // ✅ Matches model’s label spelling
+};
+
 
 // Basic Map Placeholder Component
 const MapPlaceholder = () => (
   <div className="h-64 w-full bg-gray-200 rounded-lg flex items-center justify-center relative overflow-hidden border border-gray-300">
-    {/* Simple background pattern */}
     <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="absolute inset-0">
       <defs>
         <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -16,10 +38,10 @@ const MapPlaceholder = () => (
       </defs>
       <rect width="100%" height="100%" fill="url(#grid)" />
     </svg>
-     <div className="relative z-10 bg-white/90 backdrop-blur-sm p-4 rounded-lg text-center shadow cursor-pointer hover:bg-white transition-colors">
-        <MapPin className="h-6 w-6 mx-auto mb-2 text-red-500" />
-        <p className="text-sm font-medium text-gray-700">Click to set location</p>
-        <p className="text-xs text-gray-500">(Map integration TBD)</p>
+    <div className="relative z-10 bg-white/90 backdrop-blur-sm p-4 rounded-lg text-center shadow cursor-pointer hover:bg-white transition-colors">
+      <MapPin className="h-6 w-6 mx-auto mb-2 text-red-500" />
+      <p className="text-sm font-medium text-gray-700">Click to set location</p>
+      <p className="text-xs text-gray-500">(Map integration TBD)</p>
     </div>
   </div>
 );
@@ -32,7 +54,7 @@ export default function NewReportPage() {
     title: '',
     description: '',
     type: '',
-    location: { coordinates: [0, 0] } // [longitude, latitude]
+    location: { coordinates: [0, 0] }
   });
   const [errors, setErrors] = useState({});
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -42,6 +64,12 @@ export default function NewReportPage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [classificationResult, setClassificationResult] = useState(null);
+  const [classificationLoading, setClassificationLoading] = useState(false);
+  const [classificationError, setClassificationError] = useState(null);
+
+  // Initialize Hugging Face Inference Client
+  const hfClient = new InferenceClient(HF_API_TOKEN);
 
   // Get current location
   const getCurrentLocation = () => {
@@ -59,9 +87,7 @@ export default function NewReportPage() {
         setCurrentLocation({ latitude, longitude });
         setFormData(prev => ({
           ...prev,
-          location: { 
-            coordinates: [longitude, latitude]  // GeoJSON format: [longitude, latitude]
-          }
+          location: { coordinates: [longitude, latitude] }
         }));
         setLocationLoading(false);
       },
@@ -81,21 +107,33 @@ export default function NewReportPage() {
       [name]: value
     }));
 
-    // Clear error when field is being edited
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: null
       }));
     }
+
+    if (name === 'type' && selectedImage) {
+      classifyImage(selectedImage, value);
+    }
   };
 
-  // Handle image selection
-  const handleImageChange = (e) => {
+  // Handle image selection and trigger classification
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+    const validFormats = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!validFormats.includes(file.type)) {
+      setErrors(prev => ({
+        ...prev,
+        image: 'Only PNG, JPG, and GIF formats are supported'
+      }));
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
       setErrors(prev => ({
         ...prev,
         image: 'Image size must be less than 5MB'
@@ -110,12 +148,15 @@ export default function NewReportPage() {
     };
     reader.readAsDataURL(file);
 
-    // Clear error if any
     if (errors.image) {
       setErrors(prev => ({
         ...prev,
         image: null
       }));
+    }
+
+    if (formData.type) {
+      await classifyImage(file, formData.type);
     }
   };
 
@@ -123,27 +164,84 @@ export default function NewReportPage() {
   const handleRemoveImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
+    setClassificationResult(null);
+    setClassificationError(null);
   };
+
+  // Classify image using Hugging Face endpoint
+ const classifyImage = async (imageFile, expectedType) => {
+  setClassificationLoading(true);
+  setClassificationError(null);
+  setClassificationResult(null);
+
+  try {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('declared_label', labelMapping[expectedType.toLowerCase()] || expectedType);
+
+    const response = await fetch(HF_ENDPOINT_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${HF_API_TOKEN}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log("Raw result from model:", result);
+
+    // ✅ Parse your model’s actual structure
+    if (
+      result &&
+      typeof result.result === 'string' &&
+      typeof result.declared_label === 'string' &&
+      typeof result.prediction_score === 'number'
+    ) {
+      setClassificationResult({
+        predictedLabel: result.declared_label,
+        confidence: result.prediction_score,
+        isMatch: result.result.toLowerCase() === 'match',
+      });
+    } else {
+      throw new Error(`Unexpected response format: ${JSON.stringify(result)}`);
+    }
+  } catch (error) {
+    setClassificationError('Failed to classify image. Please try again.');
+    console.error('Classification error:', error);
+  } finally {
+    setClassificationLoading(false);
+  }
+};
+
 
   // Validate form for the current step
   const validateStep = () => {
-    const newErrors = {};
-    
-    if (step === 1) {
-      if (!formData.title.trim()) newErrors.title = 'Title is required';
-      if (!formData.description.trim()) newErrors.description = 'Description is required';
-      if (!formData.type) newErrors.type = 'Please select an incident type';
-    }
-    
-    if (step === 2) {
-      if (!formData.location.coordinates[0] && !formData.location.coordinates[1]) {
-        newErrors.location = 'Please set a location';
-      }
-    }
+  const newErrors = {};
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  if (step === 1) {
+    if (!formData.title.trim()) newErrors.title = 'Title is required';
+    if (!formData.description.trim()) newErrors.description = 'Description is required';
+    if (!formData.type) newErrors.type = 'Please select an incident type';
+  }
+
+  if (step === 2) {
+    if (!formData.location.coordinates[0] && !formData.location.coordinates[1]) {
+      newErrors.location = 'Please set a location';
+    }
+    if (selectedImage && classificationResult && !classificationResult.isMatch) {
+      newErrors.imageMatch = `Error: The image is classified as "${classificationResult.predictedLabel}" (${(classificationResult.confidence * 100).toFixed(1)}% confidence), which does not match the selected type "${formData.type}". Submission is blocked.`;
+    }
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
 
   // Move to next step
   const handleNextStep = () => {
@@ -167,10 +265,7 @@ export default function NewReportPage() {
     setSubmitError(null);
     
     try {
-      // Create FormData for multipart/form-data (for image upload)
       const submission = new FormData();
-      
-      // Add all form fields
       submission.append('title', formData.title);
       submission.append('description', formData.description);
       submission.append('reportedBy', user?._id || user?.id || 'anonymous');
@@ -178,26 +273,17 @@ export default function NewReportPage() {
       submission.append('longitude', formData.location.coordinates[0]);
       submission.append('latitude', formData.location.coordinates[1]);
       
-      // Add image if selected
       if (selectedImage) {
         submission.append('image', selectedImage);
       }
       
-      // Submit form data - Use the correct API endpoint without the 'api/' prefix
-      // since it's already included in the baseURL
       const response = await api.post('/report', submission, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       
-      console.log('Report submission response:', response.data);
-      
-      // Get the report data from the response
-      // Handle both possible response formats (direct or nested)
       const reportData = response.data.report || response.data;
-      
-      // Navigate to success page with report data
       navigate('/dashboard/reports/success', { 
         state: { report: reportData }
       });
@@ -217,7 +303,6 @@ export default function NewReportPage() {
     <div>
       <h2 className="text-lg font-semibold text-gray-800 mb-4">Report Details</h2>
       
-      {/* Title */}
       <div className="mb-4">
         <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
         <input
@@ -232,7 +317,6 @@ export default function NewReportPage() {
         {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
       </div>
       
-      {/* Description */}
       <div className="mb-4">
         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
         <textarea
@@ -247,7 +331,6 @@ export default function NewReportPage() {
         {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
       </div>
       
-      {/* Incident Type */}
       <div className="mb-4">
         <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">Incident Type *</label>
         <select
@@ -257,19 +340,20 @@ export default function NewReportPage() {
           onChange={handleChange}
           className={`w-full px-3 py-2 border ${errors.type ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500`}
         >
-          <option value="" disabled>Select incident type</option>
-          <option value="flood">Flood</option>
-          <option value="earthquake">Earthquake</option>
-          <option value="fire">Fire</option>
-          <option value="landslide">Landslide</option>
-          <option value="roadblock">Road Blockage</option>
-          <option value="poweroutage">Power Outage</option>
-          <option value="other">Other</option>
+         <option value="flood">Flood</option>
+        <option value="earthquake">Earthquake</option>
+          <option value="drought">Drought</option>
+          <option value="hailstorm">Hailstorm</option>
+          <option value="landslidedisaster">Landslide Disaster</option>
+          <option value="locustwarn">Locust Swarm</option>
+          <option value="sinkhole">Sinkhole</option>
+          <option value="volcano">Volcano</option>
+          <option value="wildefire">Wildefire</option> {/* ✅ Keep this as-is if it's correct in your model */}
+
         </select>
         {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type}</p>}
       </div>
       
-      {/* Navigation Buttons */}
       <div className="flex justify-end mt-6">
         <button
           type="button"
@@ -287,7 +371,6 @@ export default function NewReportPage() {
     <div>
       <h2 className="text-lg font-semibold text-gray-800 mb-4">Location & Images</h2>
       
-      {/* Location */}
       <div className="mb-6">
         <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
         <div className="flex flex-col space-y-2">
@@ -341,7 +424,6 @@ export default function NewReportPage() {
         </div>
       </div>
       
-      {/* Image Upload */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-1">Images (Optional)</label>
         
@@ -384,13 +466,40 @@ export default function NewReportPage() {
             >
               <X className="h-4 w-4" />
             </button>
+            {classificationLoading && (
+              <div className="mt-2 flex items-center justify-center text-sm text-gray-600">
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Classifying image...
+              </div>
+            )}
+            {classificationError && (
+              <div className="mt-2 text-sm text-red-600 flex items-start">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 mr-1" />
+                <span>{classificationError}</span>
+              </div>
+            )}
+            {classificationResult && (
+              <div className="mt-2 flex items-start text-sm">
+                {classificationResult.isMatch ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5 mr-1" />
+                    <span className="text-green-600">✅ Image and selected Incident type match.</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5 mr-1" />
+                    <span className="text-red-600">❌ Image and selected Incident type do NOT match.</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
         
         {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image}</p>}
+        {errors.imageMatch && <p className="mt-1 text-sm text-yellow-600">{errors.imageMatch}</p>}
       </div>
       
-      {/* Navigation Buttons */}
       <div className="flex justify-between mt-6">
         <button
           type="button"
@@ -400,21 +509,28 @@ export default function NewReportPage() {
           Previous
         </button>
         <button
-          type="submit"
-          disabled={isSubmitting}
-          className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-            isSubmitting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-          }`}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 inline animate-spin" />
-              Submitting...
-            </>
-          ) : (
-            'Submit Report'
-          )}
-        </button>
+  type="submit"
+  disabled={
+    isSubmitting ||
+    (selectedImage && classificationResult && !classificationResult.isMatch)
+  }
+  className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+    isSubmitting ||
+    (selectedImage && classificationResult && !classificationResult.isMatch)
+      ? 'bg-blue-400 cursor-not-allowed'
+      : 'bg-blue-600 hover:bg-blue-700'
+  }`}
+>
+  {isSubmitting ? (
+    <>
+      <Loader2 className="h-4 w-4 mr-2 inline animate-spin" />
+      Submitting...
+    </>
+  ) : (
+    'Submit Report'
+  )}
+</button>
+
       </div>
     </div>
   );
@@ -430,7 +546,6 @@ export default function NewReportPage() {
         <p className="text-gray-600">Fill in the details about the incident you want to report.</p>
       </div>
 
-      {/* Error Alert */}
       {submitError && (
         <div className="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-md p-4 flex items-start">
           <AlertTriangle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
@@ -441,7 +556,6 @@ export default function NewReportPage() {
         </div>
       )}
 
-      {/* Step Progress Indicator */}
       <div className="mb-6">
         <div className="flex items-center">
           <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'} text-sm font-semibold`}>
@@ -458,7 +572,6 @@ export default function NewReportPage() {
         </div>
       </div>
 
-      {/* Form */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <form onSubmit={handleSubmit}>
           {step === 1 && renderStepOne()}
