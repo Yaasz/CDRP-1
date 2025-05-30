@@ -52,3 +52,4 @@ app.use("/api/announcement", announcementRoutes);
 app.get("/", (req, res) => {
   res.status(200).json("server run successfully");
 });
+module.exports = app;

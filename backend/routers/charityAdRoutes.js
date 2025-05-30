@@ -38,7 +38,7 @@ router
   )
   .delete(
     authToken,
-    authRoles("charity"),
+    authRoles("charity", "admin"),
     requireVerification,
     deleteCharityAd
   );

@@ -1,4 +1,5 @@
 const Organization = require("../models/organizationModel");
+const CharityAd = require("../models/charityadModel");
 const cloudinary = require("../config/cloudinary");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -19,7 +20,10 @@ const transporter = nodemailer.createTransport({
 exports.createOrganization = async (req, res) => {
   try {
     const data = { ...req.body };
-    console.log("data org data", data);
+    // Remove empty fields
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
     if (
       !data.organizationName ||
       !data.email ||
@@ -317,7 +321,10 @@ exports.deleteOrganization = async (req, res) => {
       });
     }
     const organization = await Organization.findByIdAndDelete(id);
-
+    const charityAds = await CharityAd.find({ charity: id });
+    for (const charityAd of charityAds) {
+      await charityAd.deleteOne();
+    }
     if (!organization) {
       return res.status(404).json({
         success: false,

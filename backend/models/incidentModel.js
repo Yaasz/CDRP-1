@@ -3,7 +3,6 @@ const REPORT_THRESHOLD = process.env.REPORT_THRESHOLD || 5;
 const validator = require("validator");
 const opencage = require("opencage-api-client");
 const axios = require("axios");
-console.log("report treshold", REPORT_THRESHOLD);
 const categoryToPriority = {
   Urgent: "high",
   Medium: "medium",

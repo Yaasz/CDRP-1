@@ -98,29 +98,61 @@ components:
         updatedAt: { type: string, format: date-time }
     Incident:
       type: object
-      required: [type, title, description, dateOccurred, location, status]
+      required: [type, title, description, dateOccurred, location]
       properties:
         _id: { type: string }
-        type: { type: string, minLength: 4 }
-        title: { type: string, minLength: 4 }
-        description: { type: string, minLength: 4, maxLength: 300 }
-        dateOccurred: { type: string, format: date-time }
+        type:
+          type: string
+          minLength: 4
+          description: "Type of incident (must be at least 4 characters)"
+        title:
+          type: string
+          minLength: 4
+          description: "Title of the incident (must be at least 4 characters)"
+        description:
+          type: string
+          minLength: 4
+          maxLength: 300
+          description: "Description of the incident (4-300 characters)"
+        dateOccurred:
+          type: string
+          format: date-time
+          description: "Date when the incident occurred"
         location:
           type: object
+          required: [type, coordinates]
           properties:
-            type: { type: string, enum: [Point] }
-            coordinates: { type: array, items: { type: number } }
+            type:
+              type: string
+              enum: [Point]
+            coordinates:
+              type: array
+              items:
+                type: number
+              description: "[longitude, latitude]"
+            name:
+              type: string
+              description: "Location name (auto-populated by geocoding)"
         status:
-          {
-            type: string,
-            enum:
-              [pending, validated, assigned, in progress, critical, resolved],
-            default: pending,
-          }
-        reports: { type: array, items: { type: string } }
-        priority: { type: string, enum: [high, medium, low], default: medium }
-        createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
+          type: string
+          enum:
+            [pending, validated, assigned, "in progress", critical, resolved]
+          default: pending
+        reports:
+          type: array
+          items:
+            type: string
+            description: "Array of Report IDs"
+        priority:
+          type: string
+          enum: [high, medium, low]
+          default: medium
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     News:
       type: object
       required: [title, description, incident]
@@ -146,30 +178,67 @@ components:
         updatedAt: { type: string, format: date-time }
     CharityAd:
       type: object
-      required: [charity, title, description, duration, expiresAt]
+      required: [charity, title, description, duration]
       properties:
         _id: { type: string }
-        charity: { type: string }
-        title: { type: string, minLength: 4, maxLength: 50 }
-        image: { type: string, format: uri }
-        cloudinaryId: { type: string }
-        description: { type: string, minLength: 4, maxLength: 1000 }
-        status: { type: string, enum: [open, closed], default: open }
-        volunteers: { type: array, items: { type: string } }
-        duration: { type: number }
-        expiresAt: { type: string, format: date-time }
-        categories: { type: array, items: { type: string } }
+        charity:
+          type: string
+          description: "Organization ID (must be a charity organization)"
+        title:
+          type: string
+          minLength: 4
+          maxLength: 50
+          description: "Title of the charity ad (4-50 characters)"
+        image:
+          type: string
+          format: uri
+          description: "URL of the charity ad image"
+        cloudinaryId:
+          type: string
+          description: "Cloudinary ID for the image"
+        description:
+          type: string
+          minLength: 4
+          maxLength: 1000
+          description: "Description of the charity ad (4-1000 characters)"
+        status:
+          type: string
+          enum: [open, closed]
+          default: open
+        volunteers:
+          type: array
+          items:
+            type: string
+            description: "Array of Volunteer IDs"
+        duration:
+          type: number
+          description: "Duration in milliseconds (default: 7 days)"
+        expiresAt:
+          type: string
+          format: date-time
+          description: "Expiration date (auto-calculated based on duration)"
+        categories:
+          type: array
+          items:
+            type: string
+          description: "Array of category strings"
         requirements:
-          {
-            type: object,
-            properties:
-              {
-                location: { type: string },
-                skills: { type: array, items: { type: string } },
-              },
-          }
-        createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
+          type: object
+          properties:
+            location:
+              type: string
+              description: "Required location for volunteers"
+            skills:
+              type: array
+              items:
+                type: string
+              description: "Array of required skills"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     Announcement:
       type: object
       required: [incident, title, description]
@@ -234,70 +303,99 @@ components:
         ]
       properties:
         _id: { type: string }
-        charityAdId: { type: string }
-        user: { type: string }
-        fullName: { type: string, minLength: 5 }
-        sex: { type: string, enum: [male, female] }
-        age: { type: number, minimum: 1, maximum: 120 }
-        email: { type: string, format: email }
-        phone: { type: string }
-        expertise: { type: string }
-        contribution: { type: string }
-        createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
+        charityAdId:
+          type: string
+          description: "CharityAd ID reference"
+        user:
+          type: string
+          description: "User ID reference"
+        fullName:
+          type: string
+          minLength: 5
+          description: "Full name (must be at least 5 characters)"
+        sex:
+          type: string
+          enum: [male, female]
+          description: "Gender of the volunteer"
+        age:
+          type: integer
+          minimum: 1
+          maximum: 120
+          description: "Age of the volunteer (1-120)"
+        email:
+          type: string
+          format: email
+          description: "Valid email address"
+        phone:
+          type: string
+          pattern: "^\\+?[1-9]\\d{1,14}$"
+          description: "Phone number in E.164 format"
+        expertise:
+          type: string
+          description: "Volunteer's expertise"
+        contribution:
+          type: string
+          description: "Type of contribution"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 paths:
   /user:
     get:
       tags: [Users]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Get all users
       responses:
         "200":
-          {
-            content:
-              {
-                application/json:
-                  {
-                    schema:
-                      {
-                        type: array,
-                        items: { $ref: "#/components/schemas/User" },
-                      },
-                  },
-              },
-          }
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
     post:
       tags: [Users]
+      summary: Create a new user
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
               type: object
+              required: [firstName, lastName, email, phone, password]
               properties:
                 firstName: { type: string }
                 lastName: { type: string }
-                email: { type: string }
+                email: { type: string, format: email }
                 phone: { type: string }
                 password: { type: string }
-                role: { type: string }
                 image: { type: string, format: binary }
       responses:
         "201":
-          {
-            content:
-              {
-                application/json:
-                  { schema: { $ref: "#/components/schemas/User" } },
-              },
-          }
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
     delete:
       tags: [Users]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Delete all users (admin only)
       responses:
-        "200": { content: { application/json: {} } }
+        "200":
+          description: All users deleted successfully
   /user/login:
     post:
       tags: [Users]
+      summary: User login
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -307,43 +405,60 @@ paths:
                 identifier: { type: string }
                 password: { type: string }
       responses:
-        "200": { content: { application/json: {} } }
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { $ref: "#/components/schemas/User" }
   /user/verify:
     get:
       tags: [Users]
+      summary: Verify user email
       parameters:
         - in: query
           name: token
-          schema: { type: string }
+          required: true
+          schema:
+            type: string
       responses:
-        "200": { content: { application/json: {} } }
+        "200":
+          description: User verified successfully
   /user/{id}:
     get:
       tags: [Users]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Get user by ID
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
-          {
-            content:
-              {
-                application/json:
-                  { schema: { $ref: "#/components/schemas/User" } },
-              },
-          }
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
     patch:
       tags: [Users]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Update user
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
@@ -351,66 +466,79 @@ paths:
               properties:
                 firstName: { type: string }
                 lastName: { type: string }
-                email: { type: string }
+                email: { type: string, format: email }
                 phone: { type: string }
-                role: { type: string }
                 image: { type: string, format: binary }
       responses:
         "200":
-          {
-            content:
-              {
-                application/json:
-                  { schema: { $ref: "#/components/schemas/User" } },
-              },
-          }
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
     delete:
       tags: [Users]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Delete user
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
-        "200": { content: { application/json: {} } }
+        "200":
+          description: User deleted successfully
   /user/changePassword/{id}:
     patch:
       tags: [Users]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Change user password
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [currentPassword, newPassword]
               properties:
-                oldPassword: { type: string }
+                currentPassword: { type: string }
                 newPassword: { type: string }
       responses:
-        "200": { content: { application/json: {} } }
+        "200":
+          description: Password changed successfully
   /user/forceResetPassword/{id}:
     patch:
       tags: [Users]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Force reset user password (admin only)
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [newPassword]
               properties:
                 newPassword: { type: string }
       responses:
-        "200": { content: { application/json: {} } }
+        "200":
+          description: Password reset successfully
   /org:
     get:
       tags: [Organizations]
@@ -598,19 +726,15 @@ paths:
           multipart/form-data:
             schema:
               type: object
+              required: [type, description, latitude, longitude]
               properties:
                 type: { type: string }
                 title: { type: string }
                 description: { type: string }
-                location:
-                  {
-                    type: object,
-                    properties:
-                      {
-                        type: { type: string },
-                        coordinates: { type: array, items: { type: number } },
-                      },
-                  }
+                latitude: { type: number, format: float }
+                longitude: { type: number, format: float }
+                reportedBy:
+                  { type: string, description: "User ID of the reporter" }
                 image:
                   {
                     type: array,
@@ -747,29 +871,63 @@ paths:
       tags: [Volunteers]
       security: [{ bearerAuth: [] }]
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                [
+                  charityAdId,
+                  user,
+                  fullName,
+                  age,
+                  email,
+                  phone,
+                  expertise,
+                  contribution,
+                ]
               properties:
-                charityAdId: { type: string }
-                user: { type: string }
-                fullName: { type: string }
-                sex: { type: string }
-                age: { type: number }
-                email: { type: string }
-                phone: { type: string }
-                expertise: { type: string }
-                contribution: { type: string }
+                charityAdId:
+                  type: string
+                  description: "CharityAd ID reference"
+                user:
+                  type: string
+                  description: "User ID reference"
+                fullName:
+                  type: string
+                  minLength: 5
+                  description: "Full name (must be at least 5 characters, alphanumeric with basic punctuation)"
+                sex:
+                  type: string
+                  enum: [male, female]
+                  description: "Gender of the volunteer"
+                age:
+                  type: integer
+                  minimum: 18
+                  maximum: 80
+                  description: "Age of the volunteer (must be between 18 and 80)"
+                email:
+                  type: string
+                  format: email
+                  description: "Valid email address (must be unique)"
+                phone:
+                  type: string
+                  pattern: "^\\+?[1-9]\\d{1,14}$"
+                  description: "Phone number in E.164 format (must be unique)"
+                expertise:
+                  type: string
+                  description: "Volunteer's expertise"
+                contribution:
+                  type: string
+                  description: "Type of contribution"
       responses:
         "201":
-          {
-            content:
-              {
-                application/json:
-                  { schema: { $ref: "#/components/schemas/Volunteer" } },
-              },
-          }
+          description: Volunteer registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Volunteer"
     delete:
       tags: [Volunteers]
       security: [{ bearerAuth: [] }]
@@ -1010,186 +1168,135 @@ paths:
   /incidents:
     get:
       tags: [Incidents]
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - in: query
-          name: page
-          schema: { type: integer, default: 1 }
-        - in: query
-          name: limit
-          schema: { type: integer, default: 5 }
-        - in: query
-          name: search
-          schema: { type: string }
+      security:
+        - bearerAuth: []
+      summary: Get all incidents (admin and government only)
       responses:
         "200":
-          {
-            content:
-              {
-                application/json:
-                  {
-                    schema:
-                      {
-                        type: array,
-                        items: { $ref: "#/components/schemas/Incident" },
-                      },
-                  },
-              },
-          }
+          description: List of incidents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Incident"
     delete:
       tags: [Incidents]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Delete all incidents (admin and government only)
       responses:
-        "200": { content: { application/json: {} } }
+        "200":
+          description: All incidents deleted successfully
   /incidents/{id}:
     get:
       tags: [Incidents]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Get incident by ID (admin and government only)
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
-          {
-            content:
-              {
-                application/json:
-                  { schema: { $ref: "#/components/schemas/Incident" } },
-              },
-          }
-    patch:
-      tags: [Incidents]
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                type: { type: string }
-                title: { type: string }
-                description: { type: string }
-                status: { type: string }
-                location:
-                  {
-                    type: object,
-                    properties:
-                      {
-                        type: { type: string },
-                        coordinates: { type: array, items: { type: number } },
-                      },
-                  }
-                dateOccurred: { type: string, format: date-time }
-      responses:
-        "200":
-          {
-            content:
-              {
-                application/json:
-                  { schema: { $ref: "#/components/schemas/Incident" } },
-              },
-          }
+          description: Incident details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
     delete:
       tags: [Incidents]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Delete incident (admin and government only)
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
-        "200": { content: { application/json: {} } }
+        "200":
+          description: Incident deleted successfully
   /incidents/images/{id}:
     get:
       tags: [Incidents]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Get incident images (admin and government only)
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
-          {
-            content:
-              {
-                application/json:
-                  {
-                    schema:
-                      {
-                        type: array,
-                        items:
-                          {
-                            type: object,
-                            properties:
-                              {
-                                url: { type: string, format: uri },
-                                cloudinaryId: { type: string },
-                              },
-                          },
-                      },
-                  },
-              },
-          }
+          description: List of incident images
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    url: { type: string, format: uri }
+                    cloudinaryId: { type: string }
   /incidents/{id}/assign:
     post:
       tags: [Incidents]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Assign incident to a charity (government only)
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [organization, assignedBy]
               properties:
-                incidentId: { type: string }
-                organizationId: { type: string }
+                organization: { type: string }
+                assignedBy: { type: string }
                 notes: { type: string }
-                priorityLevel: { type: string }
+                priorityLevel: { type: string, enum: [high, medium, low] }
       responses:
         "201":
-          {
-            content:
-              {
-                application/json:
-                  { schema: { $ref: "#/components/schemas/Assignment" } },
-              },
-          }
+          description: Assignment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
   /incidents/{id}/assignments:
     get:
       tags: [Incidents]
-      security: [{ bearerAuth: [] }]
+      security:
+        - bearerAuth: []
+      summary: Get assignments for a specific incident (admin and government only)
       parameters:
         - in: path
           name: id
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
-          {
-            content:
-              {
-                application/json:
-                  {
-                    schema:
-                      {
-                        type: array,
-                        items: { $ref: "#/components/schemas/Assignment" },
-                      },
-                  },
-              },
-          }
+          description: List of assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Assignment"
   /assignments:
     get:
       tags: [Assignments]
@@ -1340,35 +1447,56 @@ paths:
       tags: [CharityAds]
       security: [{ bearerAuth: [] }]
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
               type: object
+              required: [charity, title, description]
               properties:
-                charity: { type: string }
-                title: { type: string }
-                description: { type: string }
-                duration: { type: number }
-                categories: { type: array, items: { type: string } }
+                charity:
+                  type: string
+                  description: "Organization ID (must be a charity organization)"
+                title:
+                  type: string
+                  minLength: 4
+                  maxLength: 50
+                  description: "Title of the charity ad (4-50 characters, alphanumeric with basic punctuation)"
+                description:
+                  type: string
+                  minLength: 4
+                  maxLength: 1000
+                  description: "Description of the charity ad (4-1000 characters, alphanumeric with basic punctuation)"
+                image:
+                  type: string
+                  format: binary
+                  description: "Image file for the charity ad"
+                duration:
+                  type: number
+                  description: "Duration in milliseconds (default: 7 days = 604800000 ms)"
+                categories:
+                  type: array
+                  items:
+                    type: string
+                  description: "Array of category strings"
                 requirements:
-                  {
-                    type: object,
-                    properties:
-                      {
-                        location: { type: string },
-                        skills: { type: array, items: { type: string } },
-                      },
-                  }
-                image: { type: string, format: binary }
+                  type: object
+                  properties:
+                    location:
+                      type: string
+                      description: "Required location for volunteers"
+                    skills:
+                      type: array
+                      items:
+                        type: string
+                      description: "Array of required skills"
       responses:
         "201":
-          {
-            content:
-              {
-                application/json:
-                  { schema: { $ref: "#/components/schemas/CharityAd" } },
-              },
-          }
+          description: Charity ad created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharityAd"
     delete:
       tags: [CharityAds]
       security: [{ bearerAuth: [] }]

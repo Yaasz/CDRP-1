@@ -9,3 +9,7 @@
 /merged_code.txt
 frontend/.env
 backend/.env
+backend/__tests__/
+backend/coverage
+backend/uploads/
+backend/jest.config.js

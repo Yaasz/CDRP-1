@@ -50,6 +50,9 @@ exports.createUser = async (req, res) => {
     const verificationToken = crypto.randomBytes(32).toString("hex");
     data.verificationToken = verificationToken;
     // console.log("create user :", data);
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
     const user = new User(data);
     const savedUser = await user.save();
 

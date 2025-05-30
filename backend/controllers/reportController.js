@@ -150,6 +150,9 @@ exports.createReport = async (req, res) => {
         },
       });
     }
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
     //console.log("report data", data);
     const newReport = new Report(data);
 

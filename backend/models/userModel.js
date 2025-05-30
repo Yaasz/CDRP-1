@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema(
         },
         message: "name must be text",
       },
-      minlength: [4, "name must be at least 5 characters "],
+      minlength: [3, "name must be at least 3 characters "],
     },
     lastName: {
       type: String,
@@ -48,7 +48,6 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      required: true,
       default: "user",
       enum: ["user", "admin"],
     },

@@ -8,6 +8,10 @@ exports.createCharityAd = async (req, res) => {
   try {
     const data = { ...req.body };
     console.log("Received data:", data);
+    // Remove empty fields
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
 
     // Required field validations
     if (!data.charity) {
@@ -324,8 +328,9 @@ exports.deleteCharityAd = async (req, res) => {
         error: "invalid param",
       });
     }
-    const charityAd = await CharityAd.findByIdAndDelete(id);
 
+    // First find the document
+    const charityAd = await CharityAd.findById(id);
     if (!charityAd) {
       return res.status(404).json({
         success: false,
@@ -333,6 +338,9 @@ exports.deleteCharityAd = async (req, res) => {
         message: "Charity ad not found",
       });
     }
+
+    // Then delete it directly
+    await charityAd.deleteOne();
 
     if (charityAd.cloudinaryId) {
       try {

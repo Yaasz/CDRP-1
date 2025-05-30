@@ -31,8 +31,8 @@ const VolunteerSchema = new mongoose.Schema({
   age: {
     type: Number,
     required: true,
-    min: [1, "age must be at least 1"],
-    max: [120, "age must be at most 120"],
+    min: [18, "age must be at least 18"],
+    max: [80, "age must be at most 80"],
     validate: {
       validator: function (value) {
         return Number.isInteger(value);
@@ -55,7 +55,6 @@ const VolunteerSchema = new mongoose.Schema({
   phone: {
     type: String,
     required: true,
-    unique: true,
     match: [/^\+?[1-9]\d{1,14}$/, "Invalid phone number"], // E.164 format validation
   },
   expertise: {

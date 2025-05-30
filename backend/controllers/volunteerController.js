@@ -14,6 +14,13 @@ const registerVolunteer = async (req, res) => {
         error: "missing field",
       });
     }
+    if (mongoose.Types.ObjectId.isValid(data.charityAdId) === false) {
+      return res.status(400).json({
+        success: false,
+        message: "invalid charity ad id",
+        error: "invalid id",
+      });
+    }
     const charityAd = await CharityAd.findById(data.charityAdId);
     if (!charityAd) {
       // If CharityAd not found, delete the volunteer and return error
@@ -33,6 +40,9 @@ const registerVolunteer = async (req, res) => {
     if (existingVolunteer) {
       return res.status(400).json({ message: "You have already registered" });
     }
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
     // Create new volunteer
     const volunteer = new Volunteer(data);
     const saved = await volunteer.save();

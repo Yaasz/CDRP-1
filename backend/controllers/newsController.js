@@ -8,7 +8,10 @@ exports.createNews = async (req, res) => {
   //upload.single("image") // removed and put in the router
   try {
     const data = { ...req.body };
-    console.log("hhh", data.images);
+    // Remove empty fields
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
+    });
     //images = data.images;
     //images.map(img) =
     // data.images = data.images
