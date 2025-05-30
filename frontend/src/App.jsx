@@ -33,7 +33,8 @@ import "./styles/theme.css";
 import VerifyEmail from "./components/VerifyEmail";
 import VerifyOrgEmail from "./components/VerifyOrgEmail";
 
-// Import charity dashboard pages
+// Import charity layout and dashboard pages
+import CharityLayout from "./components/charity/CharityLayout";
 import CharityDashboard from "./pages/charity/Dashboard";
 import CharityVolunteers from "./pages/charity/Volunteers";
 import CharityVolunteerDetail from "./pages/charity/VolunteerDetail";
@@ -123,34 +124,18 @@ function App() {
             </Route>
 
             {/* Charity Dashboard Routes */}
-            <Route path="/charity" element={<CharityDashboard />} />
-            <Route path="/charity/volunteers" element={<CharityVolunteers />} />
-            <Route
-              path="/charity/volunteers/:id"
-              element={<CharityVolunteerDetail />}
-            />
-            <Route path="/charity/incidents" element={<CharityIncidents />} />
-            <Route
-              path="/charity/incidents/new"
-              element={<CharityIncidentNew />}
-            />
-            <Route
-              path="/charity/incidents/:id"
-              element={<CharityIncidentDetail />}
-            />
-            <Route
-              path="/charity/incidents/:id/accept"
-              element={<CharityIncidentAccept />}
-            />
-            <Route
-              path="/charity/incidents/:id/reject"
-              element={<CharityIncidentReject />}
-            />
-            <Route
-              path="/charity/applications/:applicationId"
-              element={<div>Application Review</div>}
-            />
-            <Route path="/charity/settings" element={<CharitySettings />} />
+            <Route path="/charity" element={<CharityLayout />}>
+              <Route index element={<CharityDashboard />} />
+              <Route path="volunteers" element={<CharityVolunteers />} />
+              <Route path="volunteers/:id" element={<CharityVolunteerDetail />} />
+              <Route path="incidents" element={<CharityIncidents />} />
+              <Route path="incidents/new" element={<CharityIncidentNew />} />
+              <Route path="incidents/:id" element={<CharityIncidentDetail />} />
+              <Route path="incidents/:id/accept" element={<CharityIncidentAccept />} />
+              <Route path="incidents/:id/reject" element={<CharityIncidentReject />} />
+              <Route path="applications/:applicationId" element={<div>Application Review</div>} />
+              <Route path="settings" element={<CharitySettings />} />
+            </Route>
 
             {/* Government Dashboard Routes */}
             <Route path="/government" element={<GovernmentLayout />}>

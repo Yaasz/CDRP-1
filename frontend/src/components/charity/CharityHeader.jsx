@@ -1,31 +1,214 @@
-import React from 'react';
-import { Bell } from 'lucide-react';
-import { Button } from '../ui/Button';
-import { Avatar, AvatarImage, AvatarFallback } from '../ui/Avatar';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { UserCircle, Menu, X, LogOut, User, Bell } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import GoogleTranslateButton from '../GoogleTranslateButton';
+import api from '../../utils/api';
 
-const CharityHeader = ({ title = "Dashboard" }) => {
+// Avatar component specific for header
+const UserAvatar = ({ src, alt, size = "h-8 w-8" }) => (
+  <div className={`${size} rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200`}>
+    {src ? (
+      <img src={src} alt={alt} className="object-cover w-full h-full" />
+    ) : (
+      <User className="h-4 w-4 text-gray-400" />
+    )}
+  </div>
+);
+
+const CharityHeader = ({ title = "Dashboard", onMobileNavOpen }) => {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user || !user.id) return;
+      
+      try {
+        const response = await api.get(`/user/${user.id}`);
+        if (response.data && response.data.user) {
+          setUserProfile(response.data.user);
+        }
+      } catch (err) {
+        console.error('Error fetching user profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
+  // Get user's display name with better fallback logic
+  const getUserDisplayName = () => {
+    // First try to get from userProfile (full API response)
+    if (userProfile) {
+      if (userProfile.organizationName) {
+        return userProfile.organizationName;
+      } else if (userProfile.firstName && userProfile.lastName) {
+        return `${userProfile.firstName} ${userProfile.lastName}`;
+      } else if (userProfile.firstName) {
+        return userProfile.firstName;
+      } else if (userProfile.lastName) {
+        return userProfile.lastName;
+      } else if (userProfile.name) {
+        return userProfile.name;
+      }
+    }
+    
+    // Fallback to auth context user data
+    if (user) {
+      if (user.organizationName) {
+        return user.organizationName;
+      } else if (user.firstName && user.lastName) {
+        return `${user.firstName} ${user.lastName}`;
+      } else if (user.firstName) {
+        return user.firstName;
+      } else if (user.lastName) {
+        return user.lastName;
+      } else if (user.name) {
+        return user.name;
+      }
+    }
+    
+    // Final fallback
+    return 'Charity Organization';
+  };
+
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white px-6">
-      <div className="flex-1">
-        <h1 className="text-2xl font-semibold">{title}</h1>
-      </div>
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-purple-600"></span>
-          <span className="sr-only">Notifications</span>
-        </Button>
-        <div className="flex items-center gap-2">
-          <Avatar>
-            <AvatarImage src="/images/volunteers/volunteer1.jpg" alt="Admin" />
-            <AvatarFallback>ST</AvatarFallback>
-          </Avatar>
-          <div className="hidden md:block">
-            <p className="text-sm font-medium">Selam Tesfaye</p>
-            <p className="text-xs text-gray-500">Administrator</p>
+    <header className="relative bg-white shadow-sm border-b border-gray-200 z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Left side (Mobile Menu Button + Title) */}
+          <div className="flex items-center">
+            <button
+              onClick={() => setMobileNavOpen(!mobileNavOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden"
+              aria-expanded={mobileNavOpen}
+              aria-label="Open main menu"
+            >
+              {mobileNavOpen ? <X className="block h-6 w-6" /> : <Menu className="block h-6 w-6" />}
+            </button>
+            <h1 className="ml-2 md:ml-0 text-2xl font-semibold text-gray-900">{title}</h1>
+          </div>
+
+          {/* Center (spacer) */}
+          <div className="flex-1"></div>
+
+          {/* Right side (Notifications, Translate, Profile) */}
+          <div className="flex items-center space-x-4">
+            {/* Notifications */}
+            <button className="relative p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full">
+              <Bell className="h-6 w-6" />
+              <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-purple-600"></span>
+            </button>
+
+            {/* Google Translate */}
+            <GoogleTranslateButton />
+
+            {/* Profile dropdown */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <span className="sr-only">Open user menu</span>
+                {userProfile && userProfile.image ? (
+                  <UserAvatar src={userProfile.image} alt={getUserDisplayName()} />
+                ) : (
+                  <UserCircle className="h-8 w-8 text-gray-600" />
+                )}
+                <span className="ml-2 text-gray-700 font-medium hidden lg:block">
+                  {getUserDisplayName()}
+                </span>
+              </button>
+
+              {/* Dropdown menu */}
+              {showProfileMenu && (
+                <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                  <Link 
+                    to="/charity/settings" 
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setShowProfileMenu(false)}
+                  >
+                    Settings
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <div className="flex items-center">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign out
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile menu, show/hide based on state */}
+      {mobileNavOpen && (
+        <div className="md:hidden" id="mobile-menu">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <Link to="/charity" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
+              Dashboard
+            </Link>
+            <Link to="/charity/volunteers" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
+              Volunteers
+            </Link>
+            <Link to="/charity/incidents" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
+              Incidents
+            </Link>
+            <Link to="/charity/settings" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
+              Settings
+            </Link>
+          </div>
+          <div className="pt-4 pb-3 border-t border-gray-200">
+            <div className="flex items-center px-5">
+              <div className="flex-shrink-0">
+                {userProfile && userProfile.image ? (
+                  <UserAvatar src={userProfile.image} alt={getUserDisplayName()} size="h-10 w-10" />
+                ) : (
+                  <UserCircle className="h-10 w-10 text-gray-600" />
+                )}
+              </div>
+              <div className="ml-3">
+                <div className="text-base font-medium text-gray-800">{getUserDisplayName()}</div>
+                <div className="text-sm font-medium text-gray-500">{userProfile?.email || user?.email || ''}</div>
+              </div>
+            </div>
+            <div className="mt-3 space-y-1 px-2">
+              <Link to="/charity/settings" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">
+                Settings
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

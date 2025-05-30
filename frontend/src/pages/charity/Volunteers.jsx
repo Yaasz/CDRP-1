@@ -2,8 +2,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Users } from "lucide-react";
 
-import CharitySidebar from "../../components/charity/CharitySidebar";
-import CharityHeader from "../../components/charity/CharityHeader";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/Avatar";
@@ -70,34 +68,28 @@ const Volunteers = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-[#F5EFFF]/30">
-      <CharitySidebar />
-      <div className="flex-1">
-        <CharityHeader title="Volunteer Management Dashboard" />
-        <main className="p-6">
-          <div className="bg-white rounded-lg border border-[#E5D9F2] mb-6 p-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#CDC1FF] text-[#7371FC]">
-                <Users className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Total Volunteers</p>
-                <p className="text-2xl font-bold text-gray-900">1,234</p>
-              </div>
-            </div>
+    <>
+      <div className="bg-white rounded-lg border border-[#E5D9F2] mb-6 p-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#CDC1FF] text-[#7371FC]">
+            <Users className="h-6 w-6" />
           </div>
-
-          {/* Expertise Section */}
-          {renderVolunteerTable(volunteerCategories.expertise, "Expertise")}
-
-          {/* Material Section */}
-          {renderVolunteerTable(volunteerCategories.material, "Material")}
-
-          {/* Labour Section */}
-          {renderVolunteerTable(volunteerCategories.labour, "Labour")}
-        </main>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Total Volunteers</p>
+            <p className="text-2xl font-bold text-gray-900">1,234</p>
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* Expertise Section */}
+      {renderVolunteerTable(volunteerCategories.expertise, "Expertise")}
+
+      {/* Material Section */}
+      {renderVolunteerTable(volunteerCategories.material, "Material")}
+
+      {/* Labour Section */}
+      {renderVolunteerTable(volunteerCategories.labour, "Labour")}
+    </>
   );
 };
 
