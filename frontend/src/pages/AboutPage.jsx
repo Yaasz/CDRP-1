@@ -190,7 +190,7 @@ const AboutPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                 
                 <div>
-                  <div className="text-3xl font-bold text-blue-700 mb-2">2020</div>
+                  <div className="text-3xl font-bold text-blue-700 mb-2">2024</div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Founded</h3>
                   <p className="text-gray-700 text-sm">
                     Started as a response to coordination challenges observed during natural disasters
@@ -198,24 +198,18 @@ const AboutPage = () => {
                 </div>
 
                 <div>
-                  <div className="text-3xl font-bold text-blue-700 mb-2">2021</div>
+                  <div className="text-3xl font-bold text-blue-700 mb-2">2025</div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">First Deployment</h3>
                   <p className="text-gray-700 text-sm">
-                    Successfully coordinated response to Hurricane Delta, serving 50,000 residents
+                    Successfully coordinate response 
                   </p>
                 </div>
 
-                <div>
-                  <div className="text-3xl font-bold text-blue-700 mb-2">2024</div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Global Expansion</h3>
-                  <p className="text-gray-700 text-sm">
-                    Now serving 150+ communities worldwide with 500+ partner organizations
-                  </p>
-                </div>
+                
               </div>
             </div>
 
-            <div className="mt-12 text-center">
+            <div className="mt-12 text-right">
               <p className="text-lg text-gray-700 mb-6">
                 What started as a small team's vision has grown into a global movement of communities 
                 working together to build resilience and save lives. Every day, we're honored to play 
@@ -304,4 +298,4 @@ const AboutPage = () => {
   )
 }
 
-export default AboutPage 
+export default AboutPage;

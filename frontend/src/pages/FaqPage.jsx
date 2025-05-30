@@ -93,30 +93,10 @@ const FaqPage = () => {
           question: "What devices and browsers does CDRP support?",
           answer: "CDRP works on all modern web browsers (Chrome, Firefox, Safari, Edge) and has mobile apps for iOS and Android. The platform is optimized for smartphones, tablets, and desktop computers with responsive design."
         },
-        {
-          question: "What if I lose internet connection during an emergency?",
-          answer: "CDRP has offline capabilities that allow basic functions to work without internet. Data syncs automatically when connection is restored. For critical communications, the platform can also work through SMS and satellite connections where available."
-        },
+        
         {
           question: "Is my data secure and private?",
           answer: "Yes, CDRP uses enterprise-grade security with encryption for all data transmission and storage. Personal information is protected according to privacy laws. Emergency responders only see information necessary for response coordination."
-        }
-      ]
-    },
-    {
-      category: "During Emergencies",
-      questions: [
-        {
-          question: "How do I receive emergency alerts?",
-          answer: "Enable notifications in your account settings to receive alerts via push notifications, email, and SMS. You can customize alert types and geographic areas. Critical alerts override do-not-disturb settings on mobile devices."
-        },
-        {
-          question: "What should I do if I need immediate help?",
-          answer: "For life-threatening emergencies, call 911 immediately. For non-critical but urgent needs, report through CDRP and mark as 'urgent'. The platform will route your request to appropriate local responders and volunteers."
-        },
-        {
-          question: "How can I find my family members during a disaster?",
-          answer: "CDRP includes a family reunification feature where family members can check in and share their status. You can also report missing persons, and the system will coordinate with emergency services for search efforts."
         }
       ]
     }
@@ -316,4 +296,4 @@ const FaqPage = () => {
   )
 }
 
-export default FaqPage 
+export default FaqPage;

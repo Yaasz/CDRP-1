@@ -66,26 +66,7 @@ const HowToReportPage = () => {
               </div>
             </div>
 
-            {/* Step 4 */}
-            <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-              <h2 className="text-2xl font-semibold text-[#A594F9] mb-4">4. Track Your Report</h2>
-              <div className="space-y-3 text-gray-700">
-                <p>Stay updated on your report status:</p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>View report status (Pending, Verified, Responded, Resolved)</li>
-                  <li>Receive notifications on status changes</li>
-                  <li>Add additional information if requested</li>
-                </ul>
-                <div className="mt-4">
-                  <Link 
-                    to="/reports" 
-                    className="inline-block bg-[#A594F9] text-white px-6 py-2 rounded-md hover:bg-[#7371FC] transition-colors"
-                  >
-                    View Reports
-                  </Link>
-                </div>
-              </div>
-            </div>
+            
           </div>
 
           {/* Call to Action */}
