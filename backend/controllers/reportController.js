@@ -18,12 +18,12 @@ const distanceMap = {
 };
 //note:allowed types of disasters
 const allowedTypes = [
-  "Drought",
-  "Earthquake",
-  "Flood",
-  "Hailstorm",
-  "landslideDisaster",
-  "locuswarm",
+  "flood",
+  "earthquake",
+  "drought",
+  "hailstorm",
+  "landslidedisaster",
+  "locustwarn",
   "sinkhole",
   "volcano",
   "wildefire",
