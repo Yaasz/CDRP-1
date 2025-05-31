@@ -8,9 +8,9 @@ const newsSchema = new mongoose.Schema(
       required: true,
       validate: {
         validator: function (value) {
-          return validator.matches(value.trim(), /^[A-Za-z0-9\s.,!?'"&()-]+$/);
+          return validator.matches(value.trim(), /^[A-Za-z0-9\s.,!?'"&():;.+-]+$/);
         },
-        message: "title must be text",
+        message: "title must be text with allowed special characters",
       },
       minlength: [4, "title must be at least 4 characters "],
     },
@@ -19,9 +19,9 @@ const newsSchema = new mongoose.Schema(
       required: true,
       validate: {
         validator: function (value) {
-          return validator.matches(value.trim(), /^[A-Za-z0-9\s.,!?'"&()-]+$/);
+          return validator.matches(value.trim(), /^[A-Za-z0-9\s.,!?'"&():;.+-]+$/);
         },
-        message: "description must be text",
+        message: "description must be text with allowed special characters",
       },
       minlength: [4, "description must be at least 4 characters "],
       maxlength: [1000, "description too long"],

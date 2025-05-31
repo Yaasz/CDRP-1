@@ -221,25 +221,6 @@ export default function ReportsListPage() {
           />
         </div>
 
-        <div className="flex items-center space-x-2 overflow-x-auto pb-2">
-          <div className="flex items-center bg-white border border-gray-200 rounded-md p-1.5 text-sm text-gray-600 mr-1 shadow-sm whitespace-nowrap">
-            <Filter className="h-4 w-4 mr-1" />
-            <span>Status:</span>
-          </div>
-          {["All", "Pending", "In Progress", "Resolved"].map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors duration-150 shadow-sm ${
-                filterStatus === status
-                  ? "bg-blue-600 text-white"
-                  : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              {status}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Error Message */}

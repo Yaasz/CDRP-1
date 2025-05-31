@@ -75,61 +75,7 @@ export default function ReportSuccessPage() {
         </p>
       </div>
 
-      {report ? (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Report Details</h2>
-          
-          <div className="space-y-4">
-            {report._id && (
-              <div>
-                <p className="text-sm font-medium text-gray-500">Report ID</p>
-                <p className="text-gray-800">{report._id}</p>
-              </div>
-            )}
-
-            <div>
-              <p className="text-sm font-medium text-gray-500">Title</p>
-              <p className="text-gray-800">{report.title || 'No title provided'}</p>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-gray-500">Incident Type</p>
-              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {getTypeDisplayName(report.type)}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-gray-500">Description</p>
-              <p className="text-gray-800 whitespace-pre-line">{report.description || 'No description provided'}</p>
-            </div>
-
-            {report.location && (
-              <div>
-                <p className="text-sm font-medium text-gray-500 flex items-center">
-                  <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-                  Location
-                </p>
-                <p className="text-gray-800">{getLocationString(report.location)}</p>
-              </div>
-            )}
-
-            <div>
-              <p className="text-sm font-medium text-gray-500 flex items-center">
-                <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                Submitted on
-              </p>
-              <p className="text-gray-800">{formatDate(report.createdAt)}</p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md mb-6">
-          <p className="text-yellow-800">
-            Report details are not available. This might happen if you refreshed the page or accessed this page directly.
-          </p>
-        </div>
-      )}
+     
 
       <div className="bg-blue-50 border border-blue-200 p-4 rounded-md mb-6">
         <p className="text-blue-800 text-sm">

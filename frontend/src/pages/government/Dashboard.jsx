@@ -270,20 +270,20 @@ export default function GovernmentDashboard() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">
+    <div className="space-y-6 md:space-y-8">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-1">
           Government Dashboard
         </h1>
-        <p className="text-gray-600">Welcome to the CDRP Government Portal</p>
+        <p className="text-sm md:text-base text-gray-600">Welcome to the CDRP Government Portal</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatCard
           title="Active Incidents"
           value={stats.activeIncidents.toLocaleString()}
-          icon={<AlertTriangle className="w-5 h-5" />}
+          icon={<AlertTriangle className="w-4 h-4 md:w-5 md:h-5" />}
           iconBg="bg-red-100"
           iconColor="text-red-600"
           trend={+8}
@@ -293,7 +293,7 @@ export default function GovernmentDashboard() {
         <StatCard
           title="Response Time"
           value={`${stats.responseTime}h`}
-          icon={<Clock className="w-5 h-5" />}
+          icon={<Clock className="w-4 h-4 md:w-5 md:h-5" />}
           iconBg="bg-green-100"
           iconColor="text-green-600"
           trend={-0.3}
@@ -304,7 +304,7 @@ export default function GovernmentDashboard() {
         <StatCard
           title="Registered Charities"
           value={stats.registeredCharities}
-          icon={<BriefcaseBusiness className="w-5 h-5" />}
+          icon={<BriefcaseBusiness className="w-4 h-4 md:w-5 md:h-5" />}
           iconBg="bg-blue-100"
           iconColor="text-blue-600"
           trend={+2}
@@ -314,49 +314,49 @@ export default function GovernmentDashboard() {
         <StatCard
           title="Pending Approvals"
           value={stats.pendingApprovals}
-          icon={<FileBarChart className="w-5 h-5" />}
+          icon={<FileBarChart className="w-4 h-4 md:w-5 md:h-5" />}
           iconBg="bg-orange-100"
           iconColor="text-orange-600"
           progress={stats.pendingApprovals * 10}
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
         {/* Activity Map Panel */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 lg:col-span-2">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h3 className="text-lg font-medium text-gray-800">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 xl:col-span-2">
+          <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <h3 className="text-base md:text-lg font-medium text-gray-800">
               Disaster Activity Map
             </h3>
-            <div className="flex items-center space-x-2">
-              <button className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md">
+            <div className="flex items-center space-x-2 overflow-x-auto">
+              <button className="px-2 md:px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-md whitespace-nowrap">
                 Today
               </button>
-              <button className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 rounded-md">
+              <button className="px-2 md:px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 rounded-md whitespace-nowrap">
                 Week
               </button>
-              <button className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 rounded-md">
+              <button className="px-2 md:px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 rounded-md whitespace-nowrap">
                 Month
               </button>
             </div>
           </div>
-          <div className="p-6">
-            <div className="flex items-center justify-center h-80 bg-gray-50 rounded-lg relative overflow-hidden">
+          <div className="p-4 md:p-6">
+            <div className="flex items-center justify-center h-64 md:h-80 bg-gray-50 rounded-lg relative overflow-hidden">
               {/* Mock Map Visualization */}
               <div className="absolute inset-0 bg-blue-50">
                 <div className="h-full w-full flex items-center justify-center text-gray-400">
-                  <div className="text-center">
-                    <MapPin className="h-12 w-12 mx-auto mb-2 text-blue-500" />
-                    <p className="text-gray-500">
+                  <div className="text-center px-4">
+                    <MapPin className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 text-blue-500" />
+                    <p className="text-sm md:text-base text-gray-500">
                       Interactive disaster map will be displayed here
                     </p>
                   </div>
                 </div>
 
                 {/* Incident markers */}
-                <div className="absolute top-1/4 left-1/3 h-4 w-4 rounded-full bg-red-500 animate-pulse"></div>
-                <div className="absolute top-1/2 left-1/4 h-4 w-4 rounded-full bg-orange-500 animate-pulse"></div>
-                <div className="absolute bottom-1/3 right-1/3 h-4 w-4 rounded-full bg-red-500 animate-pulse"></div>
+                <div className="absolute top-1/4 left-1/3 h-3 w-3 md:h-4 md:w-4 rounded-full bg-red-500 animate-pulse"></div>
+                <div className="absolute top-1/2 left-1/4 h-3 w-3 md:h-4 md:w-4 rounded-full bg-orange-500 animate-pulse"></div>
+                <div className="absolute bottom-1/3 right-1/3 h-3 w-3 md:h-4 md:w-4 rounded-full bg-red-500 animate-pulse"></div>
               </div>
             </div>
           </div>
@@ -364,18 +364,18 @@ export default function GovernmentDashboard() {
 
         {/* Response Status Panel */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-800">
+          <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200">
+            <h3 className="text-base md:text-lg font-medium text-gray-800">
               Response Status
             </h3>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">
+                <span className="text-xs md:text-sm font-medium text-gray-600">
                   Medical Resources
                 </span>
-                <span className="text-sm font-semibold text-gray-800">78%</span>
+                <span className="text-xs md:text-sm font-semibold text-gray-800">78%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
@@ -387,10 +387,10 @@ export default function GovernmentDashboard() {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">
+                <span className="text-xs md:text-sm font-medium text-gray-600">
                   Food Supply
                 </span>
-                <span className="text-sm font-semibold text-gray-800">92%</span>
+                <span className="text-xs md:text-sm font-semibold text-gray-800">92%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
@@ -402,10 +402,10 @@ export default function GovernmentDashboard() {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">
+                <span className="text-xs md:text-sm font-medium text-gray-600">
                   Shelter Capacity
                 </span>
-                <span className="text-sm font-semibold text-gray-800">45%</span>
+                <span className="text-xs md:text-sm font-semibold text-gray-800">45%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
@@ -417,10 +417,10 @@ export default function GovernmentDashboard() {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-600">
+                <span className="text-xs md:text-sm font-medium text-gray-600">
                   Volunteers
                 </span>
-                <span className="text-sm font-semibold text-gray-800">65%</span>
+                <span className="text-xs md:text-sm font-semibold text-gray-800">65%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
@@ -429,44 +429,37 @@ export default function GovernmentDashboard() {
                 ></div>
               </div>
             </div>
-
-            <Link
-              to="/government/reports"
-              className="mt-4 flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
-            >
-              View detailed reports <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
           </div>
         </div>
       </div>
 
       {/* Recent Incidents */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-gray-800">
+        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+          <h3 className="text-base md:text-lg font-medium text-gray-800">
             Recent Incidents
           </h3>
           <span className="text-xs font-medium text-gray-500 flex items-center">
-            <Calendar className="w-4 h-4 mr-1" /> Last 7 days
+            <Calendar className="w-3 h-3 md:w-4 md:h-4 mr-1" /> Last 7 days
           </span>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Incident
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                   Location
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                   Reported
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -475,25 +468,25 @@ export default function GovernmentDashboard() {
               {recentIncidents.length > 0 ? (
                 recentIncidents.map((incident, index) => (
                   <tr key={incident._id || index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                        <div className="flex-shrink-0 h-6 w-6 md:h-8 md:w-8 rounded-full bg-red-100 flex items-center justify-center">
+                          <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-red-600" />
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                        <div className="ml-2 md:ml-4">
+                          <div className="text-xs md:text-sm font-medium text-gray-900">
                             {incident.type}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 hidden md:block">
                             ID: {incident._id}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">N/A</div>
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                      <div className="text-xs md:text-sm text-gray-900">N/A</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 inline-flex text-xs leading-4 font-medium rounded-full ${
                           incident.status === "Critical"
@@ -506,10 +499,10 @@ export default function GovernmentDashboard() {
                         {incident.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm text-gray-500 hidden md:table-cell">
                       {formatTimeAgo(incident.reportedAt)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm">
                       <Link
                         to={`/government/incidents/${incident._id}`}
                         className="text-blue-600 hover:text-blue-800 font-medium"
@@ -532,46 +525,46 @@ export default function GovernmentDashboard() {
             </tbody>
           </table>
         </div>
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div className="px-4 md:px-6 py-3 md:py-4 border-t border-gray-200 bg-gray-50">
           <Link
             to="/government/incidents"
-            className="flex items-center justify-center w-full text-sm font-medium text-blue-600 hover:text-blue-800"
+            className="flex items-center justify-center w-full text-xs md:text-sm font-medium text-blue-600 hover:text-blue-800"
           >
-            View all incidents <ArrowRight className="w-4 h-4 ml-1" />
+            View all incidents <ArrowRight className="w-3 h-3 md:w-4 md:h-4 ml-1" />
           </Link>
         </div>
       </div>
 
       {/* Active Charities */}
       <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-800">
             Active Charities
           </h2>
           <Link
             to="/government/charities"
-            className="text-[#7371FC] hover:text-[#A594F9] flex items-center"
+            className="text-[#7371FC] hover:text-[#A594F9] flex items-center text-sm md:text-base"
           >
             <span className="mr-1">View All</span>
             <ArrowRight size={16} />
           </Link>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {charities.map((charity) => (
             <div
               key={charity.id}
-              className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center"
+              className="bg-white p-3 md:p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
             >
-              <div className="flex items-center space-x-4">
-                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+              <div className="flex items-center space-x-3 md:space-x-4">
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
                   {/* Placeholder for organization logo */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    className="h-6 w-6"
+                    className="h-5 w-5 md:h-6 md:w-6"
                   >
                     <path
                       strokeLinecap="round"
@@ -581,14 +574,14 @@ export default function GovernmentDashboard() {
                     />
                   </svg>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm md:text-lg font-semibold text-gray-900 truncate">
                     {charity.name}
                   </h3>
-                  <p className="text-gray-500">{charity.description}</p>
+                  <p className="text-xs md:text-base text-gray-500 truncate">{charity.description}</p>
                 </div>
               </div>
-              <Badge className="bg-green-100 text-green-800 px-3 py-1 text-sm">
+              <Badge className="bg-green-100 text-green-800 px-2 md:px-3 py-1 text-xs md:text-sm whitespace-nowrap">
                 {charity.status}
               </Badge>
             </div>
@@ -612,19 +605,19 @@ function StatCard({
   progress,
 }) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-      <div className="flex items-center mb-4">
-        <div className={`p-2 rounded-lg ${iconBg} mr-3`}>
+    <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="flex items-center mb-3 md:mb-4">
+        <div className={`p-1.5 md:p-2 rounded-lg ${iconBg} mr-2 md:mr-3`}>
           <div className={iconColor}>{icon}</div>
         </div>
-        <p className="text-sm font-medium text-gray-500">{title}</p>
+        <p className="text-xs md:text-sm font-medium text-gray-500 truncate">{title}</p>
       </div>
 
       <div className="flex items-end justify-between">
-        <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
+        <h3 className="text-lg md:text-2xl font-bold text-gray-800">{value}</h3>
 
         {trend !== undefined && (
-          <div className="flex items-center">
+          <div className="flex flex-col sm:flex-row sm:items-center">
             <span
               className={`flex items-center text-xs font-medium ${
                 trendDown ? "text-red-600" : "text-green-600"
@@ -637,12 +630,12 @@ function StatCard({
               )}
               {Math.abs(trend)}%
             </span>
-            <span className="text-xs text-gray-500 ml-1">{trendLabel}</span>
+            <span className="text-xs text-gray-500 sm:ml-1 hidden sm:inline">{trendLabel}</span>
           </div>
         )}
 
         {progress !== undefined && (
-          <div className="w-24 bg-gray-200 rounded-full h-2">
+          <div className="w-16 md:w-24 bg-gray-200 rounded-full h-2">
             <div
               className={`h-2 rounded-full ${
                 progress > 80

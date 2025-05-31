@@ -10,6 +10,7 @@ const {
   getAnnouncementById,
   updateAnnouncement,
   deleteAnnouncement,
+  updateCharityResponse,
 } = require("../controllers/announcementController"); // Adjust path to your controller file
 
 // Define routes
@@ -28,5 +29,15 @@ router
   .get(authToken, getAnnouncementById)
   .put(authToken, authRoles("government"), updateAnnouncement)
   .delete(authToken, authRoles("government", "admin"), deleteAnnouncement);
+
+// Route for charity responses to announcements
+router
+  .route("/:id/respond")
+  .patch(
+    authToken,
+    authRoles("charity"),
+    requireVerification,
+    updateCharityResponse
+  );
 
 module.exports = router;

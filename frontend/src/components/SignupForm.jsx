@@ -16,7 +16,7 @@ export default function SignupForm({ onSubmit, onSwitch }) {
     phone: "",
     password: "",
     confirmPassword: "",
-    name: "",          // Organization name
+    organizationName: "",          // Organization name
     taxId: "",
     mission: "",       // Mission statement
   });
@@ -41,7 +41,7 @@ export default function SignupForm({ onSubmit, onSwitch }) {
 
     // Additional validation for organization signup
     if (accountType === "organization") {
-      if (signupData.name.length < 5) {
+      if (signupData.organizationName.length < 5) {
         setSignupError("Organization name must be at least 5 characters.");
         return;
       }
@@ -72,7 +72,7 @@ export default function SignupForm({ onSubmit, onSwitch }) {
         phone: "",
         password: "",
         confirmPassword: "",
-        name: "",
+        organizationName: "",
         taxId: "",
         mission: "",
       });
@@ -321,9 +321,9 @@ export default function SignupForm({ onSubmit, onSwitch }) {
               <input 
                 type="text" 
                 id="name" 
-                name="name" 
+                name="organizationName" 
                 required 
-                value={signupData.name} 
+                value={signupData.organizationName} 
                 onChange={handleChange} 
                 placeholder="Name of your organization" 
                 className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm" 

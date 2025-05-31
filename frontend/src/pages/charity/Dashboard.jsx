@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Search, Users, AlertTriangle } from "lucide-react";
+import { Search, Users, AlertTriangle, Bell } from "lucide-react";
 
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -30,6 +30,25 @@ const Dashboard = () => {
           </div>
           <div className="text-3xl font-bold text-gray-900">4</div>
           <div className="mt-1 text-xs text-gray-500">+5 from last month</div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-3 mt-6">
+        {/* Government Announcements Card */}
+        <div className="rounded-lg bg-orange-50 border border-orange-200 p-6">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-orange-700">New Announcements</h2>
+            <Bell className="h-4 w-4 text-orange-600" />
+          </div>
+          <div className="text-2xl font-bold text-orange-900">2</div>
+          <div className="mt-1 text-xs text-orange-600">Awaiting your response</div>
+          <div className="mt-3">
+            <Link to="/charity/announcements">
+              <Button size="sm" className="bg-orange-600 text-white hover:bg-orange-700 text-xs">
+                View All
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 

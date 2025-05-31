@@ -46,15 +46,25 @@ import CharityIncidentAccept from "./pages/charity/IncidentAccept";
 import CharityIncidentReject from "./pages/charity/IncidentReject";
 import CharitySettings from "./pages/charity/Settings";
 
+// Import new announcement pages
+import CharityAnnouncements from "./pages/charity/Announcements";
+import CharityAnnouncementDetail from "./pages/charity/AnnouncementDetail";
+import CharityAdNew from "./pages/charity/CharityAdNew";
+import CharityCampaigns from "./pages/charity/Campaigns";
+import CampaignSuccess from "./pages/charity/CampaignSuccess";
+import CampaignDetail from "./pages/charity/CampaignDetail";
+import CampaignEdit from "./pages/charity/CampaignEdit";
+
 // Import government dashboard pages
-import GovernmentLayout from "./pages/government/Layout";
+import GovernmentLayout from "./components/government/GovernmentLayout";
 import GovernmentDashboard from "./pages/government/Dashboard";
 import GovernmentIncidents from "./pages/government/Incidents";
 import GovernmentIncidentDetail from "./pages/government/IncidentDetail";
 import EditIncident from "./pages/government/EditIncident";
-import GovernmentReports from "./pages/government/Reports";
 import GovernmentCharities from "./pages/government/Charities";
 import GovernmentNews from "./pages/government/News";
+import CreateNews from "./pages/government/CreateNews";
+import CreateAnnouncement from './pages/government/CreateAnnouncement';
 
 // Import admin dashboard pages
 import AdminLayout from "./pages/admin/Layout";
@@ -138,6 +148,13 @@ function App() {
               <Route path="incidents/:id/reject" element={<CharityIncidentReject />} />
               <Route path="applications/:applicationId" element={<div>Application Review</div>} />
               <Route path="settings" element={<CharitySettings />} />
+              <Route path="announcements" element={<CharityAnnouncements />} />
+              <Route path="announcements/:id" element={<CharityAnnouncementDetail />} />
+              <Route path="ads/new" element={<CharityAdNew />} />
+              <Route path="campaigns" element={<CharityCampaigns />} />
+              <Route path="campaigns/success" element={<CampaignSuccess />} />
+              <Route path="campaigns/:id" element={<CampaignDetail />} />
+              <Route path="campaigns/:id/edit" element={<CampaignEdit />} />
             </Route>
 
             {/* Government Dashboard Routes */}
@@ -149,10 +166,10 @@ function App() {
                 path="incidents/:id"
                 element={<GovernmentIncidentDetail />}
               />
-              <Route path="reports" element={<GovernmentReports />} />
+              <Route path="announcements/create" element={<CreateAnnouncement />} />
               <Route path="charities" element={<GovernmentCharities />} />
               <Route path="news" element={<GovernmentNews />} />
-              <Route path="news/create" element={<GovernmentNews />} />
+              <Route path="news/create" element={<CreateNews />} />
               <Route path="news/:id" element={<GovernmentNews />} />
               <Route path="settings" element={<div>Government Settings</div>} />
             </Route>

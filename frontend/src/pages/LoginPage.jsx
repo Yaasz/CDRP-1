@@ -191,7 +191,7 @@ export default function LoginPage() {
         // Handle organization signup - only include required fields
         apiUrl = `org`;
         payload = {
-          name: signupData.name,
+          organizationName: signupData.organizationName,
           email: signupData.email,
           phone: signupData.phone,
           password: signupData.password,
