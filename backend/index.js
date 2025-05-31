@@ -16,6 +16,7 @@ const reportRoutes = require("./routers/reportRoutes");
 const volunteerRoutes = require("./routers/volunteerRoutes");
 const assignmentRoutes = require("./routers/assignmentRoutes");
 const { login } = require("./controllers/login");
+const { getDash } = require("./controllers/dashboardData");
 
 const app = express();
 app.use(cors());
@@ -40,6 +41,7 @@ const swaggerDocument = YAML.load(path.join(__dirname, "swaggerDoc.yaml"));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.post("/api/login", login); //note created a common login function
 app.use("/api/user", userRoutes);
+app.get("/govdash", getDash);
 app.use("/api/org", organizationRoutes);
 app.use("/api/report", reportRoutes);
 app.use("/api/volunteer", volunteerRoutes);

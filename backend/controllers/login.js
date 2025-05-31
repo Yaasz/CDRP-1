@@ -46,11 +46,7 @@ exports.login = async (req, res) => {
       success: true,
       message: "login successful",
       token: token,
-      user: {
-        email: isUser.email,
-        phone: isUser.phone,
-        fullName: isUser.firstName + " " + isUser.lastName,
-      },
+      user: isUser,
     });
   }
   if (isOrg) {

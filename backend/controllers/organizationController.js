@@ -510,4 +510,39 @@ exports.verifyEmail = async (req, res) => {
     });
   }
 };
-//note: start by creating org email verify frontend
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "old and new password must be provided",
+      });
+    }
+    const org = await Organization.findById(id);
+    const passwordMatches = await bcrypt.compare(oldPassword, org.password);
+    if (!passwordMatches) {
+      return res.status(400).json({
+        success: false,
+        message: "incorrect password",
+      });
+    }
+
+    org.password = newPassword;
+    await org.save();
+
+    res.status(200).json({
+      success: true,
+      message: "password changed successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "internal server error",
+      error: error.message,
+    });
+    console.log(error);
+  }
+};
