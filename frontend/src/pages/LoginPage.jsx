@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, Users, Zap } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import LoginForm from "../components/LoginForm";
 import SignupForm from "../components/SignupForm";
 import { useAuth } from "../context/AuthContext";
@@ -229,9 +229,9 @@ export default function LoginPage() {
       </div>
 
       <div className="flex min-h-screen">
-        {/* Left side - Form */}
-        <div className="w-full lg:w-7/12 xl:w-1/2 flex items-center justify-center px-4 sm:px-6 lg:px-12 py-12 relative z-10">
-          <div className="w-full max-w-md">
+        {/* Full width form container */}
+        <div className="w-full flex items-center justify-center px-4 sm:px-6 lg:px-12 py-12 relative z-10">
+          <div className="w-full max-w-lg">
             
             {/* Back to home link */}
             <Link
@@ -306,85 +306,6 @@ export default function LoginPage() {
                   Privacy Policy
                 </Link>
               </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right side - Information panel */}
-        <div className="hidden lg:flex lg:w-5/12 xl:w-1/2 bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 relative">
-          {/* Background pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div
-              className="w-full h-full"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Ccircle cx='50' cy='50' r='2'/%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-              }}
-            ></div>
-          </div>
-
-          <div className="relative z-10 flex flex-col justify-center p-12 text-white">
-            <div className="mb-8">
-              <h2 className="text-4xl font-bold mb-4">
-                Community Disaster Response Platform
-              </h2>
-              <p className="text-xl text-blue-100 leading-relaxed">
-                Join thousands of communities worldwide in building resilience and coordinating effective disaster response.
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="flex items-start">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Secure & Reliable</h3>
-                  <p className="text-blue-100">
-                    Enterprise-grade security with 99.9% uptime ensures your data is safe and accessible when you need it most.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Community Driven</h3>
-                  <p className="text-blue-100">
-                    Connect with volunteers, organizations, and emergency services to coordinate effective disaster response.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
-                  <Zap className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Real-time Response</h3>
-                  <p className="text-blue-100">
-                    AI-powered incident detection and real-time coordination tools reduce response time by up to 40%.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-12 p-6 bg-white/10 backdrop-blur-sm rounded-xl">
-              <div className="grid grid-cols-3 gap-6 text-center">
-                <div>
-                  <div className="text-2xl font-bold">150+</div>
-                  <div className="text-sm text-blue-100">Communities</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">10K+</div>
-                  <div className="text-sm text-blue-100">Volunteers</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">500+</div>
-                  <div className="text-sm text-blue-100">Organizations</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

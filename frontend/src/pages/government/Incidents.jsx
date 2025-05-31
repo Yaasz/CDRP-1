@@ -255,11 +255,11 @@ export default function GovernmentIncidents() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
-                      <Link to={`/government/incidents/edit/${incident._id}`}>
+                      {/* <Link to={`/government/incidents/edit/${incident._id}`}>
                         <Button className="bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs px-2 py-1">
                           Edit
                         </Button>
-                      </Link>
+                      </Link> */}
                       
                       {incident.status === 'assigned' || incident.status === 'resolved' ? (
                         <Button 

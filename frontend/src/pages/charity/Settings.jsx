@@ -16,13 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 const Settings = () => {
   return (
     <div className="flex min-h-screen bg-[#F5EFFF]/30">
-      <CharitySidebar />
+      
       <div className="flex-1">
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white px-6">
-          <div className="flex-1">
-            <h1 className="text-2xl font-semibold">Settings</h1>
-          </div>
-        </header>
+        
         <main className="p-6">
           <Tabs defaultValue="account">
             <TabsList className="mb-6 grid w-full grid-cols-3 md:w-[400px]">
@@ -62,39 +58,7 @@ const Settings = () => {
                           className="border-[#CDC1FF] focus:border-[#A594F9] focus:ring-[#A594F9]"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="role">Role</Label>
-                        <Select defaultValue="admin">
-                          <SelectTrigger 
-                            id="role" 
-                            className="border-[#CDC1FF] focus:border-[#A594F9] focus:ring-[#A594F9]"
-                          >
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Administrator</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="coordinator">Coordinator</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-
-                      <Label htmlFor="language">Language</Label>
-                        <Select defaultValue="en">
-                          <SelectTrigger 
-                            id="language"
-                            className="border-[#CDC1FF] focus:border-[#A594F9] focus:ring-[#A594F9]"
-                          >
-                            <SelectValue placeholder="Select language" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="en">English</SelectItem>
-                            <SelectItem value="am">Amharic</SelectItem>
-                            <SelectItem value="ti">Tigrinya</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      
                     </div>
                     <div className="flex justify-end">
                       <Button className="bg-[#7371FC] hover:bg-[#6260e0]">Save Changes</Button>

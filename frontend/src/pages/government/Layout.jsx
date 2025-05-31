@@ -110,7 +110,7 @@ export default function GovernmentLayout() {
               <AlertTriangle className="w-5 h-5 mr-3" />
               <span>Incidents</span>
             </NavLink>
-            <NavLink
+            {/* <NavLink
               to="/government/reports"
               className={({ isActive }) => 
                 `flex items-center px-4 py-2.5 rounded-md transition-colors duration-150 ${
@@ -122,7 +122,7 @@ export default function GovernmentLayout() {
             >
               <Newspaper className="w-5 h-5 mr-3" />
               <span>Reports</span>
-            </NavLink>
+            </NavLink> */}
             <NavLink
               to="/government/charities"
               className={({ isActive }) => 
@@ -149,7 +149,7 @@ export default function GovernmentLayout() {
               <FileText className="w-5 h-5 mr-3" />
               <span>News</span>
             </NavLink>
-            <NavLink
+            {/* <NavLink
               to="/government/settings"
               className={({ isActive }) => 
                 `flex items-center px-4 py-2.5 rounded-md transition-colors duration-150 ${
@@ -161,7 +161,7 @@ export default function GovernmentLayout() {
             >
               <Settings className="w-5 h-5 mr-3" />
               <span>Settings</span>
-            </NavLink>
+            </NavLink> */}
           </div>
 
           {/* Logout button at the bottom */}

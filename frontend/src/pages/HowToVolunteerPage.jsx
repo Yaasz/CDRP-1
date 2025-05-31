@@ -1,7 +1,24 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import volunteerHands from "../assets/volunteer-hands.png";
 
 const HowToVolunteerPage = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Handle navigation based on authentication status
+  const handleSignupLogin = () => {
+    navigate('/login');
+  };
+
+  const handleBecomeVolunteer = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard/volunteer');
+    } else {
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5EFFF] to-[#E5D9F2] pt-24 pb-12 relative overflow-hidden">
       {/* Background Image Watermark */}
@@ -38,12 +55,12 @@ const HowToVolunteerPage = () => {
                   <li>Your activities and contributions will be tracked securely</li>
                 </ul>
                 <div className="mt-4">
-                  <Link 
-                    to="/login" 
+                  <button 
+                    onClick={handleSignupLogin}
                     className="inline-block bg-[#A594F9] text-white px-6 py-2 rounded-md hover:bg-[#7371FC] transition-colors"
                   >
                     Signup/Login
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
@@ -102,36 +119,19 @@ const HowToVolunteerPage = () => {
               </div>
             </div>
 
-            {/* Step 5 & 6 Combined */}
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border-l-4 border-[#A594F9]">
-              <h2 className="text-2xl font-semibold text-[#7371FC] mb-4">5. Get Started</h2>
-              <div className="space-y-3 text-gray-700">
-                <p>What happens next:</p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Receive application confirmation</li>
-                  <li>Get notified of acceptance</li>
-                  <li>Receive detailed task assignments including:</li>
-                  <ul className="list-circle pl-8 space-y-1">
-                    <li>Location and timing</li>
-                    <li>Required resources</li>
-                    <li>Contact information</li>
-                    <li>Safety guidelines</li>
-                  </ul>
-                </ul>
-              </div>
-            </div>
+           
           </div>
 
           {/* Call to Action */}
           <div className="mt-12 text-center bg-white/90 backdrop-blur-sm rounded-lg shadow-md p-8">
             <h3 className="text-2xl font-bold text-[#7371FC] mb-4">Ready to Make a Difference?</h3>
             <p className="text-gray-700 mb-6">Join our community of volunteers and help those in need during critical times.</p>
-            <Link 
-              to="/dashboard/volunteer" 
+            <button 
+              onClick={handleBecomeVolunteer}
               className="inline-block bg-[#7371FC] text-white px-8 py-3 rounded-md hover:bg-[#A594F9] transition-colors font-semibold"
             >
               Become a Volunteer Today
-            </Link>
+            </button>
           </div>
         </div>
       </div>

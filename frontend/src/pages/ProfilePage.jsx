@@ -13,10 +13,11 @@ import {
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
 
-// Reusable Image Placeholder for Avatar
+// Reusable Image Placeholder for Avatar with proper scaling
 const AvatarPlaceholder = ({ src, alt, size = 28, ...props }) => (
   <div
-    className={`h-${size} w-${size} rounded-full overflow-hidden bg-gray-200 flex items-center justify-center border border-gray-300`}
+    className={`rounded-full overflow-hidden bg-gray-200 flex items-center justify-center border border-gray-300`}
+    style={{ width: `${size * 4}px`, height: `${size * 4}px` }}
     {...props}
   >
     {src && src !== "/placeholder-avatar.jpg" ? (
@@ -24,14 +25,19 @@ const AvatarPlaceholder = ({ src, alt, size = 28, ...props }) => (
         src={src}
         alt={alt}
         className="object-cover w-full h-full"
+        style={{ 
+          objectFit: 'cover',
+          objectPosition: 'center',
+          width: '100%',
+          height: '100%'
+        }}
         loading="lazy"
       />
     ) : (
       // Simple initial or icon placeholder
       <User
-        className={`h-${Math.floor(size / 2)} w-${Math.floor(
-          size / 2
-        )} text-gray-400`}
+        className="text-gray-400"
+        style={{ width: `${size * 2}px`, height: `${size * 2}px` }}
       />
     )}
   </div>
@@ -126,18 +132,61 @@ export default function ProfilePage() {
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
       // Basic validation (type, size)
       if (!file.type.startsWith("image/")) {
         alert("Please select an image file.");
         return;
       }
-      if (file.size > 2 * 1024 * 1024) {
-        // 2MB limit example
-        alert("Image size should be less than 2MB.");
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
+        alert("Image size should be less than 5MB.");
         return;
       }
-      setProfileImageFile(file);
-      setImagePreviewUrl(URL.createObjectURL(file)); // Create temporary preview URL
+
+      // Create a canvas to resize/scale the image properly
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Set canvas size for proper scaling (square aspect ratio)
+          const maxSize = 400; // Max width/height for avatar
+          let { width, height } = img;
+          
+          // Calculate new dimensions maintaining aspect ratio
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and scale the image
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert back to blob
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const scaledFile = new File([blob], file.name, { type: file.type });
+              setProfileImageFile(scaledFile);
+              setImagePreviewUrl(URL.createObjectURL(blob));
+            }
+          }, file.type, 0.9); // 90% quality
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -268,8 +317,20 @@ export default function ProfilePage() {
     setSuccessMessage("");
   };
 
-  // Get user's full name
+  // Get user's full name - prioritize auth context (signup data) over form data
   const getFullName = () => {
+    // First try to get name from auth context (original signup data)
+    if (user && user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    } else if (user && user.firstName) {
+      return user.firstName;
+    } else if (user && user.lastName) {
+      return user.lastName;
+    } else if (user && user.name) {
+      return user.name;
+    }
+    
+    // Fallback to form data if auth context doesn't have name info
     if (formData.firstName && formData.lastName) {
       return `${formData.firstName} ${formData.lastName}`;
     } else if (formData.firstName) {
@@ -277,6 +338,7 @@ export default function ProfilePage() {
     } else if (formData.lastName) {
       return formData.lastName;
     }
+    
     return "User";
   };
 

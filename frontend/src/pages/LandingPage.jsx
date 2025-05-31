@@ -1,8 +1,30 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
 import Navbar from "../components/Navbar"
 import firefighterImage from "../assets/firefighter.png"
 
 const LandingPage = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Handle Get Started button click
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
+  };
+
+  // Handle Become a Volunteer button click
+  const handleBecomeVolunteer = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard/volunteer');
+    } else {
+      navigate('/volunteer/how-to-volunteer');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -21,12 +43,12 @@ const LandingPage = () => {
 
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link
-                  to="/signup"
+                <button
+                  onClick={handleGetStarted}
                   className="bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 px-6 rounded-md text-center transition-colors"
                 >
                   Get Started
-                </Link>
+                </button>
                 
               </div>
             </div>
@@ -138,17 +160,17 @@ const LandingPage = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/signup"
+              to="/login"
               className="bg-white hover:bg-gray-100 text-blue-700 font-medium py-3 px-8 rounded-md text-center transition-colors"
             >
               Sign Up Now
             </Link>
-            <Link
-              to="/volunteer"
+            <button
+              onClick={handleBecomeVolunteer}
               className="bg-transparent hover:bg-blue-800 text-white border border-white font-medium py-3 px-8 rounded-md text-center transition-colors"
             >
               Become a Volunteer
-            </Link>
+            </button>
           </div>
         </div>
       </section>

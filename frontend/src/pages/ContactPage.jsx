@@ -68,7 +68,7 @@ const ContactPage = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">Phone</h3>
-                    <p className="text-gray-600">(555) 123-4567</p>
+                    <p className="text-gray-600">+251-115516407</p>
                     <p className="text-sm text-gray-500">Available 24/7 for emergencies</p>
                   </div>
                 </div>
@@ -91,8 +91,11 @@ const ContactPage = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">Address</h3>
                     <p className="text-gray-600">
-                      123 Emergency Response Ave<br />
-                      Disaster Preparedness City, DP 12345
+                    Head Office
+                    Nifas Silk Lafto Sub City, Beside Nifas Silk Vocational School<br />
+                    P.o.Box: 5686
+  Addis Ababa, Ethiopia
+
                     </p>
                   </div>
                 </div>
@@ -112,17 +115,7 @@ const ContactPage = () => {
                 </div>
               </div>
 
-              {/* Emergency Notice */}
-              <div className="mt-8 p-6 bg-red-50 border border-red-200 rounded-lg">
-                <h3 className="text-lg font-semibold text-red-800 mb-2">Emergency Situations</h3>
-                <p className="text-red-700 mb-4">
-                  For immediate emergency assistance, please contact local emergency services:
-                </p>
-                <div className="space-y-1">
-                  <p className="text-red-800 font-medium">Emergency: 911</p>
-                  <p className="text-red-800 font-medium">Non-Emergency: (555) 123-0000</p>
-                </div>
-              </div>
+             
             </div>
 
             {/* Contact Form */}
@@ -228,7 +221,7 @@ const ContactPage = () => {
                 How do I report a disaster or emergency?
               </h3>
               <p className="text-gray-700">
-                You can report disasters through our platform by logging in and using the report feature, or by calling our emergency hotline at (555) 123-4567.
+                You can report disasters through our platform by logging in and using the report feature.
               </p>
             </div>
 

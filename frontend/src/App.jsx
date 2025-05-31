@@ -13,6 +13,7 @@ import ReportsListPage from "./pages/ReportsListPage";
 import ReportDetailPage from "./pages/ReportDetailPage";
 import NewReportPage from "./pages/NewReportPage";
 import ReportSuccessPage from "./pages/ReportSuccessPage";
+import AlertDetailPage from "./pages/AlertDetailPage";
 import VolunteerListPage from "./pages/VolunteerListPage";
 import VolunteerDetailPage from "./pages/VolunteerDetailPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -104,6 +105,8 @@ function App() {
               <Route path="reports/new" element={<NewReportPage />} />
               <Route path="reports/success" element={<ReportSuccessPage />} />
               <Route path="reports/:reportId" element={<ReportDetailPage />} />
+              {/* Alert Routes */}
+              <Route path="alerts/:alertId" element={<AlertDetailPage />} />
               {/* News Routes */}
               <Route path="news" element={<NewsListPage />} />
               <Route path="news/:newsId" element={<NewsDetailPage />} />
