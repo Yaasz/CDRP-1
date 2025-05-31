@@ -32,6 +32,9 @@ const allowedTypes = [
 exports.createReport = async (req, res) => {
   try {
     const data = { ...req.body };
+    if (req.files) {
+      data.image = [];
+    }
     const empty = [];
     //check if the required fields are provided
     if (!data.type) empty.push("type");

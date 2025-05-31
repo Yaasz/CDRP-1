@@ -13,6 +13,7 @@ const {
   deleteAll,
   login,
   verifyEmail,
+  changePassword,
 } = require("../controllers/organizationController");
 
 router
@@ -23,6 +24,9 @@ router
 
 router.post("/login", upload.none(), login);
 router.get("/verifyEmail", verifyEmail);
+router
+  .route("/changePassword/:id")
+  .patch(upload.none(), authToken, changePassword);
 router
   .route("/:id")
   .get(authToken, getOrganization)

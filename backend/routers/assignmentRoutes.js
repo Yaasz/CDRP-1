@@ -7,18 +7,26 @@ const {
   getAllAssignments,
   getAssignmentById,
   updateAssignmentStatus,
-  getAssignmentsForIncident
+  getAssignmentsForIncident,
 } = require("../controllers/assignmentController");
 
 // Routes for assignments
 router
   .route("/")
-  .get(authToken, authRoles("admin", "government", "charity"), getAllAssignments)
+  .get(
+    authToken,
+    authRoles("admin", "government", "charity"),
+    getAllAssignments
+  )
   .post(authToken, authRoles("government"), createAssignment);
 
 router
   .route("/:id")
-  .get(authToken, authRoles("admin", "government", "charity"), getAssignmentById)
+  .get(
+    authToken,
+    authRoles("admin", "government", "charity"),
+    getAssignmentById
+  )
   .patch(authToken, authRoles("government", "charity"), updateAssignmentStatus);
 
 // Get assignments for a specific incident
@@ -26,4 +34,4 @@ router
   .route("/incident/:incidentId")
   .get(authToken, authRoles("admin", "government"), getAssignmentsForIncident);
 
-module.exports = router; 
+module.exports = router;

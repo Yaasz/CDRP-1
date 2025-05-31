@@ -14,7 +14,7 @@ const organizationSchema = new mongoose.Schema(
         },
         message: "name must be text",
       },
-      minlength: [5, "name must be at least 5 characters "],
+      minlength: [3, "name must be at least 3 characters "],
     },
     email: {
       type: String,
