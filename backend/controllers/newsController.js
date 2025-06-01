@@ -8,23 +8,18 @@ exports.createNews = async (req, res) => {
   //upload.single("image") // removed and put in the router
   try {
     const data = { ...req.body };
-    // Remove empty fields
-    Object.keys(data).forEach((key) => {
-      if (data[key] === "") delete data[key];
-    });
-    images = data.images;
-    images.map(img) =
-    data.images = data.images
-      .replace(/\r\n/g, "") // Remove newlines
-      .replace(/\s+/g, " ") // Normalize whitespace
-      .replace(/,(\s*})/g, "$1") // Remove trailing commas before closing braces
-      .trim();
-    data.images = data.images.startsWith("[")
-      ? data.images
-      : `[${data.images}]`;
-    console.log("data images", data.images);
-    data.images = JSON.parse(data.images);
-    console.log("parsed", data.images);
+    if (typeof data.images === "string") {
+      try {
+        data.images = JSON.parse(data.images);
+      } catch (err) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid image format",
+          error: err.message,
+        });
+      }
+    }
+
     if (!data.incident) {
       return res.status(400).json({
         success: false,
@@ -39,25 +34,12 @@ exports.createNews = async (req, res) => {
         error: "missing fields",
       });
     }
-    if (!data.images.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "news must have at least one image",
-        error: "missing fields",
-      });
-    }
-    const images = data.images;
-    console.log("type", typeof images);
-    images.map((img) => {
-      if (!img.url || !img.cloudinaryId) {
-        return res.status(400).json({
-          success: false,
-          message: "image must be url and cloudinaryId ",
-          error: "missing fields",
-        });
-      }
+
+    Object.keys(data).forEach((key) => {
+      if (data[key] === "") delete data[key];
     });
-    //console.log("data", data);
+    console.log("news data", data);
+
     const newsAnnouncement = new News(data);
 
     const savedAnnouncement = await newsAnnouncement.save();
@@ -89,11 +71,12 @@ exports.getAllNews = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
+
     res.status(200).json({
       success: true,
       totalCount: await News.countDocuments(),
       searchCount: await News.countDocuments(searchFilter),
-      news: newsAnnouncements,
+      data: newsAnnouncements,
       page: parseInt(page),
     });
   } catch (error) {
@@ -153,17 +136,18 @@ exports.updateNews = async (req, res) => {
         error: "invalid id",
       });
     }
-    // Parse images string
-    if (data.images) {
-      data.images = data.images
-        .replace(/\r\n/g, "") // Remove newlines
-        .replace(/\s+/g, " ") // Normalize whitespace
-        .replace(/,(\s*})/g, "$1") // Remove trailing commas before closing braces
-        .trim();
-      data.images = data.images.startsWith("[")
-        ? data.images
-        : `[${data.images}]`;
-      data.images = JSON.parse(data.images);
+
+    // Parse images string to array
+    if (data.images && typeof data.images === "string") {
+      try {
+        data.images = JSON.parse(data.images);
+      } catch (parseError) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid images format",
+          error: "images must be valid JSON array",
+        });
+      }
     }
 
     // Check if news exists
@@ -191,7 +175,11 @@ exports.updateNews = async (req, res) => {
         error: "missing fields",
       });
     }
-    if (!data.images || data.images.length === 0) {
+    if (
+      !data.images ||
+      !Array.isArray(data.images) ||
+      data.images.length === 0
+    ) {
       return res.status(400).json({
         success: false,
         message: "news must have at least one image",
@@ -201,18 +189,20 @@ exports.updateNews = async (req, res) => {
 
     // Validate images
     const images = data.images;
-    images.forEach((img) => {
+    for (const img of images) {
       if (!img.url || !img.cloudinaryId) {
         return res.status(400).json({
           success: false,
-          message: "image must be url and cloudinaryId",
-          error: "missing fields",
+          message: "image must have url and cloudinaryId",
+          error: "invalid image data",
         });
       }
-    });
+    }
+
     Object.keys(data).forEach((key) => {
       if (data[key] === "") delete data[key];
     });
+
     // Update news
     const news = await News.findByIdAndUpdate(id, data, {
       new: true,

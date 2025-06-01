@@ -42,7 +42,7 @@ const AnnouncementSchema = new mongoose.Schema(
             validator: async function (value) {
               const Organization = mongoose.model("Organization");
               const org = await Organization.findById(value);
-              return org && org.organizationType === "charity";
+              return org && org.role === "charity";
             },
             message:
               "The referenced organization must have organizationType 'charity'.",

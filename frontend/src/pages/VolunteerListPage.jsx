@@ -159,46 +159,7 @@ export default function VolunteerListPage() {
           </div>
         </div>
         
-        <div className="flex gap-3 flex-wrap lg:flex-nowrap">
-          <div className="relative min-w-[140px]">
-            <select defaultValue="" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
-              <option value="">All Categories</option>
-              <option value="healthcare">Healthcare</option>
-              <option value="education">Education</option>
-              <option value="environment">Environment</option>
-              <option value="emergency">Emergency</option>
-              <option value="construction">Construction</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-               <ChevronDown className="h-4 w-4 text-gray-400" />
-            </div>
-          </div>
-          <div className="relative min-w-[120px]">
-            <select defaultValue="" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
-              <option value="">All Locations</option>
-              <option value="addis">Addis Ababa</option>
-              <option value="bahir">Bahir Dar</option>
-              <option value="hawassa">Hawassa</option>
-              <option value="mekelle">Mekelle</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-               <ChevronDown className="h-4 w-4 text-gray-400" />
-            </div>
-          </div>
-          <div className="relative min-w-[120px]">
-            <select defaultValue="" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none text-sm">
-              <option value="">All Skills</option>
-              <option value="manual">Manual Labor</option>
-              <option value="teaching">Teaching</option>
-              <option value="medical">Medical</option>
-              <option value="logistics">Logistics</option>
-              <option value="communication">Communication</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-               <ChevronDown className="h-4 w-4 text-gray-400" />
-            </div>
-          </div>
-        </div>
+        
       </div>
 
       {/* Results Header & View Toggle */}
